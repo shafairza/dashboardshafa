@@ -10,8 +10,8 @@ from PIL import Image
 # ==========================
 @st.cache_resource
 def load_models():
-    yolo_model = YOLO("model/Shafa_Laporan 4.pt")  # Model deteksi objek (Smoking / Not Smoking)
-    classifier = tf.keras.models.load_model("model/Shafa_Laporan 2.h5")  # Model klasifikasi gambar
+    yolo_model = YOLO("model/Shafa_Laporan 4.pt")  # Model deteksi objek
+    classifier = tf.keras.models.load_model("model/Shafa_Laporan 2.h5")  # Model klasifikasi
     return yolo_model, classifier
 
 yolo_model, classifier = load_models()
@@ -29,15 +29,20 @@ if page == "Tentang":
     st.title("💡 Tentang Aplikasi Deteksi & Klasifikasi Gambar")
 
     st.markdown("""
-    Aplikasi ini dikembangkan oleh **Shafa** untuk mendeteksi dan mengklasifikasikan gambar menggunakan dua model utama:
+    Aplikasi ini dikembangkan oleh *Shafa* untuk mendeteksi dan mengklasifikasikan gambar menggunakan dua model utama:
     
-    - 🔍 **YOLOv8**: Model deteksi objek untuk mengidentifikasi perilaku **Smoking** dan **Not Smoking**.
-    - 🧠 **CNN / DenseNet201**: Model klasifikasi gambar dengan kategori:  
-      **Kelas Aman, Kelas Api, Kelas Asap, dan Kelas Asap & Api.**
+    - 🔍 *YOLOv8*: Model deteksi objek yang dapat mengenali objek tertentu di dalam gambar.  
+    - 🧠 *CNN / DenseNet201*: Model klasifikasi gambar yang mengidentifikasi kategori dari gambar yang diunggah.
     
-    ### 🎯 Tujuan
-    - Mengintegrasikan dua pendekatan AI: deteksi perilaku dan klasifikasi kondisi visual.
-    - Menyaring input agar sistem tetap akurat sesuai konteks modelnya.
+    ### 🎯 Tujuan Aplikasi
+    - Menyediakan alat bantu interaktif untuk mengenali dan mengklasifikasikan objek secara otomatis.  
+    - Meningkatkan efisiensi dalam pengolahan citra berbasis AI.  
+    
+    ### 📘 Cara Menggunakan
+    1. Masuk ke halaman *Prediksi Model* di sidebar.
+    2. Unggah gambar berformat .jpg, .jpeg, atau .png.
+    3. Pilih mode *Deteksi Objek (YOLO)* atau *Klasifikasi Gambar* di sidebar.
+    4. Lihat hasil deteksi atau klasifikasi yang ditampilkan secara visual dan probabilitasnya.
     """)
 
 # ==========================
@@ -46,43 +51,26 @@ if page == "Tentang":
 elif page == "Prediksi Model":
     st.title("🧠 Prediksi Model Deteksi & Klasifikasi")
 
-    # Pilihan mode
+    # Pilihan mode di sidebar
     menu = st.sidebar.selectbox("Pilih Mode:", ["Deteksi Objek (YOLO)", "Klasifikasi Gambar"])
 
     uploaded_file = st.file_uploader("📤 Unggah Gambar", type=["jpg", "jpeg", "png"])
 
     if uploaded_file is not None:
         img = Image.open(uploaded_file)
-        st.image(img, caption="🖼️ Gambar yang Diupload", use_container_width=True)
+        st.image(img, caption="🖼 Gambar yang Diupload", use_container_width=True)
 
         # ==========================
-        # DETEKSI OBJEK (YOLO)
+        # DETEKSI OBJEK
         # ==========================
         if menu == "Deteksi Objek (YOLO)":
             st.subheader("🔍 Hasil Deteksi Objek (YOLO)")
-
-            # Jalankan deteksi
             results = yolo_model(img)
-            detected_names = results[0].names  # daftar nama kelas dari model
-            boxes = results[0].boxes  # hasil deteksi
-            detected_classes = [detected_names[int(cls)] for cls in boxes.cls]
-
-            # Daftar kelas yang diizinkan
-            allowed_classes = ["Smoking", "Not Smoking"]
-
-            # Filter hasil hanya untuk kelas relevan
-            relevant_detections = [c for c in detected_classes if c in allowed_classes]
-
-            if len(relevant_detections) > 0:
-                st.success(f"✅ Ditemukan objek relevan: {', '.join(set(relevant_detections))}")
-                result_img = results[0].plot()
-                st.image(result_img, caption="📦 Hasil Deteksi", use_container_width=True)
-            else:
-                st.warning("⚠️ Tidak ditemukan objek relevan (Smoking / Not Smoking). "
-                           "Kemungkinan gambar tidak sesuai konteks model deteksi.")
+            result_img = results[0].plot()
+            st.image(result_img, caption="📦 Hasil Deteksi", use_container_width=True)
 
         # ==========================
-        # KLASIFIKASI GAMBAR (CNN)
+        # KLASIFIKASI GAMBAR
         # ==========================
         elif menu == "Klasifikasi Gambar":
             st.subheader("🧩 Hasil Klasifikasi Gambar")
@@ -98,11 +86,12 @@ elif page == "Prediksi Model":
             class_index = np.argmax(prediction)
             confidence = np.max(prediction)
 
+            # Label kelas sesuai model
             class_labels = ["Kelas Aman", "Kelas Api", "Kelas Asap", "Kelas Asap dan Api"]
             predicted_label = class_labels[class_index]
 
-            st.write(f"### 🔖 Kelas Prediksi: **{predicted_label}**")
-            st.write(f"🎯 Probabilitas: **{confidence:.2%}**")
+            st.write(f"### 🔖 Kelas Prediksi: *{predicted_label}*")
+            st.write(f"🎯 Probabilitas: *{confidence:.2%}*")
 
     else:
-        st.info("⬆️ Silakan unggah gambar terlebih dahulu untuk melakukan prediksi.")
+        st.info("⬆ Silakan unggah gambar terlebih dahulu untuk melakukan prediksi.")
