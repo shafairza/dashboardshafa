@@ -5,7 +5,7 @@ from tensorflow.keras.preprocessing import image
 import numpy as np
 from PIL import Image
 import cv2
-import pandas as pd # Tambahkan untuk tabel hasil
+import pandas as pd 
 
 # ==========================
 # Konfigurasi Halaman (Mode Gelap disarankan)
@@ -28,12 +28,17 @@ def load_models():
     try:
         yolo_model = YOLO("model/Shafa_Laporan 4.pt")  # Model deteksi objek
         classifier = tf.keras.models.load_model("model/Shafa_Laporan 2.h5")  # Model klasifikasi
-        return yolo_model, classifier, CLASS_NAMES
+        
+        # Mendefinisikan kelas yang diharapkan untuk deteksi (Asumsi: 'smoker' dan 'rice')
+        # GANTI DENGAN NAMA KELAS YOLO ANDA YANG SEBENARNYA!
+        EXPECTED_DETECTION_CLASSES = ['smoker', 'rice', 'not_smoker'] 
+
+        return yolo_model, classifier, CLASS_NAMES, EXPECTED_DETECTION_CLASSES
     except Exception as e:
         st.error(f"Gagal memuat model: {e}")
-        return None, None, None
+        return None, None, None, None
 
-yolo_model, classifier, CLASS_NAMES = load_models()
+yolo_model, classifier, CLASS_NAMES, EXPECTED_DETECTION_CLASSES = load_models()
 
 # Keluar jika model gagal dimuat
 if yolo_model is None or classifier is None:
@@ -57,40 +62,46 @@ def display_object_detection(img, yolo_model):
 
     # Deteksi objek dengan threshold
     results = yolo_model(img, conf=conf_threshold)
-    result_img = results[0].plot()  # hasil deteksi (gambar dengan box)
     
     # 1. Tampilkan Gambar Hasil Deteksi
+    result_img = results[0].plot()  # hasil deteksi (gambar dengan box)
     st.image(result_img, caption="Hasil Deteksi dengan Bounding Box", use_container_width=True)
 
-    # 2. Tampilkan Detail dalam Bentuk Tabel
+    # 2. Tampilkan Detail dalam Bentuk Tabel (DIUBAH)
     st.subheader("📊 Detail Objek Terdeteksi")
     boxes = results[0].boxes
     
-    if len(boxes) > 0:
-        data = []
-        for box in boxes:
-            conf = box.conf.item()
-            cls_index = int(box.cls.item())
-            
-            # Asumsi: Nama kelas YOLO terperoleh dari names
-            class_name = yolo_model.names.get(cls_index, f"ID: {cls_index}")
-            
+    # Filter objek yang terdeteksi sesuai dengan kelas yang relevan
+    detected_objects_data = []
+    
+    # Loop melalui semua hasil deteksi
+    for box in boxes:
+        conf = box.conf.item()
+        cls_index = int(box.cls.item())
+        class_name = yolo_model.names.get(cls_index, f"ID: {cls_index}")
+        
+        # Tambahkan hanya jika kelasnya termasuk yang diharapkan (e.g., 'smoker', 'notsmoker', 'rice')
+        if class_name in EXPECTED_DETECTION_CLASSES:
             # Koordinat Bounding Box (XYXY)
             x1, y1, x2, y2 = [int(i) for i in box.xyxy[0].tolist()]
             
-            data.append({
+            detected_objects_data.append({
                 "Objek Terdeteksi": class_name,
                 "Skor Keyakinan": f"{conf:.2f}",
                 "Koordinat (x1, y1, x2, y2)": f"({x1}, {y1}, {x2}, {y2})"
             })
             
-        df = pd.DataFrame(data)
+    # Tampilkan hasil berdasarkan data yang sudah difilter
+    if len(detected_objects_data) > 0:
+        df = pd.DataFrame(detected_objects_data)
         st.dataframe(df, use_container_width=True, hide_index=True)
     else:
-        st.info("Tidak ada objek terdeteksi dengan threshold ini.")
+        # Pesan jika tidak ada objek yang relevan terdeteksi
+        st.info(f"✅ Tidak ada objek 'Rice' atau 'Smoker' (atau kelas terkait) yang terdeteksi pada gambar ini dengan threshold {conf_threshold:.2f}. ")
+
 
 # ==========================
-# Fungsi untuk Tampilan Klasifikasi Gambar
+# Fungsi untuk Tampilan Klasifikasi Gambar (TETAP SAMA)
 # ==========================
 def display_image_classification(img, classifier, class_names):
     st.subheader("🔬 Hasil Klasifikasi Gambar")
@@ -98,7 +109,6 @@ def display_image_classification(img, classifier, class_names):
     # Bagian Kontrol (Sidebar)
     with st.sidebar:
         st.header("Pengaturan Klasifikasi")
-        # Anda bisa menambahkan pengaturan pre-processing di sini jika perlu
         st.info("Model ini mengharapkan gambar berukuran (224, 224).")
 
     # === LOGIKA PRE-PROCESSING & PREDIKSI (Sesuai kode asli Anda) ===
@@ -148,13 +158,10 @@ def display_image_classification(img, classifier, class_names):
 
 
 # ==========================
-# MAIN UI
+# MAIN UI (TETAP SAMA)
 # ==========================
 st.title("🤖 Dashboard Rice and Smoker: Image Classification and Object Detection")
 st.markdown("---")
-
-# Gunakan kolom untuk menata Sidebar lebih rapi (Navigasi tetap di sidebar bawaan)
-# st.sidebar.title("Kontrol & Mode") # Judul untuk sidebar
 
 # Navigasi utama
 menu = st.sidebar.selectbox("Pilih Mode Analisis:", ["Deteksi Objek (YOLO)", "Klasifikasi Gambar"])
@@ -163,9 +170,6 @@ uploaded_file = st.file_uploader("🖼️ Unggah Gambar", type=["jpg", "jpeg", "
 
 if uploaded_file is not None:
     img = Image.open(uploaded_file)
-    
-    # Gunakan kolom untuk menampilkan gambar yang diupload dan hasil secara berdampingan (hanya ide)
-    # Untuk kasus deteksi, kita biarkan gambar hasil memakan lebar penuh
     
     st.markdown("#### Gambar yang Diupload")
     st.image(img, caption="Gambar Sumber", use_container_width=True)
