@@ -150,7 +150,7 @@ def display_image_classification(img, classifier, class_names):
 # ==========================
 # MAIN UI
 # ==========================
-st.title("🤖 Dashboard Prediksi Gambar Shafa Imut")
+st.title("🤖 Dashboard Rice and Smoker: Image Classification and Object Detection")
 st.markdown("---")
 
 # Gunakan kolom untuk menata Sidebar lebih rapi (Navigasi tetap di sidebar bawaan)
