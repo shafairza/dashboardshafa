@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 import time
 
+# --- PENTING: IMPOR KHUSUS ---
 try:
     import torch
     TORCH_AVAILABLE = True
@@ -16,9 +17,18 @@ except ImportError:
 try:
     import tensorflow as tf
     from tensorflow import keras
+    # Menggunakan utility dari Keras untuk preprocessing gambar
+    from tensorflow.keras.preprocessing import image 
     TENSORFLOW_AVAILABLE = True
 except ImportError:
     TENSORFLOW_AVAILABLE = False
+
+try:
+    from ultralytics import YOLO
+    YOLO_AVAILABLE = True
+except ImportError:
+    YOLO_AVAILABLE = False
+# ------------------------------
 
 st.set_page_config(
     page_title="ML Dashboard",
@@ -661,19 +671,21 @@ if 'total_predictions' not in st.session_state:
 if 'accuracy_score' not in st.session_state:
     st.session_state.accuracy_score = 95.7
 if 'task_type' not in st.session_state:
-    st.session_state.task_type = "Image Classification" # Default
+    st.session_state.task_type = "Klasifikasi Gambar" # Default untuk Predict Model Page
 if 'model_loaded' not in st.session_state:
     st.session_state.model_loaded = False
 if 'current_page' not in st.session_state:
     st.session_state.current_page = "Dashboard"
 
-# --- HELPER FUNCTIONS (TIDAK BERUBAH) ---
+# --- MODEL LOADING (DIPERBARUI) ---
+
 @st.cache_resource
 def load_tensorflow_model():
+    """Memuat model Keras/TensorFlow untuk Klasifikasi."""
     if not TENSORFLOW_AVAILABLE:
         return None
     try:
-        # PENTING: Pastikan path model ini benar di lingkungan Anda
+        # Asumsi path model klasifikasi adalah Shafa_Laporan 2.h5
         model = keras.models.load_model('models/Shafa_Laporan 2.h5')
         return model
     except Exception as e:
@@ -682,101 +694,41 @@ def load_tensorflow_model():
 
 @st.cache_resource
 def load_pytorch_model():
+    """Memuat model PyTorch untuk Klasifikasi (Jika digunakan)."""
     if not TORCH_AVAILABLE:
         return None
     try:
-        # PENTING: Pastikan path model ini benar di lingkungan Anda
+        # Asumsi path model PyTorch
         model = torch.load('models/Shafa_Laporan 4.pt', map_location='cpu')
         return model
     except Exception as e:
         st.error(f"Error loading PyTorch model: {e}")
         return None
 
-def predict_classification(image, model_type="TensorFlow Model"):
-    """Image Classification Prediction"""
-    # Categories: Rice types + Smoking/Not Smoking (Tinggal menyesuaikan jika hanya untuk ekspresi wajah)
-    categories = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Not Smoking', 'Smoking'] 
-    
+@st.cache_resource
+def load_yolo_model():
+    """Memuat model YOLO untuk Deteksi."""
+    if not YOLO_AVAILABLE:
+        return None
     try:
-        if model_type == "TensorFlow Model":
-            model = load_tensorflow_model()
-            if model is not None:
-                img_array = np.array(image.resize((224, 224))) / 255.0
-                img_array = np.expand_dims(img_array, axis=0)
-                
-                predictions = model.predict(img_array, verbose=0)
-                probabilities = predictions[0] * 100
-                predicted_class = categories[np.argmax(probabilities)]
-                confidence = np.max(probabilities)
-            else:
-                # Simulasi jika model gagal dimuat
-                probabilities = np.random.dirichlet(np.ones(6)) * 100
-                predicted_class = categories[np.argmax(probabilities)]
-                confidence = np.max(probabilities)
-        else: # PyTorch Model
-            if TORCH_AVAILABLE:
-                model = load_pytorch_model()
-                if model is not None:
-                    img_array = np.array(image.resize((224, 224))) / 255.0
-                    img_tensor = torch.FloatTensor(img_array).permute(2, 0, 1).unsqueeze(0)
-                    
-                    with torch.no_grad():
-                        predictions = model(img_tensor)
-                        probabilities = torch.softmax(predictions, dim=1).numpy()[0] * 100
-                        predicted_class = categories[np.argmax(probabilities)]
-                        confidence = np.max(probabilities)
-                else:
-                    probabilities = np.random.dirichlet(np.ones(6)) * 100
-                    predicted_class = categories[np.argmax(probabilities)]
-                    confidence = np.max(probabilities)
-            else:
-                probabilities = np.random.dirichlet(np.ones(6)) * 100
-                predicted_class = categories[np.argmax(probabilities)]
-                confidence = np.max(probabilities)
+        # Asumsi model YOLO dimuat dari file 'yolov8n.pt' atau model kustom Anda
+        # Ganti 'yolov8n.pt' dengan path ke file .pt model YOLO kustom Anda jika berbeda!
+        model = YOLO('models/yolov8n.pt') 
+        return model
     except Exception as e:
-        st.warning(f"Model prediction failed: {e}. Using simulation.")
-        probabilities = np.random.dirichlet(np.ones(6)) * 100
-        predicted_class = categories[np.argmax(probabilities)]
-        confidence = np.max(probabilities)
-
-    return {
-        'class': predicted_class,
-        'confidence': confidence,
-        'probabilities': dict(zip(categories, probabilities)),
-        'task_type': 'Classification'
-    }
-
-def predict_detection(image):
-    """Object Detection Prediction (SIMULASI)"""
-    # Ganti ini dengan logika deteksi YOLO Anda yang sebenarnya
-    objects = [
-        {'class': 'Face', 'confidence': 0.95, 'bbox': [100, 150, 200, 250]},
-        {'class': 'Face', 'confidence': 0.87, 'bbox': [300, 200, 400, 300]},
-        {'class': 'Face', 'confidence': 0.78, 'bbox': [500, 100, 600, 200]}
-    ]
-    
-    return {
-        'objects': objects,
-        'total_objects': len(objects),
-        'task_type': 'Detection'
-    }
-
-def predict_image(image, task_type, model_type="TensorFlow Model"):
-    """Main prediction function"""
-    if task_type == "Image Classification":
-        return predict_classification(image, model_type)
-    elif task_type == "Object Detection":
-        return predict_detection(image)
-    else:
-        return predict_classification(image, model_type)
+        st.error(f"Error loading YOLO model: {e}")
+        return None
 
 
-def process_image(image):
-    img = Image.open(image)
+def process_image(uploaded_file):
+    """Membuka dan melakukan resize gambar yang diunggah."""
+    img = Image.open(uploaded_file)
     img = img.convert('RGB')
-    img.thumbnail((800, 800))
+    # Resize agar tidak terlalu besar (opsional)
+    img.thumbnail((1024, 1024))
     return img
 
+# --- CHARTING UTILITIES (TIDAK BERUBAH) ---
 
 def create_confidence_chart(probabilities):
     # Dapatkan 5 kategori teratas untuk visualisasi
@@ -846,7 +798,6 @@ def create_history_chart(history):
 
     df = pd.DataFrame(history)
     
-    # Filter hanya untuk entri yang memiliki 'confidence' (yaitu, hasil klasifikasi)
     df_filtered = df[df['task_type'] == 'Classification'].copy()
     if df_filtered.empty:
         return None
@@ -916,7 +867,7 @@ def create_history_chart(history):
 
     return fig
 
-# --- STREAMLIT SIDEBAR (PERUBAHAN DISINI) ---
+# --- STREAMLIT SIDEBAR ---
 with st.sidebar:
     st.markdown("""
         <div style='text-align: center; padding: 2rem 0; margin-bottom: 2rem; border-bottom: 1px solid rgba(168, 85, 247, 0.3);'>
@@ -933,10 +884,8 @@ with st.sidebar:
         <p style='font-size: 0.7rem; font-weight: 600; color: #a855f7; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1rem;'>Navigasi:</p>
     """, unsafe_allow_html=True)
 
-    # Opsi navigasi baru
     menu_options = ["🏠 Beranda", "🧠 Prediksi Model", "📊 Analitik", "ℹ️ Tentang"]
     
-    # Update current_page based on selection
     menu_selection = st.radio(
         "menu_nav",
         menu_options,
@@ -945,7 +894,6 @@ with st.sidebar:
         key="main_menu_selection"
     )
 
-    # Map menu selection to simple page name
     if "Beranda" in menu_selection:
         st.session_state.current_page = "Dashboard"
     elif "Prediksi Model" in menu_selection:
@@ -954,15 +902,6 @@ with st.sidebar:
         st.session_state.current_page = "Analytics"
     elif "Tentang" in menu_selection:
         st.session_state.current_page = "About"
-    
-    # Tetap sediakan variabel untuk kompatibilitas, tapi ini TIDAK akan digunakan di Prediksi Model
-    task_type_default = "Image Classification"
-    model_type_default = "TensorFlow Model"
-    confidence_threshold_default = 70
-
-    st.session_state.task_type_default = task_type_default
-    st.session_state.model_type_default = model_type_default
-    st.session_state.confidence_threshold_default = confidence_threshold_default
     
     st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
 
@@ -991,11 +930,12 @@ if st.session_state.current_page == "Dashboard":
     
     col_info_1, col_info_2 = st.columns(2)
     with col_info_1:
-        st.markdown("""
+        st.markdown(f"""
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
                 <h3 style="color: #a855f7;">Model Tersedia:</h3>
                 <p style="color: #000000;">
-                    TensorFlow (Keras) dan PyTorch (untuk klasifikasi)
+                    TensorFlow (Keras) - { "✅ Aktif" if TENSORFLOW_AVAILABLE else "❌ Tidak Aktif" }<br>
+                    YOLO (Ultralytics) - { "✅ Aktif" if YOLO_AVAILABLE else "❌ Tidak Aktif" }
                 </p>
             </div>
         """, unsafe_allow_html=True)
@@ -1004,13 +944,14 @@ if st.session_state.current_page == "Dashboard":
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
                 <h3 style="color: #a855f7;">Fitur Utama:</h3>
                 <p style="color: #000000;">
-                    Klasifikasi Gambar & Deteksi Objek (Simulasi)
+                    Klasifikasi Gambar (TensorFlow)<br>
+                    Deteksi Objek (YOLO)
                 </p>
             </div>
         """, unsafe_allow_html=True)
 
 
-# 2. Prediksi Model (Baru)
+# 2. Prediksi Model (Baru - Dengan Logika Prediksi yang Diperbarui)
 elif st.session_state.current_page == "Model Prediction":
     st.markdown("""
         <div style="text-align: center; padding: 1rem 2rem 2rem 2rem;">
@@ -1025,39 +966,35 @@ elif st.session_state.current_page == "Model Prediction":
     
     st.markdown("---")
     
-    # Bagian sidebar untuk pemilihan mode (Deteksi Objek atau Klasifikasi Gambar)
-    # Catatan: Walaupun prompt meminta st.sidebar.selectbox, kita akan membuatnya di main content area untuk UI yang lebih baik,
-    # atau di sidebar jika *memang* harus. Saya akan taruh di main area agar terlihat menonjol.
-    
-    # Gunakan container untuk styling yang lebih baik
     st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
-    st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
     
     col_mode_select, col_model_select = st.columns([1, 1])
 
     with col_mode_select:
-        # Pilihan mode deteksi/klasifikasi
-        task_type_select = st.selectbox(
+        st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
+        # Menggunakan variable 'menu' sesuai prompt Anda, meskipun diimplementasikan sebagai selectbox
+        menu = st.selectbox(
             "Pilih Mode:", 
             ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"],
             label_visibility="collapsed",
             key="task_type_select"
         )
-        st.session_state.task_type = task_type_select
         
     with col_model_select:
-        # Pilihan model (hanya untuk Klasifikasi)
-        if st.session_state.task_type == "Klasifikasi Gambar":
+        st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Opsi Model:</h3>', unsafe_allow_html=True)
+        if menu == "Klasifikasi Gambar":
             model_type_select = st.selectbox(
                 "Pilih Framework:",
                 ["TensorFlow Model", "PyTorch Model"],
                 label_visibility="collapsed",
                 key="model_type_select"
             )
-        else:
-            model_type_select = "Detection Model (Simulated)"
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi digunakan.</p>', unsafe_allow_html=True)
-
+            model_to_use = load_tensorflow_model() if model_type_select == "TensorFlow Model" else load_pytorch_model()
+        else: # Deteksi Objek (YOLO)
+            model_type_select = "YOLO Model"
+            model_to_use = load_yolo_model()
+            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model YOLO aktif.</p>', unsafe_allow_html=True)
+            
     st.markdown('</div>', unsafe_allow_html=True)
 
     # Logic for Image Upload and Prediction
@@ -1075,85 +1012,155 @@ elif st.session_state.current_page == "Model Prediction":
     st.markdown("</div>", unsafe_allow_html=True)
 
     if uploaded_file is not None:
-        image = process_image(uploaded_file)
+        img = process_image(uploaded_file)
+        
+        # Kolom untuk hasil
+        col_img, col_res = st.columns([1, 1], gap="large")
 
-        col1, col2 = st.columns([1, 1], gap="large")
-
-        with col1:
+        with col_img:
             st.markdown("""
                 <div style="background: rgba(168, 85, 247, 0.1); border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 20px; padding: 1rem; overflow: hidden;">
             """, unsafe_allow_html=True)
-            st.image(image, use_container_width=True, caption="Gambar yang Diunggah")
+            st.image(img, use_container_width=True, caption="Gambar yang Diunggah")
             st.markdown("</div>", unsafe_allow_html=True)
 
-        with col2:
+
+        with col_res:
             st.markdown("""
                 <div style="background: rgba(168, 85, 247, 0.1); border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 20px; padding: 1rem; overflow: hidden;">
             """, unsafe_allow_html=True)
 
-            with st.spinner(f"Memproses gambar dengan mode {st.session_state.task_type}..."):
+            with st.spinner(f"Memproses gambar dengan mode {menu}..."):
+                
+                # Progress bar simulasi
                 progress_bar = st.progress(0)
                 for i in range(100):
                     time.sleep(0.01)
                     progress_bar.progress(i + 1)
+                progress_bar.empty()
+
                 
-                # Panggil fungsi prediksi dengan mode yang dipilih
-                result = predict_image(image, st.session_state.task_type, model_type_select)
-                st.session_state.total_predictions += 1
-                
-                # Tampilkan Hasil
-                st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Hasil Prediksi:</h3>', unsafe_allow_html=True)
-
-                if st.session_state.task_type == "Klasifikasi Gambar":
+                # ==========================
+                # DETEKSI OBJEK (YOLO)
+                # ==========================
+                if menu == "Deteksi Objek (YOLO)":
+                    st.subheader("🔍 Hasil Deteksi Objek (YOLO)")
                     
-                    # Simpan ke histori
-                    st.session_state.prediction_history.append({
-                        'timestamp': datetime.now().strftime('%H:%M:%S'),
-                        'class': result['class'],
-                        'confidence': result['confidence'],
-                        'task_type': result['task_type']
-                    })
+                    # Cek ketersediaan model YOLO
+                    if not YOLO_AVAILABLE or model_to_use is None:
+                        st.error("Model YOLO (ultralytics) tidak tersedia atau gagal dimuat.")
+                    else:
+                        
+                        # Mengubah PIL Image ke format yang didukung YOLO (numpy array/path)
+                        img_np = np.array(img)
+                        
+                        TARGET_DETECTION_CLASSES = ["smoking", "notsmoking"] 
+                        
+                        try:
+                            # Conf 0.25 diambil dari prompt user
+                            results = model_to_use(img_np, conf=0.25, verbose=False) 
+                            class_names = model_to_use.names
+                            target_detections_found = False
+                            
+                            # Logika untuk memeriksa deteksi target
+                            if results and hasattr(results[0], 'boxes'):
+                                for r in results:
+                                    detected_indices = r.boxes.cls.tolist()
+                                    detected_class_names = [class_names[int(i)] for i in detected_indices]
+                                    
+                                    if any(name in TARGET_DETECTION_CLASSES for name in detected_class_names):
+                                        target_detections_found = True
+                                        break
+                                
+                                if target_detections_found:
+                                    # Plot hasil ke gambar (YOLOv8 akan mengembalikan numpy array)
+                                    result_img_np = results[0].plot()
+                                    st.image(result_img_np, caption="📦 Hasil Deteksi", use_container_width=True)
+                                    st.success("✅ Objek 'smoking' atau 'notsmoking' terdeteksi!")
+                                else:
+                                    st.warning("⚠ Tidak ada objek 'smoking' atau 'notsmoking' terdeteksi.")
+                                    st.image(img, caption="Gambar Asli (Tidak Ada Deteksi Target)", use_container_width=True)
 
-                    st.markdown(f"""
-                        <div style="text-align: center; background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.5);">
-                            <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">
-                                KELAS PREDISKI: <span style="font-size: 2rem;">{result['class']}</span>
-                            </p>
-                            <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">
-                                CONFIDENCE: {result['confidence']:.2f}%
-                            </p>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
-                    st.markdown("---")
-                    
-                    st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
+                                # Update riwayat deteksi (sederhana)
+                                st.session_state.total_predictions += 1
+                                st.session_state.prediction_history.append({
+                                    'timestamp': datetime.now().strftime('%H:%M:%S'),
+                                    'class': 'N/A',
+                                    'confidence': 0.0,
+                                    'task_type': 'Detection',
+                                    'objects_detected': len(results[0].boxes) if results else 0
+                                })
+                            else:
+                                st.warning("⚠ Model YOLO tidak mendeteksi objek apapun.")
+                                st.image(img, caption="Gambar Asli", use_container_width=True)
+
+                        except Exception as e:
+                            st.error(f"Terjadi kesalahan saat deteksi: {str(e)}")
 
 
-                elif st.session_state.task_type == "Deteksi Objek (YOLO)":
-                    
-                    # Simpan ke histori (dengan format berbeda untuk deteksi)
-                    st.session_state.prediction_history.append({
-                        'timestamp': datetime.now().strftime('%H:%M:%S'),
-                        'class': 'N/A',
-                        'confidence': 0.0,
-                        'task_type': result['task_type'],
-                        'objects_detected': result['total_objects']
-                    })
+                # ==========================
+                # KLASIFIKASI GAMBAR (TensorFlow Model)
+                # ==========================
+                elif menu == "Klasifikasi Gambar":
+                    st.subheader("🧩 Hasil Klasifikasi Gambar")
 
-                    st.markdown(f"""
-                        <div style="text-align: center; background: linear-gradient(135deg, #00e676 0%, #00c853 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.5);">
-                            <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">
-                                TOTAL OBJEK DITERK: <span style="font-size: 2rem;">{result['total_objects']}</span>
-                            </p>
-                            <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">
-                                Mode: Deteksi Objek (Simulasi)
-                            </p>
-                        </div>
-                    """, unsafe_allow_html=True)
+                    CLASSIFICATION_LABELS = ["Arborio", "Basmati", "Ipsala", "Jasmine", "Karacadag"]
                     
-                    st.markdown("---")
-                    st.warning("Peringatan: Deteksi Objek saat ini menggunakan data simulasi.")
+                    if not TENSORFLOW_AVAILABLE or model_to_use is None:
+                        st.error("Model Klasifikasi (TensorFlow/Keras) tidak dapat dimuat atau gagal diinisialisasi.")
+                    else:
+                        try:
+                            # Gunakan ukuran input tetap sesuai pelatihan (128x128)
+                            target_size = (128, 128) 
+
+                            # Preprocessing
+                            img_resized = img.resize(target_size)
+                            img_array = image.img_to_array(img_resized)
+                            img_array = np.expand_dims(img_array, axis=0)
+                            img_array = img_array / 255.0  
+
+                            # Prediksi
+                            prediction = model_to_use.predict(img_array, verbose=0)
+                            probabilities = prediction[0] * 100
+                            class_index = np.argmax(prediction)
+                            confidence = np.max(prediction)
+                            confidence_threshold = 0.7  
+                            predicted_label = CLASSIFICATION_LABELS[class_index]
+                            
+                            # Tampilkan hasil
+                            
+                            # Simpan ke riwayat
+                            st.session_state.total_predictions += 1
+                            st.session_state.prediction_history.append({
+                                'timestamp': datetime.now().strftime('%H:%M:%S'),
+                                'class': predicted_label,
+                                'confidence': confidence * 100, # Simpan dalam persentase
+                                'task_type': 'Classification'
+                            })
+
+                            if confidence >= confidence_threshold:
+                                st.success(f"### 🔖 Kelas Prediksi: {predicted_label}")
+                                st.metric(label="🎯 Probabilitas", value=f"{confidence:.2%}")
+                            else:
+                                st.warning("⚠ Model tidak yakin dengan prediksi ini.")
+                                st.write(f"Prediksi tertinggi: *{predicted_label}* ({confidence:.2%})")
+                            
+                            # Tampilkan Chart Probabilitas
+                            prob_dict = dict(zip(CLASSIFICATION_LABELS, probabilities))
+                            st.plotly_chart(create_confidence_chart(prob_dict), use_container_width=True)
+
+
+                        except Exception as e:
+                            error_message = str(e)
+                            if "Matrix size-incompatible" in error_message or "incompatible with the layer" in error_message:
+                                st.error("""
+                                    🛑 *ERROR KRITIS MODEL KLASIFIKASI!*
+                                    Model Shafa_Laporan 2.h5 gagal prediksi karena *ketidaksesuaian dimensi fitur (shape mismatch)*.
+                                    
+                                    *Solusi:* Pastikan model dilatih dengan layer input yang sesuai atau ubah kode preprocessing agar sesuai dengan input model (misal: CNN mengharapkan 4D tensor).
+                                """)
+                            else:
+                                st.error(f"Terjadi kesalahan saat klasifikasi: {error_message}")
 
 
             st.markdown("</div>", unsafe_allow_html=True)
@@ -1170,7 +1177,7 @@ elif st.session_state.current_page == "Model Prediction":
     st.markdown("""
         <div style="text-align: center; margin: 4rem 0 2rem 0;">
             <p style="font-size: 1.25rem; color: #000000; font-style: italic; margin: 0;">
-                "Disini Bisa Deteksi Berbagai Ekspresi Wajah (simulasi)"
+                "Modul Klasifikasi dan Deteksi Objek telah dimuat!"
             </p>
         </div>
     """, unsafe_allow_html=True)
@@ -1182,72 +1189,66 @@ elif st.session_state.current_page == "Analytics":
     st.markdown("---")
 
     df_history_classification = pd.DataFrame([h for h in st.session_state.prediction_history if h['task_type'] == 'Classification'])
+    df_history_detection = pd.DataFrame([h for h in st.session_state.prediction_history if h['task_type'] == 'Detection'])
 
-    if not df_history_classification.empty:
+    if not st.session_state.prediction_history:
+        st.info("Tidak ada data prediksi yang tersedia. Kunjungi halaman Prediksi Model untuk membuat prediksi.")
+    else:
+        # Metrik Gabungan
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            st.metric(
-                "Total Klasifikasi",
-                len(df_history_classification)
-            )
+            st.metric("Total Prediksi (All)", st.session_state.total_predictions)
 
         with col2:
-            avg_confidence = df_history_classification['confidence'].mean()
-            st.metric(
-                "Rata-rata Confidence",
-                f"{avg_confidence:.1f}%"
-            )
+            st.metric("Total Klasifikasi", len(df_history_classification))
 
         with col3:
-            max_confidence = df_history_classification['confidence'].max()
-            st.metric(
-                "Confidence Maksimum",
-                f"{max_confidence:.1f}%"
-            )
-
+            st.metric("Total Deteksi", len(df_history_detection))
+        
         with col4:
-            most_common = df_history_classification['class'].mode()[0] if not df_history_classification['class'].mode().empty else "N/A"
-            st.metric(
-                "Kelas Terbanyak",
-                most_common
-            )
+            if not df_history_classification.empty:
+                avg_confidence = df_history_classification['confidence'].mean()
+                st.metric("Rata-rata Confidence", f"{avg_confidence:.1f}%")
+            else:
+                 st.metric("Rata-rata Confidence", "N/A")
 
         st.markdown("---")
+        
+        # Grafik Klasifikasi
+        if not df_history_classification.empty:
+            col1, col2 = st.columns([1, 1])
 
-        col1, col2 = st.columns([1, 1])
+            with col1:
+                st.markdown("### Distribusi Kelas (Klasifikasi)")
+                class_counts = df_history_classification['class'].value_counts()
+                fig_pie = px.pie(
+                    values=class_counts.values,
+                    names=class_counts.index,
+                    title="Prediction Distribution (Classification)",
+                    color_discrete_sequence=['#a855f7', '#c084fc', '#9333ea', '#d8b4fe', '#7c3aed']
+                )
+                fig_pie.update_layout(
+                    font=dict(size=12, color='#B4B4B4'),
+                    title_font=dict(size=16, color='#FFFFFF'),
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(30, 25, 45, 0.4)'
+                )
+                st.plotly_chart(fig_pie, use_container_width=True)
 
-        with col1:
-            st.markdown("### Distribusi Kelas")
-            class_counts = df_history_classification['class'].value_counts()
-            fig_pie = px.pie(
-                values=class_counts.values,
-                names=class_counts.index,
-                title="Prediction Distribution (Classification)",
-                color_discrete_sequence=['#a855f7', '#c084fc', '#9333ea', '#d8b4fe', '#7c3aed']
-            )
-            fig_pie.update_layout(
-                font=dict(size=12, color='#B4B4B4'),
-                title_font=dict(size=16, color='#FFFFFF'),
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(30, 25, 45, 0.4)'
-            )
-            st.plotly_chart(fig_pie, use_container_width=True)
-
-        with col2:
-            st.markdown("### Trend Confidence")
-            fig_line = create_history_chart(st.session_state.prediction_history)
-            if fig_line:
-                st.plotly_chart(fig_line, use_container_width=True)
+            with col2:
+                st.markdown("### Trend Confidence")
+                fig_line = create_history_chart(st.session_state.prediction_history)
+                if fig_line:
+                    st.plotly_chart(fig_line, use_container_width=True)
 
         st.markdown("---")
 
         st.markdown("### Riwayat Prediksi Lengkap")
-        # Gabungkan semua data, termasuk deteksi
         df_all_history = pd.DataFrame(st.session_state.prediction_history)
         
         # Sederhanakan tampilan untuk riwayat
-        if 'objects_detected' in df_all_history.columns:
+        if 'objects_detected' in df_all_history.columns and 'confidence' in df_all_history.columns:
             df_all_history['Result'] = df_all_history.apply(
                 lambda row: f"Class: {row['class']} ({row['confidence']:.2f}%)" if row['task_type'] == 'Classification' 
                 else f"Objects Detected: {row['objects_detected']}", axis=1
@@ -1267,9 +1268,6 @@ elif st.session_state.current_page == "Analytics":
             st.session_state.total_predictions = 0
             st.rerun()
 
-    else:
-        st.info("Tidak ada data prediksi **Klasifikasi** yang tersedia. Kunjungi halaman Prediksi Model untuk memulai.")
-
 
 # 4. About (Tidak Berubah)
 elif st.session_state.current_page == "About":
@@ -1279,16 +1277,16 @@ elif st.session_state.current_page == "About":
     st.markdown("""
     ### ML Image Prediction Dashboard
 
-    Platform untuk pengujian model machine learning (ML) secara real-time. Dashboard ini dirancang untuk menunjukkan kapabilitas model **Klasifikasi Gambar** (menggunakan TensorFlow atau PyTorch) dan **Deteksi Objek** (Simulasi YOLO).
+    Platform untuk pengujian model machine learning (ML) secara real-time. Dashboard ini dirancang untuk menunjukkan kapabilitas model **Klasifikasi Gambar** (menggunakan TensorFlow atau PyTorch) dan **Deteksi Objek** (YOLO).
 
     #### Fitur Utama:
-    * **Klasifikasi Gambar:** Mengklasifikasikan gambar yang diunggah ke dalam kategori tertentu dengan nilai *confidence*.
-    * **Deteksi Objek (Simulasi):** Menyimulasikan pendeteksian objek dalam gambar.
+    * **Klasifikasi Gambar:** Mengklasifikasikan gambar yang diunggah ke dalam kategori tertentu dengan nilai *confidence* (Menggunakan model `Shafa_Laporan 2.h5`).
+    * **Deteksi Objek (YOLO):** Melakukan pendeteksian objek dengan fokus pada kelas `smoking` dan `notsmoking` (Membutuhkan model YOLO).
     * **Visualisasi Data:** Menampilkan distribusi *confidence* dan riwayat prediksi.
 
     #### Teknologi
     * **Framework Utama:** Streamlit
-    * **Machine Learning:** TensorFlow/Keras & PyTorch
+    * **Machine Learning:** TensorFlow/Keras, PyTorch, Ultralytics YOLO
     * **Data Analysis:** Pandas, NumPy
     * **Visualisasi:** Plotly Express & Graph Objects
     """)
