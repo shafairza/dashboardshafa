@@ -980,7 +980,7 @@ if st.session_state.current_page == "Dashboard":
                 Dashboard: Classification and Detection by S
             </h1>
             <p style="font-size: 1.125rem; color: #000000; margin: 0.75rem 0 0 0; font-weight: 500;">
-                Platform untuk pengujian Model Machine Learning.
+                Platform untuk pengujian Model Machine Learning
             </p>
         </div>
     """, unsafe_allow_html=True)
