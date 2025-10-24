@@ -45,8 +45,6 @@ streamlit run app.py
 # Install all dependencies
 pip install -r requirements.txt
 
-# Or install only core dependencies
-pip install streamlit pandas numpy pillow plotly scikit-learn opencv-python-headless matplotlib seaborn
 ```
 
 ## Usage
