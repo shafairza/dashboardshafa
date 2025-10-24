@@ -18,23 +18,24 @@ def load_models():
     classifier = tf.keras.models.load_model("model/Shafa_Laporan 2.h5") 
     return yolo_model, classifier
 
-# Menangani kegagalan memuat model agar aplikasi tetap berjalan
+# Menangani kegagalan memuat model saat inisialisasi
 try:
     yolo_model, classifier = load_models()
     MODEL_LOAD_SUCCESS = True
 except Exception as e:
     st.error(f"Gagal memuat model: {e}. Prediksi akan disimulasikan.")
     MODEL_LOAD_SUCCESS = False
+    
     # Definisi placeholder jika model gagal dimuat
     class DummyYOLO:
         def __call__(self, img, conf=0.25):
-            # Simulasi hasil kosong untuk mencegah error pada logika deteksi
             class DummyBoxes:
                 cls = []
             class DummyResults:
                 boxes = DummyBoxes()
                 def plot(self):
-                    return np.array(img)
+                    # Mengkonversi PIL Image ke numpy array untuk simulasi plot
+                    return np.array(img.convert('RGB')) 
             return [DummyResults()]
         names = ["smoking", "notsmoking"]
     
@@ -56,10 +57,10 @@ if page == "Tentang":
     st.markdown("""
     Aplikasi ini dikembangkan oleh *Shafa* untuk mendeteksi dan mengklasifikasikan gambar menggunakan dua model utama:
     
-    - 🔍 *YOLOv8*: Model deteksi objek (fokus: smoking/notsmoking).
-    - 🧠 *CNN (DenseNet201)*: Model klasifikasi gambar (fokus: jenis beras).
+    - 🔍 **YOLOv8 (Deteksi):** Model deteksi objek yang **difokuskan pada objek 'smoking' atau 'notsmoking'**.
+    - 🧠 **CNN (Klasifikasi):** Model klasifikasi gambar yang **difokuskan pada 5 jenis butir beras**.
     
-    **PENTING (Klasifikasi):** Model klasifikasi dilatih menggunakan **`rescale=1./255`**.
+    **PENTING (Klasifikasi):** Model dilatih menggunakan pra-pemrosesan **`rescale=1./255`**.
     
     ### 📘 Cara Menggunakan
     1. Buka halaman *Prediksi Model*.
@@ -89,13 +90,13 @@ elif page == "Prediksi Model":
             TARGET_DETECTION_CLASSES = ["smoking", "notsmoking"] 
             
             try:
+                # Lakukan deteksi
                 results = yolo_model(img, conf=0.25) 
                 class_names = yolo_model.names
                 target_detections_found = False
                 
                 # Cek hasil deteksi untuk kelas target
                 for r in results:
-                    # Pastikan boxes dan cls ada sebelum mengaksesnya
                     if hasattr(r, 'boxes') and hasattr(r.boxes, 'cls'):
                         detected_indices = r.boxes.cls.tolist()
                         detected_class_names = [class_names[int(i)] for i in detected_indices]
@@ -116,22 +117,26 @@ elif page == "Prediksi Model":
                 st.error(f"Terjadi kesalahan saat deteksi: {str(e)}")
 
         # ==========================
-        # KLASIFIKASI GAMBAR (DenseNet201) - MODIFIKASI RESCALE & ERROR HANDLING
+        # KLASIFIKASI GAMBAR (DenseNet201)
         # ==========================
         elif menu == "Klasifikasi Gambar":
             st.subheader("🧩 Hasil Klasifikasi Gambar")
 
             CLASSIFICATION_LABELS = ["Basmati", "Ipsala", "Arborio", "Karacadag", "Jasmine"] 
             
+            # Cek status pemuatan model sebelum mencoba prediksi
             if not MODEL_LOAD_SUCCESS or classifier is None:
                  st.error("Model Klasifikasi (`Shafa_Laporan 2.h5`) tidak dapat dimuat atau gagal diinisialisasi. Tidak bisa memproses prediksi.")
-                 return
+                 # Tidak perlu 'return' karena ini bukan fungsi
 
             try:
                 # 1. Tentukan target size (Asumsi 224x224, atau ambil dari model)
-                input_shape = classifier.input_shape
-                target_size = (input_shape[1], input_shape[2]) if len(input_shape) == 4 and None not in input_shape else (224, 224)
-
+                if MODEL_LOAD_SUCCESS and classifier:
+                    input_shape = classifier.input_shape
+                    target_size = (input_shape[1], input_shape[2]) if len(input_shape) == 4 and None not in input_shape else (224, 224)
+                else:
+                    target_size = (224, 224)
+                    
                 # 2. Preprocessing (Resize dan Konversi ke Array)
                 img_resized = img.resize(target_size)
                 img_array = image.img_to_array(img_resized)
@@ -140,12 +145,13 @@ elif page == "Prediksi Model":
                 # 3. NORMALISASI: Sesuai parameter training generator (rescale=1./255)
                 img_array = img_array / 255.0 
                 
-                # Prediksi: Potensi ERROR MUNCUL DI SINI
+                # Prediksi
                 prediction = classifier.predict(img_array, verbose=0)
                 class_index = np.argmax(prediction)
                 confidence = np.max(prediction)
                 confidence_threshold = 0.7 
 
+                # Cek hasil dan confidence
                 if confidence >= confidence_threshold and 0 <= class_index < len(CLASSIFICATION_LABELS):
                     predicted_label = CLASSIFICATION_LABELS[class_index]
                     st.success(f"### 🔖 Kelas Prediksi: {predicted_label}")
@@ -155,7 +161,7 @@ elif page == "Prediksi Model":
                     st.write(f"Probabilitas Tertinggi ({CLASSIFICATION_LABELS[class_index]}): {confidence:.2%}")
 
             except Exception as e:
-                # Penanganan error Shape Mismatch yang Konsisten
+                # Penanganan error Shape Mismatch yang Konsisten (Masalah model)
                 error_message = str(e)
                 if "Matrix size-incompatible" in error_message or "incompatible with the layer: expected axis -1" in error_message:
                     st.error("""
