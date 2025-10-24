@@ -1004,7 +1004,7 @@ if st.session_state.current_page == "Dashboard":
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
                 <h3 style="color: #a855f7;">Fitur Utama:</h3>
                 <p style="color: #000000;">
-                    Klasifikasi Gambar & Deteksi Objek (Simulasi)
+                    Klasifikasi & Deteksi Objek pada gambar
                 </p>
             </div>
         """, unsafe_allow_html=True)
