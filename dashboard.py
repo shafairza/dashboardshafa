@@ -7,7 +7,9 @@ import plotly.graph_objects as go
 from datetime import datetime
 import time
 
-# --- PENTING: IMPOR KHUSUS ---
+# --- PENTING: IMPOR KHUSUS & PENGECEKAN LIBRARY ---
+# Model memerlukan: tensorflow, ultralytics (yolo), pandas, plotly, pillow
+
 try:
     import torch
     TORCH_AVAILABLE = True
@@ -677,7 +679,7 @@ if 'model_loaded' not in st.session_state:
 if 'current_page' not in st.session_state:
     st.session_state.current_page = "Dashboard"
 
-# --- MODEL LOADING (REVISI DAN KONSOLIDASI) ---
+# --- MODEL LOADING (REVISI DAN KONSOLIDASI DENGAN DIAGNOSTIK) ---
 
 @st.cache_resource
 def load_tensorflow_model():
@@ -689,13 +691,17 @@ def load_tensorflow_model():
         classifier = keras.models.load_model('models/Shafa_Laporan 2.h5')
         return classifier
     except Exception as e:
-        # st.error(f"Error loading TensorFlow model: {e}") # Jangan tampilkan error di sidebar
+        # PESAN DIAGNOSTIK KE TERMINAL
+        print(f"===========================================================")
+        print(f"!!! GAGAL MEMUAT MODEL TENSORFLOW (Shafa_Laporan 2.h5) !!!")
+        print(f"DETAIL ERROR: {e}")
+        print(f"===========================================================")
         return None 
 
 @st.cache_resource
 def load_pytorch_model():
     """Memuat model PyTorch untuk Klasifikasi (Jika digunakan)."""
-    # PyTorch model tidak digunakan di logika utama Anda, tapi tetap dipertahankan
+    # Dipertahankan, tetapi tidak digunakan di logika utama prediksi, Anda bisa memilihnya di Prediksi Model
     if not TORCH_AVAILABLE:
         return None
     try:
@@ -703,7 +709,11 @@ def load_pytorch_model():
         classifier = torch.load('models/Shafa_Laporan 4.pt', map_location='cpu')
         return classifier
     except Exception as e:
-        # st.error(f"Error loading PyTorch model: {e}")
+        # PESAN DIAGNOSTIK KE TERMINAL
+        print(f"===========================================================")
+        print(f"!!! GAGAL MEMUAT MODEL PYTORCH (Shafa_Laporan 4.pt) !!!")
+        print(f"DETAIL ERROR: {e}")
+        print(f"===========================================================")
         return None
 
 @st.cache_resource
@@ -716,13 +726,18 @@ def load_yolo_model():
         model = YOLO('models/Shafa_Laporan 4.pt') 
         return model
     except Exception as e:
-        # st.error(f"Error loading YOLO model: {e}")
+        # PESAN DIAGNOSTIK KE TERMINAL
+        print(f"===========================================================")
+        print(f"!!! GAGAL MEMUAT MODEL YOLO (Shafa_Laporan 4.pt) !!!")
+        print(f"DETAIL ERROR: {e}")
+        print(f"===========================================================")
         return None
 
 # --- MEMUAT MODEL SECARA GLOBAL (di luar fungsi) ---
+# Hasil loading ini akan digunakan di halaman "Model Prediction"
 TENSORFLOW_CLASSIFIER = load_tensorflow_model()
 YOLO_DETECTOR = load_yolo_model()
-# PYTORCH_CLASSIFIER = load_pytorch_model() # Jika tidak dipakai, tidak perlu dimuat
+# PYTORCH_CLASSIFIER = load_pytorch_model() # Dipertahankan, tapi Anda harus memilihnya di UI
 
 # --- UTILITIES ---
 def process_image(uploaded_file):
@@ -930,7 +945,7 @@ if st.session_state.current_page == "Dashboard":
 
     st.markdown("---")
 
-    st.info("Pilih **'🧠 Prediksi Model'** di sidebar untuk memulai deteksi atau klasifikasi gambar.")
+    st.info("Pilih **'🧠 Prediksi Model'** di sidebar untuk memulai deteksi atau klasifikasi gambar. Cek terminal Anda untuk pesan diagnostik model.")
     
     col_info_1, col_info_2 = st.columns(2)
     with col_info_1:
@@ -1054,10 +1069,10 @@ elif st.session_state.current_page == "Model Prediction":
                     
                     # Cek ketersediaan model YOLO
                     if not is_model_ready:
-                        st.error("Model YOLO (Shafa_Laporan 4.pt) tidak dapat dimuat atau gagal diinisialisasi.")
+                        st.error("Model YOLO (Shafa_Laporan 4.pt) **tidak dapat dimuat** atau gagal diinisialisasi. Cek terminal untuk pesan diagnostik.")
                     else:
                         
-                        TARGET_DETECTION_CLASSES = ["smoking", "notsmoking"] # Tetap
+                        TARGET_DETECTION_CLASSES = ["smoking", "notsmoking"] # Classes yang dicari
                         
                         try:
                             # Model YOLOv8 bisa menerima PIL Image
@@ -1091,7 +1106,7 @@ elif st.session_state.current_page == "Model Prediction":
                                     st.image(result_img_np, caption="📦 Hasil Deteksi", use_container_width=True)
                                     st.success("✅ Objek 'smoking' atau 'notsmoking' terdeteksi!")
                                 else:
-                                    st.warning("⚠ Tidak ada objek 'smoking' atau 'notsmoking' terdeteksi.")
+                                    st.warning("⚠ Tidak ada objek 'smoking' atau 'notsmoking' terdeteksi (atau confidence di bawah 0.25).")
                                     st.image(img, caption="Gambar Asli (Tidak Ada Deteksi Target)", use_container_width=True)
 
                                 # Update riwayat deteksi (sederhana)
@@ -1120,7 +1135,7 @@ elif st.session_state.current_page == "Model Prediction":
                     CLASSIFICATION_LABELS = ["Arborio", "Basmati", "Ipsala", "Jasmine", "Karacadag"]
                     
                     if not is_model_ready:
-                        st.error("Model Klasifikasi (Shafa_Laporan 2.h5) tidak dapat dimuat atau gagal diinisialisasi.")
+                        st.error("Model Klasifikasi (Shafa_Laporan 2.h5) **tidak dapat dimuat** atau gagal diinisialisasi. Cek terminal untuk pesan diagnostik.")
                     else:
                         try:
                             # Gunakan ukuran input tetap sesuai pelatihan (128x128)
@@ -1188,7 +1203,7 @@ elif st.session_state.current_page == "Model Prediction":
     st.markdown("""
         <div style="text-align: center; margin: 4rem 0 2rem 0;">
             <p style="font-size: 1.25rem; color: #000000; font-style: italic; margin: 0;">
-                "Modul Klasifikasi dan Deteksi Objek telah dimuat!"
+                "Modul Klasifikasi dan Deteksi Objek telah dimuat (atau dicoba dimuat)!"
             </p>
         </div>
     """, unsafe_allow_html=True)
