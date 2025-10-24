@@ -79,7 +79,6 @@ Place your `.h5` model files in the `models/` directory:
 ```
 models/
 ├── Shafa_Laporan 2.h5
-└── your_model.h5
 ```
 
 ### PyTorch Models
@@ -87,7 +86,6 @@ Place your `.pt` model files in the `models/` directory:
 ```
 models/
 ├── Shafa_Laporan 4.pt
-└── your_model.pt
 ```
 
 ## Configuration
