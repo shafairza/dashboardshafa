@@ -29,19 +29,19 @@ if page == "Tentang":
     st.title("💡 Tentang Aplikasi Deteksi & Klasifikasi Gambar")
 
     st.markdown("""
-    Aplikasi ini dikembangkan oleh *Shafa* untuk mendeteksi dan mengklasifikasikan gambar menggunakan dua model utama:
+    Aplikasi ini dikembangkan oleh Shafa untuk mendeteksi dan mengklasifikasikan gambar menggunakan dua model utama:
     
-    - 🔍 *YOLOv8*: Model deteksi objek yang dapat mengenali objek tertentu di dalam gambar.  
-    - 🧠 *CNN / DenseNet201*: Model klasifikasi gambar yang mengidentifikasi kategori dari gambar yang diunggah.
+    - 🔍 YOLOv8: Model deteksi objek yang dapat mengenali objek tertentu di dalam gambar.  
+    - 🧠 CNN / DenseNet201: Model klasifikasi gambar yang mengidentifikasi kategori dari gambar yang diunggah.
     
     ### 🎯 Tujuan Aplikasi
     - Menyediakan alat bantu interaktif untuk mengenali dan mengklasifikasikan objek secara otomatis.  
     - Meningkatkan efisiensi dalam pengolahan citra berbasis AI.  
     
     ### 📘 Cara Menggunakan
-    1. Masuk ke halaman *Prediksi Model* di sidebar.
+    1. Masuk ke halaman Prediksi Model di sidebar.
     2. Unggah gambar berformat .jpg, .jpeg, atau .png.
-    3. Pilih mode *Deteksi Objek (YOLO)* atau *Klasifikasi Gambar* di sidebar.
+    3. Pilih mode Deteksi Objek (YOLO) atau Klasifikasi Gambar di sidebar.
     4. Lihat hasil deteksi atau klasifikasi yang ditampilkan secara visual dan probabilitasnya.
     """)
 
@@ -61,43 +61,13 @@ elif page == "Prediksi Model":
         st.image(img, caption="🖼 Gambar yang Diupload", use_container_width=True)
 
         # ==========================
-        # DETEKSI OBJEK (HANYA PEROKOK & NON PEROKOK)
+        # DETEKSI OBJEK
         # ==========================
         if menu == "Deteksi Objek (YOLO)":
             st.subheader("🔍 Hasil Deteksi Objek (YOLO)")
-
-            # Jalankan deteksi
             results = yolo_model(img)
-            result = results[0]
-
-            # Ambil nama kelas dari model YOLO
-            names = result.names  # Dictionary {id: label}
-            boxes = result.boxes
-
-            # Fokus hanya pada dua kelas berikut
-            target_classes = ["perokok", "non_perokok"]
-
-            filtered_boxes = []
-            for box in boxes:
-                cls_id = int(box.cls[0])
-                label = names[cls_id]
-                if label in target_classes:
-                    filtered_boxes.append(box)
-
-            # Jika ditemukan deteksi perokok/non perokok
-            if filtered_boxes:
-                result_img = result.plot()
-                st.image(result_img, caption="📦 Hasil Deteksi: Orang Perokok & Non-Perokok", use_container_width=True)
-
-                # Menampilkan hasil deteksi dalam teks
-                for box in filtered_boxes:
-                    cls_id = int(box.cls[0])
-                    conf = float(box.conf[0])
-                    label = names[cls_id]
-                    st.write(f"- **Kelas:** {label} | **Kepercayaan:** {conf:.2%}")
-
-            else:
-                st.warning("🚭 Tidak ditemukan objek orang perokok atau non-perokok pada gambar ini.")
+            result_img = results[0].plot()
+            st.image(result_img, caption="📦 Hasil Deteksi", use_container_width=True)
 
         # ==========================
         # KLASIFIKASI GAMBAR
@@ -120,8 +90,8 @@ elif page == "Prediksi Model":
             class_labels = ["Kelas Aman", "Kelas Api", "Kelas Asap", "Kelas Asap dan Api"]
             predicted_label = class_labels[class_index]
 
-            st.write(f"### 🔖 Kelas Prediksi: *{predicted_label}*")
-            st.write(f"🎯 Probabilitas: *{confidence:.2%}*")
+            st.write(f"### 🔖 Kelas Prediksi: {predicted_label}")
+            st.write(f"🎯 Probabilitas: {confidence:.2%}")
 
     else:
         st.info("⬆ Silakan unggah gambar terlebih dahulu untuk melakukan prediksi.")
