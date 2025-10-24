@@ -51,8 +51,13 @@ elif page == "Prediksi Model":
     uploaded_file = st.file_uploader("📤 Unggah Gambar", type=["jpg", "jpeg", "png"])
 
     if uploaded_file is not None:
-        img = Image.open(uploaded_file).convert("RGB")
-        st.image(img, caption="🖼 Gambar yang Diupload", use_container_width=True)
+        try:
+            # Buka gambar dengan aman
+            img = Image.open(uploaded_file).convert("RGB")
+            st.image(img, caption="🖼 Gambar yang Diupload", use_container_width=True)
+        except Exception as e:
+            st.error(f"Gagal membaca gambar: {str(e)}")
+            st.stop()
 
         # ==========================
         # DETEKSI OBJEK (YOLO)
@@ -63,15 +68,6 @@ elif page == "Prediksi Model":
                 results = yolo_model(img)
                 result_img = results[0].plot()
                 st.image(result_img, caption="📦 Hasil Deteksi", use_container_width=True)
-
-                # Simpan hasil deteksi ke session_state untuk digunakan di klasifikasi
-                st.session_state["yolo_detected"] = len(results[0].boxes) > 0
-
-                if st.session_state["yolo_detected"]:
-                    st.info(f"✅ Terdeteksi {len(results[0].boxes)} objek oleh YOLO.")
-                else:
-                    st.warning("⚠ Tidak ada objek yang terdeteksi oleh YOLO.")
-
             except Exception as e:
                 st.error(f"Terjadi kesalahan saat deteksi: {str(e)}")
 
@@ -82,43 +78,42 @@ elif page == "Prediksi Model":
             st.subheader("🧩 Hasil Klasifikasi Gambar")
 
             try:
-                # Cek apakah sebelumnya gambar terdeteksi YOLO
-                if "yolo_detected" in st.session_state and st.session_state["yolo_detected"]:
-                    st.warning("⚠️ Bukan deteksi objek. Silakan gunakan mode *Deteksi Objek (YOLO)* untuk gambar ini.")
+                # Pertama, jalankan YOLO untuk cek apakah gambar mengandung objek terdeteksi
+                yolo_check = yolo_model(img)
+                boxes = yolo_check[0].boxes
+                if boxes is not None and len(boxes) > 0:
+                    st.warning("⚠️ Gambar ini terdeteksi sebagai objek oleh YOLO. Gunakan mode 'Deteksi Objek (YOLO)'.")
+                    st.stop()
+
+                # Ambil ukuran input model
+                input_shape = classifier.input_shape
+                if len(input_shape) == 4 and all(v is not None for v in input_shape[1:3]):
+                    target_size = (input_shape[1], input_shape[2])
                 else:
-                    # Ambil ukuran input model
-                    input_shape = classifier.input_shape
-                    if len(input_shape) == 4:
-                        target_size = (input_shape[1], input_shape[2])
-                    else:
-                        target_size = (224, 224)  # default DenseNet201
+                    target_size = (224, 224)  # fallback default
 
-                    if None in target_size:
-                        target_size = (224, 224)
+                # Preprocessing untuk DenseNet201
+                img_resized = img.resize(target_size)
+                img_array = image.img_to_array(img_resized)
+                img_array = np.expand_dims(img_array, axis=0)
+                img_array = preprocess_input(img_array)
 
-                    # Preprocessing sesuai DenseNet201
-                    img_resized = img.resize(target_size)
-                    img_array = image.img_to_array(img_resized)
-                    img_array = np.expand_dims(img_array, axis=0)
-                    img_array = preprocess_input(img_array)
+                # Prediksi klasifikasi
+                prediction = classifier.predict(img_array)
+                class_index = np.argmax(prediction)
+                confidence = np.max(prediction)
 
-                    # Prediksi
-                    prediction = classifier.predict(img_array)
-                    class_index = np.argmax(prediction)
-                    confidence = np.max(prediction)
+                class_labels = ["Basmati", "Ipsala", "Arborio", "Karacadag", "Jasmine"]
+                predicted_label = class_labels[class_index]
 
-                    # Label kelas (pastikan urutannya sesuai training)
-                    class_labels = ["Basmati", "Ipsala", "Arborio", "Karacadag", "Jasmine"]
-                    predicted_label = class_labels[class_index]
+                # Ambang batas probabilitas
+                confidence_threshold = 0.7
 
-                    # Ambang batas
-                    confidence_threshold = 0.7
-
-                    if confidence < confidence_threshold:
-                        st.warning("⚠️ Gambar tidak dikenali oleh model. Pastikan gambar sesuai dengan data pelatihan.")
-                    else:
-                        st.success(f"### 🔖 Kelas Prediksi: {predicted_label}")
-                        st.write(f"🎯 Probabilitas: {confidence:.2%}")
+                if confidence < confidence_threshold:
+                    st.warning("⚠️ Gambar tidak dikenali oleh model. Pastikan gambar sesuai dengan data pelatihan.")
+                else:
+                    st.success(f"### 🔖 Kelas Prediksi: {predicted_label}")
+                    st.write(f"🎯 Probabilitas: {confidence:.2%}")
 
             except Exception as e:
                 st.error(f"Terjadi kesalahan saat klasifikasi: {str(e)}")
