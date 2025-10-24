@@ -118,7 +118,7 @@ elif page == "Prediksi Model":
         elif menu == "Klasifikasi Gambar":
             st.subheader("🧩 Hasil Klasifikasi Gambar")
 
-            CLASSIFICATION_LABELS = ["Basmati", "Ipsala", "Arborio", "Karacadag", "Jasmine"] 
+            CLASSIFICATION_LABELS = ["Arborio", "Basmati", "Ipsala", "Jasmine", "Karacadag"]
             
             if not MODEL_LOAD_SUCCESS or classifier is None:
                 st.error("Model Klasifikasi (`Shafa_Laporan 2.h5`) tidak dapat dimuat atau gagal diinisialisasi.")
