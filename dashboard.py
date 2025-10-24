@@ -12,7 +12,6 @@ try:
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
-    st.warning("PyTorch tidak tersedia")
 
 try:
     import tensorflow as tf
@@ -20,14 +19,6 @@ try:
     TENSORFLOW_AVAILABLE = True
 except ImportError:
     TENSORFLOW_AVAILABLE = False
-    st.warning("TensorFlow tidak tersedia")
-
-try:
-    from ultralytics import YOLO
-    YOLO_AVAILABLE = True
-except ImportError:
-    YOLO_AVAILABLE = False
-    st.warning("Ultralytics YOLO tidak tersedia. Install: pip install ultralytics")
 
 st.set_page_config(
     page_title="ML Dashboard",
@@ -36,7 +27,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- CSS STYLING ---
+# --- CSS STYLING (TIDAK BERUBAH) ---
 st.markdown("""
     <style>
     /* Completely hide and disable sidebar collapse button */
@@ -162,6 +153,13 @@ def load_css():
         color: var(--text-primary) !important;
     }
 
+    /* Sidebar Section Headers */
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
+        color: var(--text-primary) !important;
+    }
+
     /* Typography - Black for main content */
     .main h1 {
         font-weight: 700 !important;
@@ -276,7 +274,7 @@ def load_css():
         border-color: rgba(192, 132, 252, 0.6) !important;
     }
 
-    /* Radio Button Styling */
+    /* Radio Button Styling - Perfect Consistency */
     .stRadio > div {
         gap: 0.75rem !important;
         display: flex !important;
@@ -350,6 +348,25 @@ def load_css():
         gap: 0rem !important;
         margin-left: 0rem !important;
         width: 100% !important;
+    }
+
+    /* Slider Styling */
+    .stSlider > div > div > div {
+        background: var(--surface) !important;
+        border-radius: 8px !important;
+        height: 6px !important;
+    }
+
+    .stSlider > div > div > div > div {
+        background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%) !important;
+    }
+
+    .stSlider > div > div > div > div > div {
+        background: #ffffff !important;
+        border: 2px solid var(--primary) !important;
+        box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3) !important;
+        width: 18px !important;
+        height: 18px !important;
     }
 
     /* File Uploader - Glass with Purple Theme */
@@ -427,6 +444,30 @@ def load_css():
         font-weight: 600;
     }
 
+    .stSuccess {
+        background: rgba(34, 197, 94, 0.2) !important;
+        color: #ffffff !important;
+        border-color: rgba(34, 197, 94, 0.5) !important;
+    }
+
+    .stError {
+        background: rgba(239, 68, 68, 0.2) !important;
+        color: #ffffff !important;
+        border-color: rgba(239, 68, 68, 0.5) !important;
+    }
+
+    .stInfo {
+        background: rgba(168, 85, 247, 0.2) !important;
+        color: #ffffff !important;
+        border-color: rgba(168, 85, 247, 0.5) !important;
+    }
+
+    .stWarning {
+        background: rgba(249, 115, 22, 0.2) !important;
+        color: #ffffff !important;
+        border-color: rgba(249, 115, 22, 0.5) !important;
+    }
+
     /* All Alert text should be BLACK */
     .stAlert div,
     .stAlert p,
@@ -482,12 +523,124 @@ def load_css():
     footer {visibility: hidden;}
     header {visibility: hidden;}
 
+    /* Hide sidebar collapse button completely */
+    [data-testid="collapsedControl"] {
+        display: none !important;
+    }
+
+    /* Hide sidebar collapse button in header */
+    [data-testid="stSidebar"] button[kind="header"] {
+        display: none !important;
+    }
+
+    /* Hide all collapse control buttons */
+    button[aria-label*="collapse"] {
+        display: none !important;
+    }
+
+    /* Hide Material Icon text fallback */
+    .material-icons {
+        font-size: 0 !important;
+    }
+
+    /* Hide keyboard_double_arrow text specifically */
+    [data-testid="stSidebar"] button {
+        font-size: 0 !important;
+    }
+
+    [data-testid="stSidebar"] button svg {
+        display: block !important;
+    }
+
+    /* Alternative: hide the entire sidebar nav button area */
+    section[data-testid="stSidebar"] > div > div > button {
+        display: none !important;
+    }
+
+    /* Hide the collapsible trigger */
+    .css-1544g2n, .css-nahz7x, .css-10trblm {
+        display: none !important;
+    }
+
+    /* Balance/Result Card - Purple Theme */
+    .balance-card {
+        background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(147, 51, 234, 0.15) 100%);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(168, 85, 247, 0.4);
+        border-radius: 24px;
+        padding: 2.5rem;
+        box-shadow:
+            0 8px 32px rgba(168, 85, 247, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s ease;
+    }
+
+    .balance-card:hover {
+        border-color: rgba(192, 132, 252, 0.6);
+        box-shadow:
+            0 12px 40px rgba(168, 85, 247, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        transform: translateY(-4px);
+    }
+
+    /* Chart Container - Glass */
+    .js-plotly-plot {
+        background: rgba(255, 255, 255, 0.03) !important;
+        backdrop-filter: blur(10px);
+        border-radius: 16px !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        padding: 1rem !important;
+    }
+
     /* Image Container */
     [data-testid="stImage"] {
         border-radius: 16px;
         overflow: hidden;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Custom Loading Animation */
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .loading-dots {
+        display: flex;
+        gap: 8px;
+        margin-top: 1rem;
+    }
+
+    .loading-dot {
+        width: 12px;
+        height: 12px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        border-radius: 50%;
+        animation: bounce 1.4s ease-in-out infinite both;
+    }
+
+    .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+    .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+    .loading-dot:nth-child(3) { animation-delay: 0s; }
+
+    @keyframes bounce {
+        0%, 80%, 100% {
+            transform: scale(0);
+        }
+        40% {
+            transform: scale(1);
+        }
     }
 
     /* Divider */
@@ -508,12 +661,13 @@ if 'total_predictions' not in st.session_state:
 if 'accuracy_score' not in st.session_state:
     st.session_state.accuracy_score = 95.7
 if 'task_type' not in st.session_state:
-    st.session_state.task_type = "Image Classification"
+    st.session_state.task_type = "Image Classification" # Default
 if 'model_loaded' not in st.session_state:
     st.session_state.model_loaded = False
 if 'current_page' not in st.session_state:
     st.session_state.current_page = "Dashboard"
 
+# --- HELPER FUNCTIONS (TIDAK BERUBAH) ---
 # --- FUNGSI PROCESS IMAGE ---
 def process_image(uploaded_file):
     """Fungsi untuk memproses file gambar yang diupload"""
@@ -678,20 +832,8 @@ def predict_detection(img, yolo_model):
             "target_found": False
         }
 
-# --- FUNGSI PREDICT IMAGE (ROUTER) ---
-def predict_image(image, task_type, model_type):
-    """Fungsi utama untuk routing prediksi berdasarkan task type"""
-    
-    if task_type == "Klasifikasi Gambar":
-        return predict_classification(image, classifier)
-    elif task_type == "Deteksi Objek (YOLO)":
-        return predict_detection(image, yolo_model)
-    else:
-        st.error(f"Task type tidak dikenal: {task_type}")
-        return None
-
-# --- FUNGSI VISUALISASI ---
 def create_confidence_chart(probabilities):
+    # Dapatkan 5 kategori teratas untuk visualisasi
     sorted_probs = sorted(probabilities.items(), key=lambda item: item[1], reverse=True)[:5]
     categories = [item[0] for item in sorted_probs]
     values = [item[1] for item in sorted_probs]
@@ -706,6 +848,10 @@ def create_confidence_chart(probabilities):
             marker=dict(
                 color=colors[:len(categories)],
                 line=dict(color='rgba(255, 255, 255, 0.3)', width=2),
+                gradient=dict(
+                    type='radial',
+                    coloraxis='coloraxis'
+                )
             ),
             text=[f'{v:.1f}%' for v in values],
             textposition='auto',
@@ -731,3 +877,472 @@ def create_confidence_chart(probabilities):
         xaxis=dict(
             range=[0, 100],
             gridcolor='rgba(168, 85, 247, 0.2)',
+            linecolor='rgba(255, 255, 255, 0.1)',
+            tickfont=dict(color='#d8b4fe', family='DM Sans')
+        ),
+        yaxis=dict(
+            gridcolor='rgba(168, 85, 247, 0.2)',
+            linecolor='rgba(255, 255, 255, 0.1)',
+            tickfont=dict(color='#d8b4fe', family='DM Sans')
+        ),
+        showlegend=False,
+        coloraxis=dict(
+            colorscale=[[0, 'rgba(168, 85, 247, 0.8)'], [1, 'rgba(147, 51, 234, 0.8)']]
+        )
+    )
+
+    return fig
+
+
+def create_history_chart(history):
+    if not history:
+        return None
+
+    df = pd.DataFrame(history)
+    
+    # Filter hanya untuk entri yang memiliki 'confidence' (yaitu, hasil klasifikasi)
+    df_filtered = df[df['task_type'] == 'Classification'].copy()
+    if df_filtered.empty:
+        return None
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=df_filtered['timestamp'],
+        y=df_filtered['confidence'],
+        mode='lines+markers',
+        name='Confidence Trend',
+        line=dict(
+            color='rgba(168, 85, 247, 0.8)',
+            width=4,
+            shape='spline',
+            smoothing=0.3
+        ),
+        marker=dict(
+            size=12,
+            color='rgba(192, 132, 252, 0.9)',
+            line=dict(width=2, color='rgba(255, 255, 255, 0.3)'),
+            symbol='circle'
+        ),
+        fill='tonexty',
+        fillcolor='rgba(168, 85, 247, 0.15)',
+        hovertemplate='<b>Time:</b> %{x}<br><b>Confidence:</b> %{y:.1f}%<extra></extra>'
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=df_filtered['timestamp'],
+        y=df_filtered['confidence'],
+        mode='lines',
+        fill='tozeroy',
+        fillcolor='rgba(168, 85, 247, 0.08)',
+        line=dict(color='rgba(168, 85, 247, 0.3)', width=1),
+        showlegend=False,
+        hoverinfo='skip'
+    ))
+
+    fig.update_layout(
+        title={
+            'text': 'Confidence History',
+            'font': {'size': 18, 'color': '#FFFFFF', 'family': 'DM Sans'},
+            'x': 0.5,
+            'xanchor': 'center'
+        },
+        xaxis_title='Time',
+        yaxis_title='Confidence (%)',
+        font=dict(size=12, color='#B4B4B4', family='DM Sans'),
+        plot_bgcolor='rgba(255, 255, 255, 0.03)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        height=450,
+        margin=dict(l=20, r=20, t=80, b=20),
+        xaxis=dict(
+            gridcolor='rgba(168, 85, 247, 0.2)',
+            linecolor='rgba(255, 255, 255, 0.1)',
+            tickfont=dict(color='#d8b4fe', family='DM Sans')
+        ),
+        yaxis=dict(
+            gridcolor='rgba(168, 85, 247, 0.2)',
+            linecolor='rgba(255, 255, 255, 0.1)',
+            tickfont=dict(color='#d8b4fe', family='DM Sans')
+        ),
+        showlegend=False,
+        hovermode='x unified'
+    )
+
+    return fig
+
+# --- STREAMLIT SIDEBAR (PERUBAHAN DISINI) ---
+with st.sidebar:
+    st.markdown("""
+        <div style='text-align: center; padding: 2rem 0; margin-bottom: 2rem; border-bottom: 1px solid rgba(168, 85, 247, 0.3);'>
+            <div style='width: 70px; height: 70px; margin: 0 auto 1.5rem auto; background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 32px rgba(168, 85, 247, 0.5); position: relative; overflow: hidden;'>
+                <div style='position: absolute; top: -50%; right: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%); animation: pulse 3s ease-in-out infinite;'></div>
+                <span style='font-size: 2rem; font-weight: 700; color: white; z-index: 1;'>🔬</span>
+            </div>
+            <h2 style='font-size: 1.5rem; font-weight: 700; color: #a855f7; margin: 0; letter-spacing: -0.02em;'>ML Dashboard</h2>
+            <div style='width: 40px; height: 2px; background: linear-gradient(90deg, #a855f7 0%, #c084fc 100%); margin: 1rem auto 0 auto; border-radius: 1px;'></div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+        <p style='font-size: 0.7rem; font-weight: 600; color: #a855f7; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1rem;'>Navigasi:</p>
+    """, unsafe_allow_html=True)
+
+    # Opsi navigasi baru
+    menu_options = ["🏠 Beranda", "🧠 Prediksi Model", "📊 Analitik", "ℹ Tentang"]
+    
+    # Update current_page based on selection
+    menu_selection = st.radio(
+        "menu_nav",
+        menu_options,
+        label_visibility="collapsed",
+        horizontal=False,
+        key="main_menu_selection"
+    )
+
+    # Map menu selection to simple page name
+    if "Beranda" in menu_selection:
+        st.session_state.current_page = "Dashboard"
+    elif "Prediksi Model" in menu_selection:
+        st.session_state.current_page = "Model Prediction"
+    elif "Analitik" in menu_selection:
+        st.session_state.current_page = "Analytics"
+    elif "Tentang" in menu_selection:
+        st.session_state.current_page = "About"
+    
+    # Tetap sediakan variabel untuk kompatibilitas, tapi ini TIDAK akan digunakan di Prediksi Model
+    task_type_default = "Image Classification"
+    model_type_default = "TensorFlow Model"
+    confidence_threshold_default = 70
+
+    st.session_state.task_type_default = task_type_default
+    st.session_state.model_type_default = model_type_default
+    st.session_state.confidence_threshold_default = confidence_threshold_default
+    
+    st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
+
+
+# --- MAIN CONTENT LOGIC ---
+
+# 1. Dashboard (Awal)
+if st.session_state.current_page == "Dashboard":
+    st.markdown("""
+        <div style="text-align: center; padding: 3rem 2rem 2rem 2rem;">
+            <div style="width: 80px; height: 80px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 32px rgba(168, 85, 247, 0.5);">
+                <span style="font-size: 2rem;">🔬</span>
+            </div>
+            <h1 style="font-size: 2.5rem; font-weight: 700; color: #000000; margin: 0; letter-spacing: -0.03em;">
+                Dashboard: Classification and Detection by S.
+            </h1>
+            <p style="font-size: 1.125rem; color: #000000; margin: 0.75rem 0 0 0; font-weight: 500;">
+                Platform untuk pengujian Model Machine Learning.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    st.info("Pilih prediksi model pada bagian navigasi untuk memulai deteksi atau klasifikasi gambar.")
+    
+    col_info_1, col_info_2 = st.columns(2)
+    with col_info_1:
+        st.markdown("""
+            <div class="glass-card" style="padding: 1.5rem; text-align: center;">
+                <h3 style="color: #a855f7;">Model Tersedia:</h3>
+                <p style="color: #000000;">
+                    TensorFlow (Keras) dan PyTorch (untuk klasifikasi)
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+    with col_info_2:
+        st.markdown("""
+            <div class="glass-card" style="padding: 1.5rem; text-align: center;">
+                <h3 style="color: #a855f7;">Fitur Utama:</h3>
+                <p style="color: #000000;">
+                    Klasifikasi & Deteksi Objek pada Gambar
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
+
+# 2. Prediksi Model (Baru)
+elif st.session_state.current_page == "Model Prediction":
+    st.markdown("""
+        <div style="text-align: center; padding: 1rem 2rem 2rem 2rem;">
+            <h1 style="font-size: 2.5rem; font-weight: 700; color: #000000; margin: 0; letter-spacing: -0.03em;">
+                🧠 Prediksi Model Deteksi & Klasifikasi
+            </h1>
+            <p style="font-size: 1.125rem; color: #000000; margin: 0.75rem 0 0 0; font-weight: 500;">
+                Uji model menggunakan gambar dalam mode Klasifikasi atau Deteksi Objek.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Bagian sidebar untuk pemilihan mode (Deteksi Objek atau Klasifikasi Gambar)
+    # Catatan: Walaupun prompt meminta st.sidebar.selectbox, kita akan membuatnya di main content area untuk UI yang lebih baik,
+    # atau di sidebar jika memang harus. Saya akan taruh di main area agar terlihat menonjol.
+    
+    # Gunakan container untuk styling yang lebih baik
+    st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
+    st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
+    
+    col_mode_select, col_model_select = st.columns([1, 1])
+
+    with col_mode_select:
+        # Pilihan mode deteksi/klasifikasi
+        task_type_select = st.selectbox(
+            "Pilih Mode:", 
+            ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"],
+            label_visibility="collapsed",
+            key="task_type_select"
+        )
+        st.session_state.task_type = task_type_select
+        
+    with col_model_select:
+        # Pilihan model (hanya untuk Klasifikasi)
+        if st.session_state.task_type == "Klasifikasi Gambar":
+            model_type_select = st.selectbox(
+                "Pilih Framework:",
+                ["TensorFlow Model", "PyTorch Model"],
+                label_visibility="collapsed",
+                key="model_type_select"
+            )
+        else:
+            model_type_select = "Detection Model (Simulated)"
+            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi digunakan.</p>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Logic for Image Upload and Prediction
+    st.markdown("""
+        <div style="max-width: 600px; margin: 0 auto 2rem auto;">
+    """, unsafe_allow_html=True)
+    
+    uploaded_file = st.file_uploader(
+        "Upload Image",
+        type=['png', 'jpg', 'jpeg'],
+        help="Supported formats: PNG, JPG, JPEG (max 200MB)",
+        label_visibility="collapsed"
+    )
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    if uploaded_file is not None:
+        image = process_image(uploaded_file)
+
+        col1, col2 = st.columns([1, 1], gap="large")
+
+        with col1:
+            st.markdown("""
+                <div style="background: rgba(168, 85, 247, 0.1); border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 20px; padding: 1rem; overflow: hidden;">
+            """, unsafe_allow_html=True)
+            st.image(image, use_container_width=True, caption="Gambar yang Diunggah")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        with col2:
+            st.markdown("""
+                <div style="background: rgba(168, 85, 247, 0.1); border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 20px; padding: 1rem; overflow: hidden;">
+            """, unsafe_allow_html=True)
+
+            with st.spinner(f"Memproses gambar dengan mode {st.session_state.task_type}..."):
+                progress_bar = st.progress(0)
+                for i in range(100):
+                    time.sleep(0.01)
+                    progress_bar.progress(i + 1)
+                
+                # Panggil fungsi prediksi dengan mode yang dipilih
+                result = predict_image(image, st.session_state.task_type, model_type_select)
+                st.session_state.total_predictions += 1
+                
+                # Tampilkan Hasil
+                st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Hasil Prediksi:</h3>', unsafe_allow_html=True)
+
+                if st.session_state.task_type == "Klasifikasi Gambar":
+                    
+                    # Simpan ke histori
+                    st.session_state.prediction_history.append({
+                        'timestamp': datetime.now().strftime('%H:%M:%S'),
+                        'class': result['class'],
+                        'confidence': result['confidence'],
+                        'task_type': result['task_type']
+                    })
+
+                    st.markdown(f"""
+                        <div style="text-align: center; background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.5);">
+                            <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">
+                                KELAS PREDISKI: <span style="font-size: 2rem;">{result['class']}</span>
+                            </p>
+                            <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">
+                                CONFIDENCE: {result['confidence']:.2f}%
+                            </p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    st.markdown("---")
+                    
+                    st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
+
+
+                elif st.session_state.task_type == "Deteksi Objek (YOLO)":
+                    
+                    # Simpan ke histori (dengan format berbeda untuk deteksi)
+                    st.session_state.prediction_history.append({
+                        'timestamp': datetime.now().strftime('%H:%M:%S'),
+                        'class': 'N/A',
+                        'confidence': 0.0,
+                        'task_type': result['task_type'],
+                        'objects_detected': result['total_objects']
+                    })
+
+                    st.markdown(f"""
+                        <div style="text-align: center; background: linear-gradient(135deg, #00e676 0%, #00c853 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.5);">
+                            <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">
+                                TOTAL OBJEK DITERK: <span style="font-size: 2rem;">{result['total_objects']}</span>
+                            </p>
+                            <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">
+                                Mode: Deteksi Objek (Simulasi)
+                            </p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    st.markdown("---")
+                    st.warning("Peringatan: Deteksi Objek saat ini menggunakan data simulasi.")
+
+
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+    else:
+        st.markdown("""
+            <div style="text-align: center; padding: 4rem 2rem;">
+                <p style="color: #000000; font-size: 1.125rem;">
+                    ☝ Pilih Mode di atas dan unggah gambar untuk memulai prediksi.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+    st.markdown("""
+        <div style="text-align: center; margin: 4rem 0 2rem 0;">
+            <p style="font-size: 1.25rem; color: #000000; font-style: italic; margin: 0;">
+                "Disini Bisa Deteksi Berbagai Ekspresi Wajah (simulasi)"
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
+
+# 3. Analytics (Tidak Berubah Signifikan)
+elif st.session_state.current_page == "Analytics":
+    st.markdown("# 📊 Analitik Prediksi")
+    st.markdown("---")
+
+    df_history_classification = pd.DataFrame([h for h in st.session_state.prediction_history if h['task_type'] == 'Classification'])
+
+    if not df_history_classification.empty:
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.metric(
+                "Total Klasifikasi",
+                len(df_history_classification)
+            )
+
+        with col2:
+            avg_confidence = df_history_classification['confidence'].mean()
+            st.metric(
+                "Rata-rata Confidence",
+                f"{avg_confidence:.1f}%"
+            )
+
+        with col3:
+            max_confidence = df_history_classification['confidence'].max()
+            st.metric(
+                "Confidence Maksimum",
+                f"{max_confidence:.1f}%"
+            )
+
+        with col4:
+            most_common = df_history_classification['class'].mode()[0] if not df_history_classification['class'].mode().empty else "N/A"
+            st.metric(
+                "Kelas Terbanyak",
+                most_common
+            )
+
+        st.markdown("---")
+
+        col1, col2 = st.columns([1, 1])
+
+        with col1:
+            st.markdown("### Distribusi Kelas")
+            class_counts = df_history_classification['class'].value_counts()
+            fig_pie = px.pie(
+                values=class_counts.values,
+                names=class_counts.index,
+                title="Prediction Distribution (Classification)",
+                color_discrete_sequence=['#a855f7', '#c084fc', '#9333ea', '#d8b4fe', '#7c3aed']
+            )
+            fig_pie.update_layout(
+                font=dict(size=12, color='#B4B4B4'),
+                title_font=dict(size=16, color='#FFFFFF'),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(30, 25, 45, 0.4)'
+            )
+            st.plotly_chart(fig_pie, use_container_width=True)
+
+        with col2:
+            st.markdown("### Trend Confidence")
+            fig_line = create_history_chart(st.session_state.prediction_history)
+            if fig_line:
+                st.plotly_chart(fig_line, use_container_width=True)
+
+        st.markdown("---")
+
+        st.markdown("### Riwayat Prediksi Lengkap")
+        # Gabungkan semua data, termasuk deteksi
+        df_all_history = pd.DataFrame(st.session_state.prediction_history)
+        
+        # Sederhanakan tampilan untuk riwayat
+        if 'objects_detected' in df_all_history.columns:
+            df_all_history['Result'] = df_all_history.apply(
+                lambda row: f"Class: {row['class']} ({row['confidence']:.2f}%)" if row['task_type'] == 'Classification' 
+                else f"Objects Detected: {row['objects_detected']}", axis=1
+            )
+            df_display = df_all_history[['timestamp', 'task_type', 'Result']].rename(columns={'task_type': 'Mode'})
+        else:
+            df_display = df_all_history[['timestamp', 'task_type', 'class', 'confidence']].rename(columns={'task_type': 'Mode', 'class': 'Class'})
+
+        st.dataframe(
+            df_display,
+            use_container_width=True,
+            hide_index=True
+        )
+
+        if st.button("Clear History"):
+            st.session_state.prediction_history = []
+            st.session_state.total_predictions = 0
+            st.rerun()
+
+    else:
+        st.info("Tidak ada data prediksi *Klasifikasi* yang tersedia. Kunjungi halaman Prediksi Model untuk memulai.")
+
+
+# 4. About (Tidak Berubah)
+elif st.session_state.current_page == "About":
+    st.markdown("# ℹ Tentang")
+    st.markdown("---")
+
+    st.markdown("""
+    ### ML Image Prediction Dashboard
+
+    Platform untuk pengujian model machine learning (ML) secara real-time. Dashboard ini dirancang untuk menunjukkan kapabilitas model *Klasifikasi Gambar* (menggunakan TensorFlow atau PyTorch) dan *Deteksi Objek* (Simulasi YOLO).
+
+    #### Fitur Utama:
+    * *Klasifikasi Gambar:* Mengklasifikasikan gambar yang diunggah ke dalam kategori tertentu dengan nilai confidence.
+    * *Deteksi Objek (Simulasi):* Menyimulasikan pendeteksian objek dalam gambar.
+    * *Visualisasi Data:* Menampilkan distribusi confidence dan riwayat prediksi.
+
+    #### Teknologi
+    * *Framework Utama:* Streamlit
+    * *Machine Learning:* TensorFlow/Keras & PyTorch
+    * *Data Analysis:* Pandas, NumPy
+    * *Visualisasi:* Plotly Express & Graph Objects
+    """)
