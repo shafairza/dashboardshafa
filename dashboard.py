@@ -934,7 +934,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     # Opsi navigasi baru
-    menu_options = ["🏠 Beranda", "🧠 Prediksi Model", "📊 Analitik", "ℹ️ Tentang"]
+    menu_options = ["🏠 Beranda", "🧠 Prediksi Model", "📊 Analitik", "ℹ Tentang"]
     
     # Update current_page based on selection
     menu_selection = st.radio(
@@ -987,7 +987,7 @@ if st.session_state.current_page == "Dashboard":
 
     st.markdown("---")
 
-    st.info("Pilih **'🧠 Prediksi Model'** di sidebar untuk memulai deteksi atau klasifikasi gambar.")
+    st.info("Pilih *'🧠 Prediksi Model'* di sidebar untuk memulai deteksi atau klasifikasi gambar.")
     
     col_info_1, col_info_2 = st.columns(2)
     with col_info_1:
@@ -1027,7 +1027,7 @@ elif st.session_state.current_page == "Model Prediction":
     
     # Bagian sidebar untuk pemilihan mode (Deteksi Objek atau Klasifikasi Gambar)
     # Catatan: Walaupun prompt meminta st.sidebar.selectbox, kita akan membuatnya di main content area untuk UI yang lebih baik,
-    # atau di sidebar jika *memang* harus. Saya akan taruh di main area agar terlihat menonjol.
+    # atau di sidebar jika memang harus. Saya akan taruh di main area agar terlihat menonjol.
     
     # Gunakan container untuk styling yang lebih baik
     st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
@@ -1162,7 +1162,7 @@ elif st.session_state.current_page == "Model Prediction":
         st.markdown("""
             <div style="text-align: center; padding: 4rem 2rem;">
                 <p style="color: #000000; font-size: 1.125rem;">
-                    ☝️ Pilih Mode di atas dan unggah gambar untuk memulai prediksi.
+                    ☝ Pilih Mode di atas dan unggah gambar untuk memulai prediksi.
                 </p>
             </div>
         """, unsafe_allow_html=True)
@@ -1268,27 +1268,27 @@ elif st.session_state.current_page == "Analytics":
             st.rerun()
 
     else:
-        st.info("Tidak ada data prediksi **Klasifikasi** yang tersedia. Kunjungi halaman Prediksi Model untuk memulai.")
+        st.info("Tidak ada data prediksi *Klasifikasi* yang tersedia. Kunjungi halaman Prediksi Model untuk memulai.")
 
 
 # 4. About (Tidak Berubah)
 elif st.session_state.current_page == "About":
-    st.markdown("# ℹ️ Tentang")
+    st.markdown("# ℹ Tentang")
     st.markdown("---")
 
     st.markdown("""
     ### ML Image Prediction Dashboard
 
-    Platform untuk pengujian model machine learning (ML) secara real-time. Dashboard ini dirancang untuk menunjukkan kapabilitas model **Klasifikasi Gambar** (menggunakan TensorFlow atau PyTorch) dan **Deteksi Objek** (Simulasi YOLO).
+    Platform untuk pengujian model machine learning (ML) secara real-time. Dashboard ini dirancang untuk menunjukkan kapabilitas model *Klasifikasi Gambar* (menggunakan TensorFlow atau PyTorch) dan *Deteksi Objek* (Simulasi YOLO).
 
     #### Fitur Utama:
-    * **Klasifikasi Gambar:** Mengklasifikasikan gambar yang diunggah ke dalam kategori tertentu dengan nilai *confidence*.
-    * **Deteksi Objek (Simulasi):** Menyimulasikan pendeteksian objek dalam gambar.
-    * **Visualisasi Data:** Menampilkan distribusi *confidence* dan riwayat prediksi.
+    * *Klasifikasi Gambar:* Mengklasifikasikan gambar yang diunggah ke dalam kategori tertentu dengan nilai confidence.
+    * *Deteksi Objek (Simulasi):* Menyimulasikan pendeteksian objek dalam gambar.
+    * *Visualisasi Data:* Menampilkan distribusi confidence dan riwayat prediksi.
 
     #### Teknologi
-    * **Framework Utama:** Streamlit
-    * **Machine Learning:** TensorFlow/Keras & PyTorch
-    * **Data Analysis:** Pandas, NumPy
-    * **Visualisasi:** Plotly Express & Graph Objects
+    * *Framework Utama:* Streamlit
+    * *Machine Learning:* TensorFlow/Keras & PyTorch
+    * *Data Analysis:* Pandas, NumPy
+    * *Visualisasi:* Plotly Express & Graph Objects
     """)
