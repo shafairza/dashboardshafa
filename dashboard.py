@@ -61,13 +61,43 @@ elif page == "Prediksi Model":
         st.image(img, caption="🖼 Gambar yang Diupload", use_container_width=True)
 
         # ==========================
-        # DETEKSI OBJEK
+        # DETEKSI OBJEK (HANYA PEROKOK & NON PEROKOK)
         # ==========================
         if menu == "Deteksi Objek (YOLO)":
             st.subheader("🔍 Hasil Deteksi Objek (YOLO)")
+
+            # Jalankan deteksi
             results = yolo_model(img)
-            result_img = results[0].plot()
-            st.image(result_img, caption="📦 Hasil Deteksi", use_container_width=True)
+            result = results[0]
+
+            # Ambil nama kelas dari model YOLO
+            names = result.names  # Dictionary {id: label}
+            boxes = result.boxes
+
+            # Fokus hanya pada dua kelas berikut
+            target_classes = ["perokok", "non_perokok"]
+
+            filtered_boxes = []
+            for box in boxes:
+                cls_id = int(box.cls[0])
+                label = names[cls_id]
+                if label in target_classes:
+                    filtered_boxes.append(box)
+
+            # Jika ditemukan deteksi perokok/non perokok
+            if filtered_boxes:
+                result_img = result.plot()
+                st.image(result_img, caption="📦 Hasil Deteksi: Orang Perokok & Non-Perokok", use_container_width=True)
+
+                # Menampilkan hasil deteksi dalam teks
+                for box in filtered_boxes:
+                    cls_id = int(box.cls[0])
+                    conf = float(box.conf[0])
+                    label = names[cls_id]
+                    st.write(f"- **Kelas:** {label} | **Kepercayaan:** {conf:.2%}")
+
+            else:
+                st.warning("🚭 Tidak ditemukan objek orang perokok atau non-perokok pada gambar ini.")
 
         # ==========================
         # KLASIFIKASI GAMBAR
