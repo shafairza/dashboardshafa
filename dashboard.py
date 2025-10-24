@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing import image
 import numpy as np
 from PIL import Image
+from tensorflow.keras.applications.densenet import preprocess_input
 
 # ==========================
 # Load Models
@@ -29,7 +30,7 @@ if page == "Tentang":
     st.title("💡 Tentang Aplikasi Deteksi & Klasifikasi Gambar")
 
     st.markdown("""
-    Aplikasi ini dikembangkan oleh Shafa untuk mendeteksi dan mengklasifikasikan gambar menggunakan dua model utama:
+    Aplikasi ini dikembangkan oleh **Shafa** untuk mendeteksi dan mengklasifikasikan gambar menggunakan dua model utama:
     
     - 🔍 **YOLOv8**: Model deteksi objek.
     - 🧠 **CNN (DenseNet201)**: Model klasifikasi gambar.
@@ -54,43 +55,47 @@ elif page == "Prediksi Model":
         st.image(img, caption="🖼 Gambar yang Diupload", use_container_width=True)
 
         # ==========================
-        # DETEKSI OBJEK
+        # DETEKSI OBJEK (YOLO)
         # ==========================
         if menu == "Deteksi Objek (YOLO)":
             st.subheader("🔍 Hasil Deteksi Objek (YOLO)")
-            results = yolo_model(img)
-            result_img = results[0].plot()
-            st.image(result_img, caption="📦 Hasil Deteksi", use_container_width=True)
+            try:
+                results = yolo_model(img)
+                result_img = results[0].plot()
+                st.image(result_img, caption="📦 Hasil Deteksi", use_container_width=True)
+            except Exception as e:
+                st.error(f"Terjadi kesalahan saat deteksi: {str(e)}")
 
         # ==========================
-        # KLASIFIKASI GAMBAR
+        # KLASIFIKASI GAMBAR (DenseNet201)
         # ==========================
         elif menu == "Klasifikasi Gambar":
             st.subheader("🧩 Hasil Klasifikasi Gambar")
 
             try:
-                # Ambil ukuran input model (misalnya (None, 224, 224, 3))
+                # Ambil ukuran input model
                 input_shape = classifier.input_shape
                 if len(input_shape) == 4:
                     target_size = (input_shape[1], input_shape[2])
                 else:
-                    target_size = (250, 250)  # fallback jika input_shape tidak terbaca
+                    target_size = (224, 224)  # default DenseNet201
 
                 # Pastikan tidak ada None
                 if None in target_size:
-                    target_size = (250, 250)
+                    target_size = (224, 224)
 
+                # Preprocessing sesuai DenseNet201
                 img_resized = img.resize(target_size)
                 img_array = image.img_to_array(img_resized)
                 img_array = np.expand_dims(img_array, axis=0)
-                img_array = img_array / 255.0
+                img_array = preprocess_input(img_array)
 
                 # Prediksi
                 prediction = classifier.predict(img_array)
                 class_index = np.argmax(prediction)
                 confidence = np.max(prediction)
 
-                # Label kelas
+                # Label kelas (⚠️ pastikan urutannya sesuai training)
                 class_labels = ["Kelas Basmati", "Kelas Ipsala", "Kelas Arborio", "Kelas Karacadag", "Kelas Jasmine"]
                 predicted_label = class_labels[class_index]
 
