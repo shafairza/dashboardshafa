@@ -677,49 +677,54 @@ if 'model_loaded' not in st.session_state:
 if 'current_page' not in st.session_state:
     st.session_state.current_page = "Dashboard"
 
-# --- MODEL LOADING (DIPERBARUI) ---
+# --- MODEL LOADING (REVISI DAN KONSOLIDASI) ---
 
 @st.cache_resource
 def load_tensorflow_model():
-    """Memuat model Keras/TensorFlow untuk Klasifikasi."""
+    """Memuat model Keras/TensorFlow untuk Klasifikasi (Shafa_Laporan 2.h5)."""
     if not TENSORFLOW_AVAILABLE:
         return None
     try:
-        # Asumsi path model klasifikasi adalah Shafa_Laporan 2.h5
-        model = keras.models.load_model('models/Shafa_Laporan 2.h5')
-        return model
+        # Menggunakan model klasifikasi Anda
+        classifier = keras.models.load_model('models/Shafa_Laporan 2.h5')
+        return classifier
     except Exception as e:
-        st.error(f"Error loading TensorFlow model: {e}")
-        return None
+        # st.error(f"Error loading TensorFlow model: {e}") # Jangan tampilkan error di sidebar
+        return None 
 
 @st.cache_resource
 def load_pytorch_model():
     """Memuat model PyTorch untuk Klasifikasi (Jika digunakan)."""
+    # PyTorch model tidak digunakan di logika utama Anda, tapi tetap dipertahankan
     if not TORCH_AVAILABLE:
         return None
     try:
-        # Asumsi path model PyTorch
-        model = torch.load('models/Shafa_Laporan 4.pt', map_location='cpu')
-        return model
+        # Asumsi path model PyTorch (Shafa_Laporan 4.pt)
+        classifier = torch.load('models/Shafa_Laporan 4.pt', map_location='cpu')
+        return classifier
     except Exception as e:
-        st.error(f"Error loading PyTorch model: {e}")
+        # st.error(f"Error loading PyTorch model: {e}")
         return None
 
 @st.cache_resource
 def load_yolo_model():
-    """Memuat model YOLO untuk Deteksi."""
+    """Memuat model YOLO untuk Deteksi (Shafa_Laporan 4.pt)."""
     if not YOLO_AVAILABLE:
         return None
     try:
-        # Asumsi model YOLO dimuat dari file 'yolov8n.pt' atau model kustom Anda
-        # Ganti 'yolov8n.pt' dengan path ke file .pt model YOLO kustom Anda jika berbeda!
-        model = YOLO('models/yolov8n.pt') 
+        # Ganti dengan model YOLO kustom Anda sesuai permintaan: Shafa_Laporan 4.pt
+        model = YOLO('models/Shafa_Laporan 4.pt') 
         return model
     except Exception as e:
-        st.error(f"Error loading YOLO model: {e}")
+        # st.error(f"Error loading YOLO model: {e}")
         return None
 
+# --- MEMUAT MODEL SECARA GLOBAL (di luar fungsi) ---
+TENSORFLOW_CLASSIFIER = load_tensorflow_model()
+YOLO_DETECTOR = load_yolo_model()
+# PYTORCH_CLASSIFIER = load_pytorch_model() # Jika tidak dipakai, tidak perlu dimuat
 
+# --- UTILITIES ---
 def process_image(uploaded_file):
     """Membuka dan melakukan resize gambar yang diunggah."""
     img = Image.open(uploaded_file)
@@ -729,7 +734,6 @@ def process_image(uploaded_file):
     return img
 
 # --- CHARTING UTILITIES (TIDAK BERUBAH) ---
-
 def create_confidence_chart(probabilities):
     # Dapatkan 5 kategori teratas untuk visualisasi
     sorted_probs = sorted(probabilities.items(), key=lambda item: item[1], reverse=True)[:5]
@@ -934,24 +938,24 @@ if st.session_state.current_page == "Dashboard":
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
                 <h3 style="color: #a855f7;">Model Tersedia:</h3>
                 <p style="color: #000000;">
-                    TensorFlow (Keras) - { "✅ Aktif" if TENSORFLOW_AVAILABLE else "❌ Tidak Aktif" }<br>
-                    YOLO (Ultralytics) - { "✅ Aktif" if YOLO_AVAILABLE else "❌ Tidak Aktif" }
+                    TensorFlow (Klasifikasi) - { "✅ Aktif" if TENSORFLOW_CLASSIFIER is not None else "❌ Tidak Aktif" }<br>
+                    YOLO (Deteksi) - { "✅ Aktif" if YOLO_DETECTOR is not None else "❌ Tidak Aktif" }
                 </p>
             </div>
         """, unsafe_allow_html=True)
     with col_info_2:
         st.markdown("""
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-                <h3 style="color: #a855f7;">Fitur Utama:</h3>
+                <h3 style="color: #a855f7;">Detail Model:</h3>
                 <p style="color: #000000;">
-                    Klasifikasi Gambar (TensorFlow)<br>
-                    Deteksi Objek (YOLO)
+                    Klasifikasi: Shafa_Laporan 2.h5<br>
+                    Deteksi: Shafa_Laporan 4.pt
                 </p>
             </div>
         """, unsafe_allow_html=True)
 
 
-# 2. Prediksi Model (Baru - Dengan Logika Prediksi yang Diperbarui)
+# 2. Prediksi Model (REVISI LOGIC)
 elif st.session_state.current_page == "Model Prediction":
     st.markdown("""
         <div style="text-align: center; padding: 1rem 2rem 2rem 2rem;">
@@ -968,32 +972,34 @@ elif st.session_state.current_page == "Model Prediction":
     
     st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
     
-    col_mode_select, col_model_select = st.columns([1, 1])
+    col_mode_select, col_model_info = st.columns([1, 1])
 
     with col_mode_select:
         st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
-        # Menggunakan variable 'menu' sesuai prompt Anda, meskipun diimplementasikan sebagai selectbox
         menu = st.selectbox(
             "Pilih Mode:", 
             ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"],
             label_visibility="collapsed",
             key="task_type_select"
         )
+            
+    with col_model_info:
+        st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Opsi & Status Model:</h3>', unsafe_allow_html=True)
         
-    with col_model_select:
-        st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Opsi Model:</h3>', unsafe_allow_html=True)
+        # Menggunakan variabel global yang sudah dimuat
         if menu == "Klasifikasi Gambar":
-            model_type_select = st.selectbox(
-                "Pilih Framework:",
-                ["TensorFlow Model", "PyTorch Model"],
-                label_visibility="collapsed",
-                key="model_type_select"
-            )
-            model_to_use = load_tensorflow_model() if model_type_select == "TensorFlow Model" else load_pytorch_model()
+            model_name = "TensorFlow/Keras (Shafa_Laporan 2.h5)"
+            model_to_use = TENSORFLOW_CLASSIFIER
+            status = "✅ Aktif" if TENSORFLOW_CLASSIFIER is not None else "❌ Gagal Dimuat"
+            is_model_ready = TENSORFLOW_CLASSIFIER is not None
         else: # Deteksi Objek (YOLO)
-            model_type_select = "YOLO Model"
-            model_to_use = load_yolo_model()
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model YOLO aktif.</p>', unsafe_allow_html=True)
+            model_name = "YOLO (Shafa_Laporan 4.pt)"
+            model_to_use = YOLO_DETECTOR
+            status = "✅ Aktif" if YOLO_DETECTOR is not None else "❌ Gagal Dimuat"
+            is_model_ready = YOLO_DETECTOR is not None
+        
+        st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Terpilih: <b>{model_name}</b></p>', unsafe_allow_html=True)
+        st.markdown(f'<p style="color: #000000; font-size: 0.9rem;">Status: <b>{status}</b></p>', unsafe_allow_html=True)
             
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1047,34 +1053,41 @@ elif st.session_state.current_page == "Model Prediction":
                     st.subheader("🔍 Hasil Deteksi Objek (YOLO)")
                     
                     # Cek ketersediaan model YOLO
-                    if not YOLO_AVAILABLE or model_to_use is None:
-                        st.error("Model YOLO (ultralytics) tidak tersedia atau gagal dimuat.")
+                    if not is_model_ready:
+                        st.error("Model YOLO (Shafa_Laporan 4.pt) tidak dapat dimuat atau gagal diinisialisasi.")
                     else:
                         
-                        # Mengubah PIL Image ke format yang didukung YOLO (numpy array/path)
-                        img_np = np.array(img)
-                        
-                        TARGET_DETECTION_CLASSES = ["smoking", "notsmoking"] 
+                        TARGET_DETECTION_CLASSES = ["smoking", "notsmoking"] # Tetap
                         
                         try:
-                            # Conf 0.25 diambil dari prompt user
-                            results = model_to_use(img_np, conf=0.25, verbose=False) 
+                            # Model YOLOv8 bisa menerima PIL Image
+                            results = model_to_use(img, conf=0.25, verbose=False)
                             class_names = model_to_use.names
                             target_detections_found = False
                             
                             # Logika untuk memeriksa deteksi target
                             if results and hasattr(results[0], 'boxes'):
+                                
+                                # Mengambil hasil plot untuk ditampilkan
+                                result_img_np = results[0].plot()
+                                
                                 for r in results:
-                                    detected_indices = r.boxes.cls.tolist()
-                                    detected_class_names = [class_names[int(i)] for i in detected_indices]
-                                    
-                                    if any(name in TARGET_DETECTION_CLASSES for name in detected_class_names):
-                                        target_detections_found = True
-                                        break
+                                    # Pastikan r.boxes ada sebelum mengaksesnya
+                                    if hasattr(r, 'boxes') and hasattr(r.boxes, 'cls'):
+                                        detected_indices = r.boxes.cls.tolist()
+                                        
+                                        # Hati-hati dengan indeks kelas yang mungkin tidak ada di class_names
+                                        detected_class_names = [
+                                            class_names[int(i)] 
+                                            for i in detected_indices 
+                                            if int(i) < len(class_names)
+                                        ]
+                                        
+                                        if any(name in TARGET_DETECTION_CLASSES for name in detected_class_names):
+                                            target_detections_found = True
+                                            break
                                 
                                 if target_detections_found:
-                                    # Plot hasil ke gambar (YOLOv8 akan mengembalikan numpy array)
-                                    result_img_np = results[0].plot()
                                     st.image(result_img_np, caption="📦 Hasil Deteksi", use_container_width=True)
                                     st.success("✅ Objek 'smoking' atau 'notsmoking' terdeteksi!")
                                 else:
@@ -1106,8 +1119,8 @@ elif st.session_state.current_page == "Model Prediction":
 
                     CLASSIFICATION_LABELS = ["Arborio", "Basmati", "Ipsala", "Jasmine", "Karacadag"]
                     
-                    if not TENSORFLOW_AVAILABLE or model_to_use is None:
-                        st.error("Model Klasifikasi (TensorFlow/Keras) tidak dapat dimuat atau gagal diinisialisasi.")
+                    if not is_model_ready:
+                        st.error("Model Klasifikasi (Shafa_Laporan 2.h5) tidak dapat dimuat atau gagal diinisialisasi.")
                     else:
                         try:
                             # Gunakan ukuran input tetap sesuai pelatihan (128x128)
@@ -1117,7 +1130,7 @@ elif st.session_state.current_page == "Model Prediction":
                             img_resized = img.resize(target_size)
                             img_array = image.img_to_array(img_resized)
                             img_array = np.expand_dims(img_array, axis=0)
-                            img_array = img_array / 255.0  
+                            img_array = img_array / 255.0  # Normalisasi
 
                             # Prediksi
                             prediction = model_to_use.predict(img_array, verbose=0)
@@ -1126,8 +1139,6 @@ elif st.session_state.current_page == "Model Prediction":
                             confidence = np.max(prediction)
                             confidence_threshold = 0.7  
                             predicted_label = CLASSIFICATION_LABELS[class_index]
-                            
-                            # Tampilkan hasil
                             
                             # Simpan ke riwayat
                             st.session_state.total_predictions += 1
@@ -1281,7 +1292,7 @@ elif st.session_state.current_page == "About":
 
     #### Fitur Utama:
     * **Klasifikasi Gambar:** Mengklasifikasikan gambar yang diunggah ke dalam kategori tertentu dengan nilai *confidence* (Menggunakan model `Shafa_Laporan 2.h5`).
-    * **Deteksi Objek (YOLO):** Melakukan pendeteksian objek dengan fokus pada kelas `smoking` dan `notsmoking` (Membutuhkan model YOLO).
+    * **Deteksi Objek (YOLO):** Melakukan pendeteksian objek dengan fokus pada kelas `smoking` dan `notsmoking` (Menggunakan model `Shafa_Laporan 4.pt`).
     * **Visualisasi Data:** Menampilkan distribusi *confidence* dan riwayat prediksi.
 
     #### Teknologi
