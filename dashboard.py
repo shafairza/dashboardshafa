@@ -977,7 +977,7 @@ if st.session_state.current_page == "Dashboard":
                 <span style="font-size: 2rem;">🔬</span>
             </div>
             <h1 style="font-size: 2.5rem; font-weight: 700; color: #000000; margin: 0; letter-spacing: -0.03em;">
-                Selamat Datang di ML Dashboard
+                Dashboard: Classification and Detection by S
             </h1>
             <p style="font-size: 1.125rem; color: #000000; margin: 0.75rem 0 0 0; font-weight: 500;">
                 Platform untuk pengujian Model Machine Learning.
