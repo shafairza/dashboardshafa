@@ -5,8 +5,8 @@ A modern, interactive dashboard for machine learning image classification and ob
 ---
 
 ## 🚀 Features
-- 🖼️ Image Classification - Classify images into categories (Rice types, Smoking detection)
-- 🎯 Object Detection - Detect and locate objects in images
+- 🖼️ Image Classification - Classify images into categories (Rice types)
+- 🎯 Object Detection - Detect Smoking or NotSmoking
 - 🤖 Multiple Model Support - TensorFlow (.h5) and PyTorch (.pt) models
 - 📊 Interactive Visualizations - Real-time charts and analytics
 - 🎨 Modern UI - Glassmorphism design with dark/light theme
@@ -26,5 +26,6 @@ pip install streamlit pandas numpy pillow plotly
 streamlit run app.py
 
 ---
+
 ## **🧠 Full Installation (With ML Support)**
 For full functionality with actual model predictions:
