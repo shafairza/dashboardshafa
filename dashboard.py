@@ -61,13 +61,45 @@ elif page == "Prediksi Model":
         st.image(img, caption="🖼 Gambar yang Diupload", use_container_width=True)
 
         # ==========================
-        # DETEKSI OBJEK
+        # DETEKSI OBJEK (DENGAN MODIFIKASI FOKUS)
         # ==========================
         if menu == "Deteksi Objek (YOLO)":
             st.subheader("🔍 Hasil Deteksi Objek (YOLO)")
-            results = yolo_model(img)
-            result_img = results[0].plot()
-            st.image(result_img, caption="📦 Hasil Deteksi", use_container_width=True)
+            
+            # --- MODIFIKASI DIMULAI DI SINI ---
+            
+            # Mendapatkan hasil prediksi (conf=0.5 adalah ambang batas minimal kepercayaan)
+            results = yolo_model(img, conf=0.5) 
+            
+            # Mendapatkan daftar nama kelas dari model
+            class_names = yolo_model.names
+            
+            # Kelas yang ingin difokuskan (HARUS sesuai dengan label di model Anda!)
+            target_classes = ["smoking", "notsmoking"]
+            
+            # Cek apakah ada deteksi dari kelas target
+            target_detections_found = False
+            for r in results:
+                # Mengambil indeks kelas yang terdeteksi
+                detected_indices = r.boxes.cls.tolist()
+                
+                # Mengubah indeks kelas menjadi nama kelas yang terdeteksi
+                detected_class_names = [class_names[int(i)] for i in detected_indices]
+                
+                # Memeriksa apakah ada kelas target yang terdeteksi
+                if any(name in target_classes for name in detected_class_names):
+                    target_detections_found = True
+                    break
+
+            if target_detections_found:
+                # Jika objek target terdeteksi, tampilkan hasil plot dari YOLO
+                result_img = results[0].plot()
+                st.image(result_img, caption="📦 Hasil Deteksi", use_container_width=True)
+                st.success(f"✅ Objek 'smoking' atau 'notsmoking' terdeteksi.")
+            else:
+                # Jika objek target tidak terdeteksi, tampilkan gambar asli dan peringatan
+                st.warning(f"⚠️ **Tidak Terdeteksi:** Objek 'smoking' atau 'notsmoking' tidak ditemukan dalam gambar ini.")
+                st.image(img, caption="Gambar Asli (Tidak Ada Deteksi Target)", use_container_width=True)
 
         # ==========================
         # KLASIFIKASI GAMBAR
