@@ -31,18 +31,13 @@ if page == "Tentang":
     st.markdown("""
     Aplikasi ini dikembangkan oleh Shafa untuk mendeteksi dan mengklasifikasikan gambar menggunakan dua model utama:
     
-    - 🔍 **YOLOv8**: Model deteksi objek yang mengenali objek dalam gambar.  
-    - 🧠 **CNN (DenseNet201)**: Model klasifikasi gambar untuk mengidentifikasi kategori spesifik dari citra.
-    
-    ### 🎯 Tujuan
-    - Menyediakan alat bantu interaktif untuk mengenali dan mengklasifikasikan objek secara otomatis.  
-    - Meningkatkan efisiensi dalam pengolahan citra berbasis AI.  
+    - 🔍 **YOLOv8**: Model deteksi objek.
+    - 🧠 **CNN (DenseNet201)**: Model klasifikasi gambar.
     
     ### 📘 Cara Menggunakan
-    1. Buka halaman **Prediksi Model** di sidebar.
+    1. Buka halaman **Prediksi Model**.
     2. Unggah gambar (.jpg/.jpeg/.png).
-    3. Pilih mode **Deteksi Objek (YOLO)** atau **Klasifikasi Gambar**.
-    4. Lihat hasil yang ditampilkan beserta probabilitasnya.
+    3. Pilih mode deteksi atau klasifikasi.
     """)
 
 # ==========================
@@ -52,7 +47,6 @@ elif page == "Prediksi Model":
     st.title("🧠 Prediksi Model Deteksi & Klasifikasi")
 
     menu = st.sidebar.selectbox("Pilih Mode:", ["Deteksi Objek (YOLO)", "Klasifikasi Gambar"])
-
     uploaded_file = st.file_uploader("📤 Unggah Gambar", type=["jpg", "jpeg", "png"])
 
     if uploaded_file is not None:
@@ -75,8 +69,17 @@ elif page == "Prediksi Model":
             st.subheader("🧩 Hasil Klasifikasi Gambar")
 
             try:
-                # Gunakan dimensi 250x250 (sesuai model kamu)
-                target_size = (250, 250)
+                # Ambil ukuran input model (misalnya (None, 224, 224, 3))
+                input_shape = classifier.input_shape
+                if len(input_shape) == 4:
+                    target_size = (input_shape[1], input_shape[2])
+                else:
+                    target_size = (250, 250)  # fallback jika input_shape tidak terbaca
+
+                # Pastikan tidak ada None
+                if None in target_size:
+                    target_size = (250, 250)
+
                 img_resized = img.resize(target_size)
                 img_array = image.img_to_array(img_resized)
                 img_array = np.expand_dims(img_array, axis=0)
@@ -87,11 +90,11 @@ elif page == "Prediksi Model":
                 class_index = np.argmax(prediction)
                 confidence = np.max(prediction)
 
-                # Label kelas sesuai urutan model
+                # Label kelas
                 class_labels = ["Kelas Basmati", "Kelas Ipsala", "Kelas Arborio", "Kelas Karacadag", "Kelas Jasmine"]
                 predicted_label = class_labels[class_index]
 
-                # Batas ambang untuk validasi gambar
+                # Ambang batas
                 confidence_threshold = 0.7
 
                 if confidence < confidence_threshold:
@@ -101,7 +104,7 @@ elif page == "Prediksi Model":
                     st.write(f"🎯 Probabilitas: {confidence:.2%}")
 
             except Exception as e:
-                st.error(f"Terjadi kesalahan saat klasifikasi: {e}")
+                st.error(f"Terjadi kesalahan saat klasifikasi: {str(e)}")
 
     else:
         st.info("⬆ Silakan unggah gambar terlebih dahulu untuk melakukan prediksi.")
