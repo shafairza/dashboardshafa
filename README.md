@@ -98,6 +98,7 @@ The application is configured for rice classification with these categories:
 - Basmati
 - Ipsala
 - Jasmine
+
 Object Detection:
 - Not Smoking
 - Smoking
