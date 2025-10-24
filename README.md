@@ -125,34 +125,9 @@ The dashboard automatically detects available ML frameworks and shows status in 
 
 ```
 
-## Development
-
-### Adding New Models
-
-1. Place model files in `models/` directory
-2. Update model loading functions in `app.py`
-3. Modify prediction functions for your specific model
-4. Update categories and labels as needed
-
-### Customizing UI
-
-The application uses inline CSS for styling. Modify the `load_css()` function to customize:
-- Colors and themes
-- Layout and spacing
-- Animations and effects
-- Responsive design
-
 ## License
 
-This project is open source and available under the MIT License.
-
-## Support
-
-For issues and questions:
-1. Check the troubleshooting section
-2. Review console error messages
-3. Ensure all dependencies are installed correctly
-4. Verify model file compatibility
+This project is open source by Shafa and available under laboratory Big Data Programming.
 
 ---
 
