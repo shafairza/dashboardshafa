@@ -76,7 +76,7 @@ elif page == "Prediksi Model":
             st.subheader("🧩 Hasil Klasifikasi Gambar")
 
             # Preprocessing otomatis sesuai input model
-            target_size = classifier.input_shape[1:3]  # ambil (height, width)
+            target_size = classifier.input_shape[1:3]
             img_resized = img.resize(target_size)
             img_array = image.img_to_array(img_resized)
             img_array = np.expand_dims(img_array, axis=0)
@@ -91,8 +91,14 @@ elif page == "Prediksi Model":
             class_labels = ["Kelas Arborio", "Kelas Basmati", "Kelas Ipsala", "Kelas Jasmine", "Kelas Karacadag"]
             predicted_label = class_labels[class_index]
 
-            st.write(f"### 🔖 Kelas Prediksi: {predicted_label}")
-            st.write(f"🎯 Probabilitas: {confidence:.2%}")
+            # Batas ambang (threshold) untuk validasi gambar
+            confidence_threshold = 0.7  # ubah sesuai akurasi model kamu
+
+            if confidence < confidence_threshold:
+                st.warning("⚠️ Gambar tidak dikenali oleh model klasifikasi. Silakan unggah gambar yang sesuai dengan data pelatihan.")
+            else:
+                st.success(f"### 🔖 Kelas Prediksi: {predicted_label}")
+                st.write(f"🎯 Probabilitas: {confidence:.2%}")
 
     else:
         st.info("⬆ Silakan unggah gambar terlebih dahulu untuk melakukan prediksi.")
