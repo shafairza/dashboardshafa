@@ -25,28 +25,6 @@ For a quick demo without ML frameworks:
 pip install streamlit pandas numpy pillow plotly
 streamlit run app.py
 
-# Install core dependencies
-pip install streamlit pandas numpy pillow plotly
-
-# Install ML frameworks (optional)
-pip install tensorflow torch torchvision
-
-# Run the application
-streamlit run app.py
-
-# Install all dependencies
-pip install -r requirements.txt
-
-# Or install only core dependencies
-pip install streamlit pandas numpy pillow plotly scikit-learn opencv-python-headless matplotlib seaborn
-
-streamlit run app.py
-
-├── app.py                 # Main application file
-├── requirements.txt       # Python dependencies
-├── README.md              # This file
-├── models/                # ML model files
-│   ├── Shafa_Laporan2.h5
-│   └── Shafa_Laporan4.pt
-├── uploads/               # Uploaded images (auto-created)
-└── data/                  # Data files (if any)
+---
+## **🧠 Full Installation (With ML Support)**
+For full functionality with actual model predictions:
