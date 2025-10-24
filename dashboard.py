@@ -1,30 +1,27 @@
 import streamlit as st
-import pandas as pd
+from ultralytics import YOLO
+import tensorflow as tf
+from tensorflow.keras.preprocessing import image
 import numpy as np
 from PIL import Image
-import plotly.express as px
-import plotly.graph_objects as go
-from datetime import datetime
-import time
 
-# Attempt to detect available libs (you already had this in your snippet)
+# ==========================
+# PAGE CONFIG
+# ==========================
+
 try:
     import torch
     TORCH_AVAILABLE = True
-except Exception:
+except ImportError:
     TORCH_AVAILABLE = False
 
 try:
     import tensorflow as tf
     from tensorflow import keras
-    from tensorflow.keras.preprocessing import image
     TENSORFLOW_AVAILABLE = True
-except Exception:
+except ImportError:
     TENSORFLOW_AVAILABLE = False
 
-# ==========================
-# PAGE CONFIG
-# ==========================
 st.set_page_config(
     page_title="ML Dashboard",
     page_icon="🔬",
@@ -32,9 +29,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ==========================
-# HIDE STREAMLIT DEFAULTS (you included many rules already)
-# ==========================
+# --- CSS STYLING (TIDAK BERUBAH) ---
 st.markdown("""
     <style>
     /* Completely hide and disable sidebar collapse button */
@@ -61,9 +56,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ==========================
-# COMPREHENSIVE THEME CSS (your provided large CSS)
-# ==========================
 def load_css():
     return """
     <style>
@@ -76,6 +68,7 @@ def load_css():
         padding: 0;
     }
 
+    /* Root Variables - Purple Theme */
     :root {
         --primary: #a855f7;
         --primary-dark: #9333ea;
@@ -86,8 +79,13 @@ def load_css():
         --text-secondary: #d8b4fe;
         --text-muted: #c084fc;
         --border: rgba(168, 85, 247, 0.3);
+        --success: #00e676;
+        --error: #ff1744;
+        --warning: #ffc400;
+        --info: #a855f7;
     }
 
+    /* Main Background - Purple Theme */
     .main {
         background:
             linear-gradient(135deg, #0a1929 0%, #1a0d2e 25%, #2d1b4e 50%, #1e0d3a 75%, #0a1929 100%),
@@ -116,14 +114,30 @@ def load_css():
     }
 
     @keyframes backgroundShift {
-        0%, 100% { transform: translateX(0) translateY(0) scale(1); opacity: 1; }
-        25% { transform: translateX(-10px) translateY(-5px) scale(1.02); opacity: 0.8; }
-        50% { transform: translateX(5px) translateY(-10px) scale(0.98); opacity: 0.9; }
-        75% { transform: translateX(-5px) translateY(5px) scale(1.01); opacity: 0.85; }
+        0%, 100% { 
+            transform: translateX(0) translateY(0) scale(1);
+            opacity: 1;
+        }
+        25% { 
+            transform: translateX(-10px) translateY(-5px) scale(1.02);
+            opacity: 0.8;
+        }
+        50% { 
+            transform: translateX(5px) translateY(-10px) scale(0.98);
+            opacity: 0.9;
+        }
+        75% { 
+            transform: translateX(-5px) translateY(5px) scale(1.01);
+            opacity: 0.85;
+        }
     }
 
-    .main > div { position: relative; z-index: 1; }
+    .main > div {
+        position: relative;
+        z-index: 1;
+    }
 
+    /* Sidebar - Purple Theme */
     [data-testid="stSidebar"] {
         background: rgba(26, 13, 46, 0.98) !important;
         backdrop-filter: blur(40px) saturate(180%);
@@ -131,346 +145,648 @@ def load_css():
         border-right: 1px solid var(--border);
         box-shadow: 4px 0 24px rgba(168, 85, 247, 0.2);
     }
-    [data-testid="stSidebar"] > div { background: transparent !important; padding: 2rem 1.5rem !important; }
-    [data-testid="stSidebar"] * { color: var(--text-primary) !important; }
 
-    .main h1 { font-weight: 700 !important; color: #000000 !important; font-size: 2.25rem !important; margin-bottom: 0.5rem !important; }
-    .main h2 { font-weight: 600 !important; color: #000000 !important; font-size: 1.75rem !important; margin-top: 2rem !important; }
-    .main h3 { font-weight: 600 !important; color: #000000 !important; font-size: 1.125rem !important; }
+    [data-testid="stSidebar"] > div {
+        background: transparent !important;
+        padding: 2rem 1.5rem !important;
+    }
 
-    .main p, .main label, .main span, .main div { color: #000000 !important; line-height: 1.6 !important; }
-    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label, [data-testid="stSidebar"] span, [data-testid="stSidebar"] div { color: #ffffff !important; }
+    [data-testid="stSidebar"] * {
+        color: var(--text-primary) !important;
+    }
 
+    /* Sidebar Section Headers */
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
+        color: var(--text-primary) !important;
+    }
+
+    /* Typography - Black for main content */
+    .main h1 {
+        font-weight: 700 !important;
+        color: #000000 !important;
+        font-size: 2.25rem !important;
+        line-height: 1.2 !important;
+        letter-spacing: -0.03em !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .main h2 {
+        font-weight: 600 !important;
+        color: #000000 !important;
+        font-size: 1.75rem !important;
+        line-height: 1.3 !important;
+        letter-spacing: -0.02em !important;
+        margin-top: 2rem !important;
+    }
+
+    .main h3 {
+        font-weight: 600 !important;
+        color: #000000 !important;
+        font-size: 1.125rem !important;
+        line-height: 1.5 !important;
+    }
+
+    /* Sidebar headings remain white */
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
+        color: #ffffff !important;
+    }
+
+    /* Main content text - BLACK */
+    .main p,
+    .main label,
+    .main span,
+    .main div {
+        color: #000000 !important;
+        line-height: 1.6 !important;
+    }
+
+    /* Ensure readability for all text in main */
+    .main .stMarkdown p,
+    .main .stMarkdown span,
+    .main .stMarkdown div {
+        color: #000000 !important;
+    }
+
+    /* Placeholder text */
+    input::placeholder {
+        color: #666666 !important;
+    }
+
+    /* Sidebar text remains white */
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] div {
+        color: #ffffff !important;
+    }
+
+    /* Glass Card Base - Ultra Premium */
     .glass-card {
-        background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%) !important;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%) !important;
         backdrop-filter: blur(20px) saturate(200%);
-        border: 1px solid rgba(255,255,255,0.15);
+        -webkit-backdrop-filter: blur(20px) saturate(200%);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 24px;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
-        padding: 1.5rem;
-        transition: all 0.5s;
+        box-shadow:
+            0 12px 40px rgba(0, 0, 0, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2),
+            0 0 0 1px rgba(139, 92, 246, 0.1);
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
     }
-    .glass-card:hover { transform: translateY(-6px) scale(1.01); }
 
+    .glass-card:hover {
+        border-color: rgba(139, 92, 246, 0.6);
+        box-shadow:
+            0 20px 60px rgba(139, 92, 246, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3),
+            0 0 0 1px rgba(139, 92, 246, 0.2);
+        transform: translateY(-8px) scale(1.02);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%) !important;
+    }
+
+    /* Buttons - Purple Theme */
     .stButton > button {
-        background: linear-gradient(135deg, rgba(168,85,247,0.9) 0%, rgba(147,51,234,0.9) 100%) !important;
-        color: #fff !important; font-weight: 600 !important;
-        border-radius: 14px !important; padding: 0.875rem 1.6rem !important;
-        box-shadow: 0 4px 20px rgba(168,85,247,0.5);
+        background: linear-gradient(135deg, rgba(168, 85, 247, 0.9) 0%, rgba(147, 51, 234, 0.9) 100%) !important;
+        backdrop-filter: blur(10px);
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        border: 1px solid rgba(168, 85, 247, 0.4) !important;
+        border-radius: 14px !important;
+        padding: 0.875rem 2rem !important;
+        font-size: 0.9375rem !important;
+        letter-spacing: 0.01em !important;
+        box-shadow:
+            0 4px 20px rgba(168, 85, 247, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
-    .stButton > button:hover { transform: translateY(-2px) scale(1.02) !important; }
 
-    .stRadio > div > label { background: var(--surface) !important; border: 1px solid var(--border) !important; border-radius: 16px !important; padding: 1rem 1.25rem !important; min-height: 60px !important; display:flex !important; align-items:center !important; }
-    .stRadio > div > label[data-checked="true"] { background: linear-gradient(135deg, rgba(168,85,247,0.3) 0%, rgba(147,51,234,0.2) 100%) !important; border-color: var(--primary) !important; transform: translateX(4px) !important; }
+    .stButton > button:hover {
+        background: linear-gradient(135deg, rgba(192, 132, 252, 1) 0%, rgba(168, 85, 247, 1) 100%) !important;
+        box-shadow:
+            0 8px 30px rgba(168, 85, 247, 0.7),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+        transform: translateY(-2px) scale(1.02) !important;
+        border-color: rgba(192, 132, 252, 0.6) !important;
+    }
 
+    /* Radio Button Styling - Perfect Consistency */
+    .stRadio > div {
+        gap: 0.75rem !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    .stRadio > div > label {
+        background: var(--surface) !important;
+        backdrop-filter: blur(15px);
+        border: 1px solid var(--border) !important;
+        border-radius: 16px !important;
+        padding: 1rem 1.25rem !important;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        cursor: pointer !important;
+        position: relative !important;
+        overflow: hidden !important;
+        min-height: 60px !important;
+        height: 60px !important;
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .stRadio > div > label::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 4px;
+        height: 100%;
+        background: transparent;
+        transition: all 0.3s ease;
+        border-radius: 0 4px 4px 0;
+    }
+
+    .stRadio > div > label:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: var(--primary) !important;
+        transform: translateX(4px) !important;
+        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.2) !important;
+    }
+
+    .stRadio > div > label:hover::before {
+        background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+    }
+
+    .stRadio > div > label[data-checked="true"] {
+        background: linear-gradient(135deg, rgba(168, 85, 247, 0.3) 0%, rgba(147, 51, 234, 0.2) 100%) !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4) !important;
+        transform: translateX(4px) !important;
+    }
+
+    .stRadio > div > label[data-checked="true"]::before {
+        background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+    }
+
+    /* Hide default radio button circle */
+    .stRadio > div > label > div:first-child {
+        display: none !important;
+    }
+
+    .stRadio > div > label > div {
+        font-weight: 600 !important;
+        color: var(--text-primary) !important;
+        font-size: 1rem !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0rem !important;
+        margin-left: 0rem !important;
+        width: 100% !important;
+    }
+
+    /* Slider Styling */
+    .stSlider > div > div > div {
+        background: var(--surface) !important;
+        border-radius: 8px !important;
+        height: 6px !important;
+    }
+
+    .stSlider > div > div > div > div {
+        background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%) !important;
+    }
+
+    .stSlider > div > div > div > div > div {
+        background: #ffffff !important;
+        border: 2px solid var(--primary) !important;
+        box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3) !important;
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    /* File Uploader - Glass with Purple Theme */
     [data-testid="stFileUploader"] {
-        background: rgba(168,85,247,0.08); border: 2px dashed rgba(168,85,247,0.5); border-radius: 20px; padding: 2rem;
+        background: rgba(168, 85, 247, 0.08);
+        backdrop-filter: blur(10px);
+        border: 2px dashed rgba(168, 85, 247, 0.5);
+        border-radius: 20px;
+        padding: 3rem 2rem;
+        transition: all 0.3s ease;
     }
-    [data-testid="stFileUploader"] label, [data-testid="stFileUploader"] span, [data-testid="stFileUploader"] p { color: #000000 !important; font-weight: 500 !important; }
 
+    [data-testid="stFileUploader"]:hover {
+        border-color: rgba(192, 132, 252, 0.7);
+        background: rgba(168, 85, 247, 0.12);
+        box-shadow: 0 8px 30px rgba(168, 85, 247, 0.3);
+    }
+
+    /* File Uploader Text - BLACK */
+    [data-testid="stFileUploader"] label,
+    [data-testid="stFileUploader"] span,
+    [data-testid="stFileUploader"] p,
+    [data-testid="stFileUploader"] div {
+        color: #000000 !important;
+        font-weight: 500 !important;
+    }
+
+    [data-testid="stFileUploader"] small {
+        color: #333333 !important;
+    }
+
+    /* Metrics - Glass Style */
+    [data-testid="stMetric"] {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(16px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 1.5rem !important;
+        box-shadow:
+            0 4px 20px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    [data-testid="stMetric"]:hover {
+        border-color: rgba(139, 92, 246, 0.3);
+        box-shadow:
+            0 8px 30px rgba(139, 92, 246, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+    }
+
+    [data-testid="stMetricValue"] {
+        font-weight: 700 !important;
+        color: var(--text-primary) !important;
+        font-size: 2rem !important;
+        letter-spacing: -0.02em !important;
+    }
+
+    [data-testid="stMetricLabel"] {
+        font-weight: 500 !important;
+        color: var(--text-secondary) !important;
+        font-size: 0.8125rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.08em !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Alert Boxes - Glass with Better Visibility */
+    .stAlert {
+        backdrop-filter: blur(10px);
+        border-radius: 14px;
+        border: 1px solid;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+    }
+
+    .stSuccess {
+        background: rgba(34, 197, 94, 0.2) !important;
+        color: #ffffff !important;
+        border-color: rgba(34, 197, 94, 0.5) !important;
+    }
+
+    .stError {
+        background: rgba(239, 68, 68, 0.2) !important;
+        color: #ffffff !important;
+        border-color: rgba(239, 68, 68, 0.5) !important;
+    }
+
+    .stInfo {
+        background: rgba(168, 85, 247, 0.2) !important;
+        color: #ffffff !important;
+        border-color: rgba(168, 85, 247, 0.5) !important;
+    }
+
+    .stWarning {
+        background: rgba(249, 115, 22, 0.2) !important;
+        color: #ffffff !important;
+        border-color: rgba(249, 115, 22, 0.5) !important;
+    }
+
+    /* All Alert text should be BLACK */
+    .stAlert div,
+    .stAlert p,
+    .stAlert span {
+        color: #000000 !important;
+    }
+
+    /* Progress Bar */
+    .stProgress > div > div > div > div {
+        background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%) !important;
+    }
+
+    .stProgress > div > div {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-radius: 10px !important;
+    }
+
+    /* Dataframe - Glass */
+    .dataframe {
+        background: rgba(255, 255, 255, 0.04) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 14px !important;
+        overflow: hidden !important;
+    }
+
+    .dataframe thead tr {
+        background: rgba(139, 92, 246, 0.15) !important;
+    }
+
+    .dataframe th {
+        color: var(--text-primary) !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        font-size: 0.75rem !important;
+        letter-spacing: 0.08em !important;
+        padding: 1rem !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .dataframe td {
+        color: var(--text-secondary) !important;
+        padding: 0.875rem 1rem !important;
+        border-color: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    .dataframe tbody tr:hover {
+        background: rgba(139, 92, 246, 0.08) !important;
+    }
+
+    /* Hide Streamlit Elements */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+
+    /* Hide sidebar collapse button completely */
+    [data-testid="collapsedControl"] {
+        display: none !important;
+    }
+
+    /* Hide sidebar collapse button in header */
+    [data-testid="stSidebar"] button[kind="header"] {
+        display: none !important;
+    }
+
+    /* Hide all collapse control buttons */
+    button[aria-label*="collapse"] {
+        display: none !important;
+    }
+
+    /* Hide Material Icon text fallback */
+    .material-icons {
+        font-size: 0 !important;
+    }
+
+    /* Hide keyboard_double_arrow text specifically */
+    [data-testid="stSidebar"] button {
+        font-size: 0 !important;
+    }
+
+    [data-testid="stSidebar"] button svg {
+        display: block !important;
+    }
+
+    /* Alternative: hide the entire sidebar nav button area */
+    section[data-testid="stSidebar"] > div > div > button {
+        display: none !important;
+    }
+
+    /* Hide the collapsible trigger */
+    .css-1544g2n, .css-nahz7x, .css-10trblm {
+        display: none !important;
+    }
+
+    /* Balance/Result Card - Purple Theme */
     .balance-card {
-        background: linear-gradient(135deg, rgba(168,85,247,0.2) 0%, rgba(147,51,234,0.15) 100%); border-radius: 24px; padding: 2rem; box-shadow: 0 8px 32px rgba(168,85,247,0.3);
+        background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(147, 51, 234, 0.15) 100%);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(168, 85, 247, 0.4);
+        border-radius: 24px;
+        padding: 2.5rem;
+        box-shadow:
+            0 8px 32px rgba(168, 85, 247, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s ease;
     }
 
-    [data-testid="stImage"] { border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
+    .balance-card:hover {
+        border-color: rgba(192, 132, 252, 0.6);
+        box-shadow:
+            0 12px 40px rgba(168, 85, 247, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        transform: translateY(-4px);
+    }
 
-    #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
+    /* Chart Container - Glass */
+    .js-plotly-plot {
+        background: rgba(255, 255, 255, 0.03) !important;
+        backdrop-filter: blur(10px);
+        border-radius: 16px !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        padding: 1rem !important;
+    }
+
+    /* Image Container */
+    [data-testid="stImage"] {
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Custom Loading Animation */
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .loading-dots {
+        display: flex;
+        gap: 8px;
+        margin-top: 1rem;
+    }
+
+    .loading-dot {
+        width: 12px;
+        height: 12px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        border-radius: 50%;
+        animation: bounce 1.4s ease-in-out infinite both;
+    }
+
+    .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+    .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+    .loading-dot:nth-child(3) { animation-delay: 0s; }
+
+    @keyframes bounce {
+        0%, 80%, 100% {
+            transform: scale(0);
+        }
+        40% {
+            transform: scale(1);
+        }
+    }
+
+    /* Divider */
+    hr {
+        border-color: rgba(255, 255, 255, 0.08) !important;
+        margin: 2rem 0 !important;
+    }
     </style>
     """
 
 st.markdown(load_css(), unsafe_allow_html=True)
 
-# ==========================
-# SESSION STATE INITIALIZATION
-# ==========================
+# --- SESSION STATE INITIALIZATION ---
 if 'prediction_history' not in st.session_state:
-    st.session_state.prediction_history = []  # list of dicts: {time, type, label, confidence}
+    st.session_state.prediction_history = []
 if 'total_predictions' not in st.session_state:
     st.session_state.total_predictions = 0
 if 'accuracy_score' not in st.session_state:
     st.session_state.accuracy_score = 95.7
 if 'task_type' not in st.session_state:
-    st.session_state.task_type = "Image Classification"
+    st.session_state.task_type = "Image Classification" # Default
 if 'model_loaded' not in st.session_state:
     st.session_state.model_loaded = False
 if 'current_page' not in st.session_state:
-    st.session_state.current_page = "Beranda"
+    st.session_state.current_page = "Dashboard"
 
 # ==========================
-# MODEL LOADING (with cache_resource)
+# Load Models
 # ==========================
 @st.cache_resource
-def load_models(yolo_path="model/Shafa_Laporan 4.pt", clf_path="model/Shafa_Laporan 2.h5"):
-    # Load YOLO if available
-    yolo_model = None
-    classifier = None
-
-    # Ultralytics YOLO
-    try:
-        if TORCH_AVAILABLE:
-            from ultralytics import YOLO
-            yolo_model = YOLO(yolo_path)
-        else:
-            yolo_model = None
-    except Exception as e:
-        yolo_model = None
-
-    # TensorFlow classifier
-    try:
-        if TENSORFLOW_AVAILABLE:
-            classifier = tf.keras.models.load_model(clf_path)
-        else:
-            classifier = None
-    except Exception as e:
-        classifier = None
-
+def load_models():
+    yolo_model = YOLO("model/Shafa_Laporan 4.pt")
+    classifier = tf.keras.models.load_model("model/Shafa_Laporan 2.h5")
     return yolo_model, classifier
 
-# Try to load models
 try:
     yolo_model, classifier = load_models()
-    st.session_state.model_loaded = True
+    MODEL_LOAD_SUCCESS = True
 except Exception as e:
-    yolo_model, classifier = None, None
-    st.session_state.model_loaded = False
+    st.error(f"Gagal memuat model: {e}. Prediksi akan disimulasikan.")
+    MODEL_LOAD_SUCCESS = False
 
-# If models failed, define dummy fallbacks
-class DummyYOLO:
-    def __init__(self):
-        self.names = ["smoking", "notsmoking"]
-    def __call__(self, img, conf=0.25):
-        # returns a list-like object similar to ultralytics result
-        class Boxes:
-            def __init__(self):
-                self.cls = np.array([], dtype=np.int64)
-        class Result:
-            def __init__(self, img):
-                self.boxes = Boxes()
-                self.orig_img = img
-            def plot(self):
-                return np.array(self.orig_img.convert("RGB"))
-        return [Result(img)]
+    class DummyYOLO:
+        def __call__(self, img, conf=0.25):
+            class DummyBoxes:
+                cls = []
+            class DummyResults:
+                boxes = DummyBoxes()
+                def plot(self):
+                    return np.array(img.convert('RGB')) 
+            return [DummyResults()]
+        names = ["smoking", "notsmoking"]
 
-if yolo_model is None:
     yolo_model = DummyYOLO()
+    classifier = None
+
 
 # ==========================
-# SIDEBAR NAVIGATION
+# Sidebar
 # ==========================
-with st.sidebar:
-    st.markdown("<h2 style='color: white;'>ML Dashboard</h2>", unsafe_allow_html=True)
-    st.markdown("##")
-    page = st.radio("Navigasi:", ("Beranda", "Prediksi Model", "Analitik", "Tentang"), index=0)
+st.sidebar.title("📊 ML Dashboard")
+page = st.sidebar.radio("Navigasi:", ["🏠 Beranda", "🧠 Prediksi Model", "📈 Analitik", "ℹ️ Tentang"])
 
-# ==========================
-# PAGE: BERANDA
-# ==========================
-if page == "Beranda":
-    st.markdown('<div style="display:flex; gap:1rem; align-items:center;">'
-                '<div style="width:96px; height:96px; border-radius:22px; background: linear-gradient(135deg,#6c5dd3,#c084fc); display:flex; align-items:center; justify-content:center; box-shadow: 0 12px 40px rgba(108,93,211,0.25);">'
-                '<span style="font-size:48px;">🔬</span></div>'
-                '<div style="flex:1;">'
-                '<h1 style="margin-bottom:0.1rem;">Dashboard: Classification and Detection by <span style="color:#6C5DD3">S.</span></h1>'
-                '<p style="margin-top:0.25rem; color:#444;">Platform untuk pengujian Model Machine Learning.</p>'
-                '</div></div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="balance-card" style="padding: 1.2rem 1.4rem; margin-top:1.2rem;">'
-                '<strong>Pilih prediksi model pada bagian navigasi untuk memulai deteksi atau klasifikasi gambar.</strong>'
-                '</div>', unsafe_allow_html=True)
-
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown('<div class="glass-card"><h3 style="color:#6C5DD3;">Model Tersedia:</h3><p>TensorFlow (Keras) dan PyTorch (untuk klasifikasi/deteksi)</p></div>', unsafe_allow_html=True)
-    with c2:
-        st.markdown('<div class="glass-card"><h3 style="color:#6C5DD3;">Fitur Utama:</h3><p>Klasifikasi & Deteksi Objek pada Gambar</p></div>', unsafe_allow_html=True)
-
-    st.markdown("##")
-    st.markdown("<h3>Ringkasan Prediksi</h3>", unsafe_allow_html=True)
-    st.metric("Total Prediksi", st.session_state.total_predictions, delta=f"{len(st.session_state.prediction_history)} baru")
-    st.metric("Akurasi (perkiraan)", f"{st.session_state.accuracy_score:.1f}%")
 
 # ==========================
-# PAGE: PREDIKSI MODEL
+# PAGE 1: BERANDA
 # ==========================
-elif page == "Prediksi Model":
-    st.markdown('<h2 style="color:#000;">🧠 Prediksi Model Deteksi & Klasifikasi</h2>', unsafe_allow_html=True)
+if page == "🏠 Beranda":
+    st.markdown('<div class="title-text">Dashboard: Classification and Detection by <span class="highlight">S.</span></div>', unsafe_allow_html=True)
+    st.markdown('<p class="subtitle">Platform untuk pengujian Model Machine Learning.</p>', unsafe_allow_html=True)
 
-    mode = st.selectbox("Pilih Mode:", ["Deteksi Objek (YOLO)", "Klasifikasi Gambar"])
+    st.markdown('<div class="info-card">Pilih prediksi model pada bagian navigasi untuk memulai deteksi atau klasifikasi gambar.</div>', unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown('<div class="info-card"><h4>Model Tersedia:</h4><p><span class="highlight">TensorFlow (Keras)</span> dan <span class="highlight">PyTorch</span> untuk klasifikasi</p></div>', unsafe_allow_html=True)
+    with col2:
+        st.markdown('<div class="info-card"><h4>Fitur Utama:</h4><p>Klasifikasi & Deteksi Objek pada Gambar</p></div>', unsafe_allow_html=True)
+
+
+# ==========================
+# PAGE 2: PREDIKSI MODEL
+# ==========================
+elif page == "🧠 Prediksi Model":
+    st.title("🧠 Prediksi Model Deteksi & Klasifikasi")
+
+    menu = st.selectbox("Pilih Mode:", ["Deteksi Objek (YOLO)", "Klasifikasi Gambar"])
     uploaded_file = st.file_uploader("📤 Unggah Gambar", type=["jpg", "jpeg", "png"])
 
     if uploaded_file is not None:
         img = Image.open(uploaded_file).convert("RGB")
         st.image(img, caption="🖼 Gambar yang Diupload", use_container_width=True)
 
-        if mode == "Deteksi Objek (YOLO)":
-            st.subheader("🔍 Hasil Deteksi Objek (YOLO)")
-
+        if menu == "Deteksi Objek (YOLO)":
+            st.subheader("🔍 Hasil Deteksi Objek")
             try:
-                # run detection
                 results = yolo_model(img, conf=0.25)
-                # check results structure safely
-                detected_class_names = []
-                for r in results:
-                    # ultralytics result: r.boxes.cls is tensor (N,)
-                    cls_attr = getattr(r.boxes, 'cls', None)
-                    if cls_attr is None:
-                        continue
-                    try:
-                        # try numpy conversion
-                        indices = np.array(cls_attr).astype(int).tolist()
-                    except Exception:
-                        try:
-                            indices = cls_attr.tolist()
-                        except Exception:
-                            indices = []
-                    for idx in indices:
-                        if isinstance(yolo_model.names, (list, dict)):
-                            # if names is list-like or dict-like
-                            try:
-                                name = yolo_model.names[int(idx)]
-                            except Exception:
-                                name = str(idx)
-                        else:
-                            name = str(idx)
-                        detected_class_names.append(name)
+                class_names = yolo_model.names
+                detected = any(cls in [0, 1] for r in results for cls in getattr(r.boxes, 'cls', []))
 
-                if len(detected_class_names) > 0:
-                    # If ultralytics supports plot()
-                    try:
-                        plotted = results[0].plot()
-                        st.image(plotted, caption="📦 Hasil Deteksi (dengan bounding box)", use_container_width=True)
-                    except Exception:
-                        st.image(img, caption="📦 Hasil Deteksi (gambar asli)", use_container_width=True)
-                    st.success(f"✅ Objek terdeteksi: {', '.join(detected_class_names)}")
-                    # log to history
-                    st.session_state.prediction_history.append({
-                        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "type": "detection",
-                        "label": ",".join(detected_class_names),
-                        "confidence": None
-                    })
-                    st.session_state.total_predictions += 1
+                if detected:
+                    st.image(results[0].plot(), caption="📦 Hasil Deteksi", use_container_width=True)
+                    st.success("✅ Objek 'smoking' atau 'notsmoking' terdeteksi!")
                 else:
-                    st.warning("⚠️ Tidak ada objek terdeteksi (target tidak ditemukan).")
-                    st.image(img, caption="Gambar Asli (Tidak Ada Deteksi Target)", use_container_width=True)
-
+                    st.warning("⚠️ Tidak ada objek target terdeteksi.")
             except Exception as e:
                 st.error(f"Terjadi kesalahan saat deteksi: {e}")
 
-        elif mode == "Klasifikasi Gambar":
+        elif menu == "Klasifikasi Gambar":
             st.subheader("🧩 Hasil Klasifikasi Gambar")
 
             CLASSIFICATION_LABELS = ["Arborio", "Basmati", "Ipsala", "Jasmine", "Karacadag"]
-
-            if not st.session_state.model_loaded or classifier is None:
-                st.error("Model Klasifikasi tidak dapat dimuat. Menjalankan simulasi prediksi.")
-                # Simulate a random prediction
-                idx = np.random.randint(0, len(CLASSIFICATION_LABELS))
-                pred_label = CLASSIFICATION_LABELS[idx]
-                pred_conf = np.round(np.random.uniform(0.4, 0.95), 2)
-                st.warning(f"Simulasi: {pred_label} ({pred_conf:.2%})")
+            if not MODEL_LOAD_SUCCESS or classifier is None:
+                st.error("Model Klasifikasi tidak tersedia.")
             else:
-                try:
-                    target_size = (128, 128)
-                    img_resized = img.resize(target_size)
-                    img_array = image.img_to_array(img_resized)
-                    img_array = np.expand_dims(img_array, axis=0)
-                    img_array = img_array / 255.0
+                img_resized = img.resize((128, 128))
+                img_array = np.expand_dims(image.img_to_array(img_resized) / 255.0, axis=0)
+                prediction = classifier.predict(img_array, verbose=0)
+                class_index = np.argmax(prediction)
+                confidence = np.max(prediction)
+                label = CLASSIFICATION_LABELS[class_index]
 
-                    prediction = classifier.predict(img_array, verbose=0)
-                    class_index = int(np.argmax(prediction, axis=1)[0])
-                    confidence = float(np.max(prediction))
-                    predicted_label = CLASSIFICATION_LABELS[class_index]
-                    threshold = 0.7
-
-                    col1, col2 = st.columns([1, 1])
-                    with col1:
-                        st.image(img_resized, caption="🔍 Gambar yang Diklasifikasikan", use_container_width=True)
-                    with col2:
-                        if confidence >= threshold:
-                            st.success(f"🔖 Kelas Prediksi: {predicted_label}")
-                            st.metric(label="🎯 Probabilitas", value=f"{confidence:.2%}")
-                        else:
-                            st.warning("⚠️ Model tidak yakin dengan prediksi ini.")
-                            st.write(f"Prediksi tertinggi: **{predicted_label}** ({confidence:.2%})")
-
-                    # log history
-                    st.session_state.prediction_history.append({
-                        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "type": "classification",
-                        "label": predicted_label,
-                        "confidence": confidence
-                    })
-                    st.session_state.total_predictions += 1
-
-                except Exception as e:
-                    err = str(e)
-                    if "incompatible" in err or "shape" in err or "Matrix" in err:
-                        st.error("""
-                            🛑 **ERROR KRITIS MODEL KLASIFIKASI!**
-                            Model gagal prediksi karena ketidaksesuaian dimensi (shape mismatch).
-                            Solusi: Pastikan model memiliki GlobalAveragePooling2D() atau Flatten() sebelum Dense terakhir
-                            lalu simpan ulang model (.h5).
-                        """)
-                    else:
-                        st.error(f"Terjadi kesalahan saat klasifikasi: {err}")
-
+                if confidence >= 0.7:
+                    st.success(f"🔖 Kelas Prediksi: {label}")
+                    st.metric("🎯 Probabilitas", f"{confidence:.2%}")
+                else:
+                    st.warning(f"Model tidak yakin (prediksi tertinggi: {label} - {confidence:.2%})")
     else:
         st.info("⬆ Silakan unggah gambar terlebih dahulu untuk melakukan prediksi.")
 
-    st.markdown("---")
-    st.markdown("### Riwayat Prediksi Terakhir")
-    # show last 6 predictions
-    history_df = pd.DataFrame(list(reversed(st.session_state.prediction_history))[:6])
-    if not history_df.empty:
-        st.dataframe(history_df)
-    else:
-        st.write("Belum ada prediksi.")
 
 # ==========================
-# PAGE: ANALITIK
+# PAGE 3: TENTANG
 # ==========================
-elif page == "Analitik":
-    st.markdown('<h2 style="color:#000;">📈 Analitik</h2>', unsafe_allow_html=True)
-
-    st.markdown("**Ringkasan pemakaian & distribusi prediksi**")
-    # simple example analytics using history
-    if len(st.session_state.prediction_history) > 0:
-        df_hist = pd.DataFrame(st.session_state.prediction_history)
-        # count by type
-        counts = df_hist['type'].value_counts().reset_index()
-        counts.columns = ['type', 'count']
-        fig = px.pie(counts, names='type', values='count', title='Distribusi Jenis Prediksi')
-        st.plotly_chart(fig, use_container_width=True)
-
-        # time series of predictions
-        df_hist['time_parsed'] = pd.to_datetime(df_hist['time'])
-        times = df_hist.groupby(pd.Grouper(key='time_parsed', freq='H')).size().reset_index(name='counts')
-        fig2 = px.bar(times, x='time_parsed', y='counts', title='Prediksi per Jam')
-        st.plotly_chart(fig2, use_container_width=True)
-    else:
-        st.info("Belum ada data riwayat prediksi untuk dianalisis.")
-
-# ==========================
-# PAGE: TENTANG
-# ==========================
-elif page == "Tentang":
-    st.markdown('<h2 style="color:#000;">💡 Tentang Aplikasi</h2>', unsafe_allow_html=True)
+elif page == "ℹ️ Tentang":
+    st.title("💡 Tentang Aplikasi")
     st.markdown("""
     Aplikasi ini dikembangkan oleh **Shafa** untuk mendeteksi dan mengklasifikasikan gambar menggunakan dua model utama:
 
-    - 🔍 **YOLOv8 (Deteksi):** Mendeteksi objek 'smoking' dan 'notsmoking'.  
+    - 🔍 **YOLOv8 (Deteksi):** Mendeteksi objek *smoking* dan *notsmoking*.  
     - 🧠 **DenseNet201 (Klasifikasi):** Mengklasifikasikan 5 jenis beras.
 
-    **Catatan Teknis:**  
-    - Model klasifikasi dilatih pada ukuran input 128x128 dan dinormalisasi dengan `rescale=1./255`.  
-    - Jika mengalami masalah `shape mismatch`, tambahkan `GlobalAveragePooling2D()` atau `Flatten()` sebelum Dense terakhir.
+    ### Cara Menggunakan
+    1. Buka halaman *Prediksi Model*.
+    2. Unggah gambar dalam format `.jpg`, `.jpeg`, atau `.png`.
+    3. Pilih mode deteksi atau klasifikasi.
     """)
-    st.markdown("##")
-    st.markdown("**Kontak / Versi**")
-    st.write("Dikembangkan oleh Shafa — versi demo dashboard.")
-
-# ==========================
-# FOOTER (tiny)
-# ==========================
-st.markdown("<div style='text-align:center; margin-top:2rem; color:#999;'>ML Dashboard • Built with Streamlit</div>", unsafe_allow_html=True)
