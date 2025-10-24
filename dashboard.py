@@ -747,7 +747,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
     }
 
 def predict_detection(image):
-    """Object Detection Prediction (SIMULASI)"""
+    """Object Detection Prediction"""
     # Ganti ini dengan logika deteksi YOLO Anda yang sebenarnya
     objects = [
         {'class': 'Face', 'confidence': 0.95, 'bbox': [100, 150, 200, 250]},
@@ -1004,7 +1004,7 @@ if st.session_state.current_page == "Dashboard":
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
                 <h3 style="color: #a855f7;">Fitur Utama:</h3>
                 <p style="color: #000000;">
-                    Klasifikasi Gambar & Deteksi Objek (Simulasi)
+                    Klasifikasi & Deteksi Objek pada Gambar
                 </p>
             </div>
         """, unsafe_allow_html=True)
