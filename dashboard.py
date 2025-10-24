@@ -989,14 +989,25 @@ if st.session_state.current_page == "Dashboard":
 
     st.info("Pilih **'🧠 Prediksi Model'** di sidebar untuk memulai deteksi atau klasifikasi gambar.")
     
-    st.markdown("""
-    <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-        <h3 style="color: #a855f7;">Fitur Utama:</h3>
-        <p style="color: #000000;">
-            Klasifikasi Gambar dan Deteksi Objek
-        </p>
-    </div>
-""", unsafe_allow_html=True)
+     col_info_1, col_info_2 = st.columns(2)
+    with col_info_1:
+        st.markdown("""
+            <div class="glass-card" style="padding: 1.5rem; text-align: center;">
+                <h3 style="color: #a855f7;">Model Tersedia:</h3>
+                <p style="color: #000000;">
+                    TensorFlow (Keras) dan PyTorch (untuk klasifikasi)
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+    with col_info_2:
+        st.markdown("""
+            <div class="glass-card" style="padding: 1.5rem; text-align: center;">
+                <h3 style="color: #a855f7;">Fitur Utama:</h3>
+                <p style="color: #000000;">
+                    Klasifikasi Gambar & Deteksi Objek (Simulasi)
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
 
 # 2. Prediksi Model (Baru)
 elif st.session_state.current_page == "Model Prediction":
