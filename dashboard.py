@@ -989,7 +989,7 @@ if st.session_state.current_page == "Dashboard":
 
     st.info("Pilih **'🧠 Prediksi Model'** di sidebar untuk memulai deteksi atau klasifikasi gambar.")
     
-     col_info_1, col_info_2 = st.columns(2)
+    col_info_1, col_info_2 = st.columns(2)
     with col_info_1:
         st.markdown("""
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
@@ -1008,6 +1008,7 @@ if st.session_state.current_page == "Dashboard":
                 </p>
             </div>
         """, unsafe_allow_html=True)
+
 
 # 2. Prediksi Model (Baru)
 elif st.session_state.current_page == "Model Prediction":
