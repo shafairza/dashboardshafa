@@ -51,13 +51,8 @@ elif page == "Prediksi Model":
     uploaded_file = st.file_uploader("📤 Unggah Gambar", type=["jpg", "jpeg", "png"])
 
     if uploaded_file is not None:
-        try:
-            # Buka gambar dengan aman
-            img = Image.open(uploaded_file).convert("RGB")
-            st.image(img, caption="🖼 Gambar yang Diupload", use_container_width=True)
-        except Exception as e:
-            st.error(f"Gagal membaca gambar: {str(e)}")
-            st.stop()
+        img = Image.open(uploaded_file).convert("RGB")
+        st.image(img, caption="🖼 Gambar yang Diupload", use_container_width=True)
 
         # ==========================
         # DETEKSI OBJEK (YOLO)
@@ -78,39 +73,37 @@ elif page == "Prediksi Model":
             st.subheader("🧩 Hasil Klasifikasi Gambar")
 
             try:
-                # Pertama, jalankan YOLO untuk cek apakah gambar mengandung objek terdeteksi
-                yolo_check = yolo_model(img)
-                boxes = yolo_check[0].boxes
-                if boxes is not None and len(boxes) > 0:
-                    st.warning("⚠️ Gambar ini terdeteksi sebagai objek oleh YOLO. Gunakan mode 'Deteksi Objek (YOLO)'.")
-                    st.stop()
-
                 # Ambil ukuran input model
                 input_shape = classifier.input_shape
-                if len(input_shape) == 4 and all(v is not None for v in input_shape[1:3]):
+                if len(input_shape) == 4:
                     target_size = (input_shape[1], input_shape[2])
                 else:
-                    target_size = (224, 224)  # fallback default
+                    target_size = (224, 224)  # default DenseNet201
 
-                # Preprocessing untuk DenseNet201
+                # Pastikan tidak ada None
+                if None in target_size:
+                    target_size = (224, 224)
+
+                # Preprocessing sesuai DenseNet201
                 img_resized = img.resize(target_size)
                 img_array = image.img_to_array(img_resized)
                 img_array = np.expand_dims(img_array, axis=0)
                 img_array = preprocess_input(img_array)
 
-                # Prediksi klasifikasi
+                # Prediksi
                 prediction = classifier.predict(img_array)
                 class_index = np.argmax(prediction)
                 confidence = np.max(prediction)
 
+                # Label kelas (⚠ pastikan urutannya sesuai training)
                 class_labels = ["Basmati", "Ipsala", "Arborio", "Karacadag", "Jasmine"]
                 predicted_label = class_labels[class_index]
 
-                # Ambang batas probabilitas
+                # Ambang batas
                 confidence_threshold = 0.7
 
                 if confidence < confidence_threshold:
-                    st.warning("⚠️ Gambar tidak dikenali oleh model. Pastikan gambar sesuai dengan data pelatihan.")
+                    st.warning("⚠ Gambar tidak dikenali oleh model. Pastikan gambar sesuai dengan data pelatihan.")
                 else:
                     st.success(f"### 🔖 Kelas Prediksi: {predicted_label}")
                     st.write(f"🎯 Probabilitas: {confidence:.2%}")
