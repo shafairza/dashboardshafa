@@ -4,7 +4,7 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing import image
 import numpy as np
 from PIL import Image
-# Hapus import preprocess_input jika hanya menggunakan rescale=1./255
+# Hapus import preprocess_input karena kita menggunakan rescale=1./255
 # from tensorflow.keras.applications.densenet import preprocess_input 
 
 # ==========================
@@ -12,11 +12,34 @@ from PIL import Image
 # ==========================
 @st.cache_resource
 def load_models():
-    yolo_model = YOLO("model/Shafa_Laporan 4.pt")  # Model deteksi objek
-    classifier = tf.keras.models.load_model("model/Shafa_Laporan 2.h5")  # Model klasifikasi
+    # Model deteksi objek (asumsi: smoking/notsmoking)
+    yolo_model = YOLO("model/Shafa_Laporan 4.pt")  
+    # Model klasifikasi (asumsi: jenis beras)
+    classifier = tf.keras.models.load_model("model/Shafa_Laporan 2.h5") 
     return yolo_model, classifier
 
-yolo_model, classifier = load_models()
+# Menangani kegagalan memuat model agar aplikasi tetap berjalan
+try:
+    yolo_model, classifier = load_models()
+    MODEL_LOAD_SUCCESS = True
+except Exception as e:
+    st.error(f"Gagal memuat model: {e}. Prediksi akan disimulasikan.")
+    MODEL_LOAD_SUCCESS = False
+    # Definisi placeholder jika model gagal dimuat
+    class DummyYOLO:
+        def __call__(self, img, conf=0.25):
+            # Simulasi hasil kosong untuk mencegah error pada logika deteksi
+            class DummyBoxes:
+                cls = []
+            class DummyResults:
+                boxes = DummyBoxes()
+                def plot(self):
+                    return np.array(img)
+            return [DummyResults()]
+        names = ["smoking", "notsmoking"]
+    
+    yolo_model = DummyYOLO()
+    classifier = None
 
 # ==========================
 # Sidebar Navigation
@@ -36,8 +59,7 @@ if page == "Tentang":
     - 🔍 *YOLOv8*: Model deteksi objek (fokus: smoking/notsmoking).
     - 🧠 *CNN (DenseNet201)*: Model klasifikasi gambar (fokus: jenis beras).
     
-    **Parameter Pelatihan Klasifikasi:**
-    Gambar dinormalisasi dengan **`rescale=1./255`**.
+    **PENTING (Klasifikasi):** Model klasifikasi dilatih menggunakan **`rescale=1./255`**.
     
     ### 📘 Cara Menggunakan
     1. Buka halaman *Prediksi Model*.
@@ -59,7 +81,7 @@ elif page == "Prediksi Model":
         st.image(img, caption="🖼 Gambar yang Diupload", use_container_width=True)
 
         # ==========================
-        # DETEKSI OBJEK (YOLO) - Disesuaikan
+        # DETEKSI OBJEK (YOLO)
         # ==========================
         if menu == "Deteksi Objek (YOLO)":
             st.subheader("🔍 Hasil Deteksi Objek (YOLO)")
@@ -71,13 +93,16 @@ elif page == "Prediksi Model":
                 class_names = yolo_model.names
                 target_detections_found = False
                 
+                # Cek hasil deteksi untuk kelas target
                 for r in results:
-                    detected_indices = r.boxes.cls.tolist()
-                    detected_class_names = [class_names[int(i)] for i in detected_indices]
-                    
-                    if any(name in TARGET_DETECTION_CLASSES for name in detected_class_names):
-                        target_detections_found = True
-                        break
+                    # Pastikan boxes dan cls ada sebelum mengaksesnya
+                    if hasattr(r, 'boxes') and hasattr(r.boxes, 'cls'):
+                        detected_indices = r.boxes.cls.tolist()
+                        detected_class_names = [class_names[int(i)] for i in detected_indices]
+                        
+                        if any(name in TARGET_DETECTION_CLASSES for name in detected_class_names):
+                            target_detections_found = True
+                            break
 
                 if target_detections_found:
                     result_img = results[0].plot()
@@ -91,17 +116,20 @@ elif page == "Prediksi Model":
                 st.error(f"Terjadi kesalahan saat deteksi: {str(e)}")
 
         # ==========================
-        # KLASIFIKASI GAMBAR (DenseNet201) - MODIFIKASI RESCALE
+        # KLASIFIKASI GAMBAR (DenseNet201) - MODIFIKASI RESCALE & ERROR HANDLING
         # ==========================
         elif menu == "Klasifikasi Gambar":
             st.subheader("🧩 Hasil Klasifikasi Gambar")
 
             CLASSIFICATION_LABELS = ["Basmati", "Ipsala", "Arborio", "Karacadag", "Jasmine"] 
             
+            if not MODEL_LOAD_SUCCESS or classifier is None:
+                 st.error("Model Klasifikasi (`Shafa_Laporan 2.h5`) tidak dapat dimuat atau gagal diinisialisasi. Tidak bisa memproses prediksi.")
+                 return
+
             try:
-                # 1. Tentukan target size
+                # 1. Tentukan target size (Asumsi 224x224, atau ambil dari model)
                 input_shape = classifier.input_shape
-                # DenseNet201 default input (224, 224, 3)
                 target_size = (input_shape[1], input_shape[2]) if len(input_shape) == 4 and None not in input_shape else (224, 224)
 
                 # 2. Preprocessing (Resize dan Konversi ke Array)
@@ -110,10 +138,9 @@ elif page == "Prediksi Model":
                 img_array = np.expand_dims(img_array, axis=0)
                 
                 # 3. NORMALISASI: Sesuai parameter training generator (rescale=1./255)
-                # Langkah ini menggantikan preprocess_input jika training HANYA menggunakan rescale
                 img_array = img_array / 255.0 
                 
-                # Prediksi
+                # Prediksi: Potensi ERROR MUNCUL DI SINI
                 prediction = classifier.predict(img_array, verbose=0)
                 class_index = np.argmax(prediction)
                 confidence = np.max(prediction)
@@ -128,18 +155,17 @@ elif page == "Prediksi Model":
                     st.write(f"Probabilitas Tertinggi ({CLASSIFICATION_LABELS[class_index]}): {confidence:.2%}")
 
             except Exception as e:
-                # Menangani error shape mismatch dengan pesan yang lebih membantu
-                if "expected axis -1 of input shape to have value" in str(e):
+                # Penanganan error Shape Mismatch yang Konsisten
+                error_message = str(e)
+                if "Matrix size-incompatible" in error_message or "incompatible with the layer: expected axis -1" in error_message:
                     st.error("""
-                        🛑 **ERROR MODEL ARSITEKTUR (Klasifikasi)!**
-                        Model `Shafa_Laporan 2.h5` memiliki masalah *shape mismatch* pada lapisan Dense pertamanya.
+                        🛑 **ERROR KRITIS MODEL KLASIFIKASI!**
+                        Model `Shafa_Laporan 2.h5` gagal prediksi karena **ketidaksesuaian dimensi fitur** (shape mismatch).
                         
-                        Penyebab: Model yang disimpan **tidak memiliki lapisan Flatten atau Global Pooling** setelah lapisan DenseNet201.
-                        
-                        Solusi: **Latih ulang/simpan ulang model Anda** di script Keras *training* Anda dan pastikan `tf.keras.layers.Flatten()` atau `tf.keras.layers.GlobalAveragePooling2D()` disertakan sebelum lapisan Dense terakhir, lalu simpan kembali sebagai `Shafa_Laporan 2.h5`.
+                        **Tindakan Perbaikan:** Anda harus **memperbaiki arsitektur model DenseNet di script training asli** Anda. Pastikan Anda menyertakan lapisan **`tf.keras.layers.GlobalAveragePooling2D()`** atau **`tf.keras.layers.Flatten()`** antara *Base Model DenseNet201* dan lapisan *Dense* terakhir. Setelah diperbaiki, **simpan ulang model** ke `model/Shafa_Laporan 2.h5`.
                     """)
                 else:
-                    st.error(f"Terjadi kesalahan saat klasifikasi: {str(e)}")
+                    st.error(f"Terjadi kesalahan saat klasifikasi: {error_message}")
 
     else:
         st.info("⬆ Silakan unggah gambar terlebih dahulu untuk melakukan prediksi.")
