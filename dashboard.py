@@ -31,18 +31,18 @@ if page == "Tentang":
     st.markdown("""
     Aplikasi ini dikembangkan oleh Shafa untuk mendeteksi dan mengklasifikasikan gambar menggunakan dua model utama:
     
-    - 🔍 YOLOv8: Model deteksi objek yang dapat mengenali objek tertentu di dalam gambar.  
-    - 🧠 CNN / DenseNet201: Model klasifikasi gambar yang mengidentifikasi kategori dari gambar yang diunggah.
+    - 🔍 **YOLOv8**: Model deteksi objek yang dapat mengenali objek tertentu di dalam gambar.  
+    - 🧠 **CNN / DenseNet201**: Model klasifikasi gambar yang mengidentifikasi kategori dari gambar yang diunggah.
     
     ### 🎯 Tujuan Aplikasi
     - Menyediakan alat bantu interaktif untuk mengenali dan mengklasifikasikan objek secara otomatis.  
     - Meningkatkan efisiensi dalam pengolahan citra berbasis AI.  
     
     ### 📘 Cara Menggunakan
-    1. Masuk ke halaman Prediksi Model di sidebar.
-    2. Unggah gambar berformat .jpg, .jpeg, atau .png.
-    3. Pilih mode Deteksi Objek (YOLO) atau Klasifikasi Gambar di sidebar.
-    4. Lihat hasil deteksi atau klasifikasi yang ditampilkan secara visual dan probabilitasnya.
+    1. Masuk ke halaman **Prediksi Model** di sidebar.
+    2. Unggah gambar berformat `.jpg`, `.jpeg`, atau `.png`.
+    3. Pilih mode **Deteksi Objek (YOLO)** atau **Klasifikasi Gambar** di sidebar.
+    4. Lihat hasil deteksi atau klasifikasi yang ditampilkan secara visual beserta probabilitasnya.
     """)
 
 # ==========================
@@ -75,8 +75,9 @@ elif page == "Prediksi Model":
         elif menu == "Klasifikasi Gambar":
             st.subheader("🧩 Hasil Klasifikasi Gambar")
 
-            # Preprocessing
-            img_resized = img.resize((224, 224))
+            # Preprocessing otomatis sesuai input model
+            target_size = classifier.input_shape[1:3]  # ambil (height, width)
+            img_resized = img.resize(target_size)
             img_array = image.img_to_array(img_resized)
             img_array = np.expand_dims(img_array, axis=0)
             img_array = img_array / 255.0
