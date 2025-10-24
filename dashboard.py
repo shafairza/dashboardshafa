@@ -1018,7 +1018,7 @@ elif st.session_state.current_page == "Model Prediction":
                 🧠 Prediksi Model Deteksi & Klasifikasi
             </h1>
             <p style="font-size: 1.125rem; color: #000000; margin: 0.75rem 0 0 0; font-weight: 500;">
-                Uji model Anda dalam mode Klasifikasi atau Deteksi Objek.
+                Uji model menggunakan gambar dalam mode Klasifikasi atau Deteksi Objek.
             </p>
         </div>
     """, unsafe_allow_html=True)
@@ -1030,33 +1030,17 @@ elif st.session_state.current_page == "Model Prediction":
     # atau di sidebar jika *memang* harus. Saya akan taruh di main area agar terlihat menonjol.
     
     # Gunakan container untuk styling yang lebih baik
-    st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
     st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
-    
-    col_mode_select, col_model_select = st.columns([1, 1])
 
-    with col_mode_select:
-        # Pilihan mode deteksi/klasifikasi
-        task_type_select = st.selectbox(
-            "Pilih Mode:", 
-            ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"],
-            label_visibility="collapsed",
-            key="task_type_select"
-        )
-        st.session_state.task_type = task_type_select
-        
-    with col_model_select:
-        # Pilihan model (hanya untuk Klasifikasi)
-        if st.session_state.task_type == "Klasifikasi Gambar":
-            model_type_select = st.selectbox(
-                "Pilih Framework:",
-                ["TensorFlow Model", "PyTorch Model"],
-                label_visibility="collapsed",
-                key="model_type_select"
-            )
-        else:
-            model_type_select = "Detection Model (Simulated)"
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi digunakan.</p>', unsafe_allow_html=True)
+task_type_select = st.selectbox(
+    "Pilih Mode:",
+    ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"],
+    label_visibility="collapsed",
+    key="task_type_select"
+)
+
+# Simpan ke session_state
+st.session_state.task_type = task_type_select)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
