@@ -987,7 +987,7 @@ if st.session_state.current_page == "Dashboard":
 
     st.markdown("---")
 
-    st.info("Pilih *'🧠 Prediksi Model'* di sidebar untuk memulai deteksi atau klasifikasi gambar.")
+    st.info("Pilih prediksi model di sidebar untuk memulai deteksi atau klasifikasi gambar.")
     
     col_info_1, col_info_2 = st.columns(2)
     with col_info_1:
