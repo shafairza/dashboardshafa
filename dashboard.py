@@ -113,7 +113,7 @@ elif page == "Prediksi Model":
                 st.error(f"Terjadi kesalahan saat deteksi: {str(e)}")
 
         # ==========================
-        # KLASIFIKASI GAMBAR (DenseNet201)
+        # KLASIFIKASI GAMBAR
         # ==========================
         elif menu == "Klasifikasi Gambar":
             st.subheader("🧩 Hasil Klasifikasi Gambar")
@@ -125,7 +125,7 @@ elif page == "Prediksi Model":
             else:
                 try:
                     # Gunakan ukuran input tetap sesuai pelatihan
-                    target_size = (250, 250)
+                    target_size = (128, 128)
 
                     # Preprocessing
                     img_resized = img.resize(target_size)
