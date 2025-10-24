@@ -108,23 +108,6 @@ To modify categories, edit the `categories` list in the `predict_classification(
 ### Confidence Threshold
 Adjust the confidence threshold in the sidebar (0-100%) to filter predictions based on model confidence.
 
-## Troubleshooting
-
-### Common Issues
-
-1. **ModuleNotFoundError: No module named 'torch'**
-   - Install PyTorch: `pip install torch torchvision`
-   - Or run in demo mode without ML frameworks
-
-2. **ModuleNotFoundError: No module named 'tensorflow'**
-   - Install TensorFlow: `pip install tensorflow`
-   - Or run in demo mode without ML frameworks
-
-3. **Model loading errors**
-   - Check model file paths in `models/` directory
-   - Ensure model files are compatible with the framework version
-   - Check console for detailed error messages
-
 ### Framework Status
 
 The dashboard automatically detects available ML frameworks and shows status in the sidebar:
@@ -134,14 +117,14 @@ The dashboard automatically detects available ML frameworks and shows status in 
 ## File Structure
 
 ```
-├── app.py                 # Main application file
+├── dashboard.py                 # Main application file
 ├── requirements.txt       # Python dependencies
 ├── README.md             # This file
 ├── models/               # ML model files
 │   ├── Shafa_Laporan 2.h5
 │   └── Shafa_Laporan 4.pt
-├── uploads/              # Uploaded images (auto-created)
-└── data/                 # Data files (if any)
+├── sample image/         # Uploaded images (auto-created)
+
 ```
 
 ## Development
