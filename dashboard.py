@@ -88,7 +88,7 @@ elif page == "Prediksi Model":
             confidence = np.max(prediction)
 
             # Label kelas sesuai model
-            class_labels = ["Kelas Aman", "Kelas Api", "Kelas Asap", "Kelas Asap dan Api"]
+            class_labels = ["Kelas Arborio", "Kelas Basmati", "Kelas Ipsala", "Kelas Jasmine", "Kelas Karacadag"]
             predicted_label = class_labels[class_index]
 
             st.write(f"### 🔖 Kelas Prediksi: {predicted_label}")
