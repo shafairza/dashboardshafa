@@ -31,18 +31,18 @@ if page == "Tentang":
     st.markdown("""
     Aplikasi ini dikembangkan oleh Shafa untuk mendeteksi dan mengklasifikasikan gambar menggunakan dua model utama:
     
-    - 🔍 **YOLOv8**: Model deteksi objek yang dapat mengenali objek tertentu di dalam gambar.  
-    - 🧠 **CNN / DenseNet201**: Model klasifikasi gambar yang mengidentifikasi kategori dari gambar yang diunggah.
+    - 🔍 **YOLOv8**: Model deteksi objek yang mengenali objek dalam gambar.  
+    - 🧠 **CNN (DenseNet201)**: Model klasifikasi gambar untuk mengidentifikasi kategori spesifik dari citra.
     
-    ### 🎯 Tujuan Aplikasi
+    ### 🎯 Tujuan
     - Menyediakan alat bantu interaktif untuk mengenali dan mengklasifikasikan objek secara otomatis.  
     - Meningkatkan efisiensi dalam pengolahan citra berbasis AI.  
     
     ### 📘 Cara Menggunakan
-    1. Masuk ke halaman **Prediksi Model** di sidebar.
-    2. Unggah gambar berformat `.jpg`, `.jpeg`, atau `.png`.
-    3. Pilih mode **Deteksi Objek (YOLO)** atau **Klasifikasi Gambar** di sidebar.
-    4. Lihat hasil deteksi atau klasifikasi yang ditampilkan secara visual beserta probabilitasnya.
+    1. Buka halaman **Prediksi Model** di sidebar.
+    2. Unggah gambar (.jpg/.jpeg/.png).
+    3. Pilih mode **Deteksi Objek (YOLO)** atau **Klasifikasi Gambar**.
+    4. Lihat hasil yang ditampilkan beserta probabilitasnya.
     """)
 
 # ==========================
@@ -51,13 +51,12 @@ if page == "Tentang":
 elif page == "Prediksi Model":
     st.title("🧠 Prediksi Model Deteksi & Klasifikasi")
 
-    # Pilihan mode di sidebar
     menu = st.sidebar.selectbox("Pilih Mode:", ["Deteksi Objek (YOLO)", "Klasifikasi Gambar"])
 
     uploaded_file = st.file_uploader("📤 Unggah Gambar", type=["jpg", "jpeg", "png"])
 
     if uploaded_file is not None:
-        img = Image.open(uploaded_file)
+        img = Image.open(uploaded_file).convert("RGB")
         st.image(img, caption="🖼 Gambar yang Diupload", use_container_width=True)
 
         # ==========================
@@ -75,30 +74,34 @@ elif page == "Prediksi Model":
         elif menu == "Klasifikasi Gambar":
             st.subheader("🧩 Hasil Klasifikasi Gambar")
 
-            # Preprocessing otomatis sesuai input model
-            target_size = classifier.input_shape[1:3]
-            img_resized = img.resize(target_size)
-            img_array = image.img_to_array(img_resized)
-            img_array = np.expand_dims(img_array, axis=0)
-            img_array = img_array / 255.0
+            try:
+                # Gunakan dimensi 250x250 (sesuai model kamu)
+                target_size = (250, 250)
+                img_resized = img.resize(target_size)
+                img_array = image.img_to_array(img_resized)
+                img_array = np.expand_dims(img_array, axis=0)
+                img_array = img_array / 255.0
 
-            # Prediksi
-            prediction = classifier.predict(img_array)
-            class_index = np.argmax(prediction)
-            confidence = np.max(prediction)
+                # Prediksi
+                prediction = classifier.predict(img_array)
+                class_index = np.argmax(prediction)
+                confidence = np.max(prediction)
 
-            # Label kelas sesuai model
-            class_labels = ["Kelas Arborio", "Kelas Basmati", "Kelas Ipsala", "Kelas Jasmine", "Kelas Karacadag"]
-            predicted_label = class_labels[class_index]
+                # Label kelas sesuai urutan model
+                class_labels = ["Kelas Basmati", "Kelas Ipsala", "Kelas Arborio", "Kelas Karacadag", "Kelas Jasmine"]
+                predicted_label = class_labels[class_index]
 
-            # Batas ambang (threshold) untuk validasi gambar
-            confidence_threshold = 0.7  # ubah sesuai akurasi model kamu
+                # Batas ambang untuk validasi gambar
+                confidence_threshold = 0.7
 
-            if confidence < confidence_threshold:
-                st.warning("⚠️ Gambar tidak dikenali oleh model klasifikasi. Silakan unggah gambar yang sesuai dengan data pelatihan.")
-            else:
-                st.success(f"### 🔖 Kelas Prediksi: {predicted_label}")
-                st.write(f"🎯 Probabilitas: {confidence:.2%}")
+                if confidence < confidence_threshold:
+                    st.warning("⚠️ Gambar tidak dikenali oleh model. Pastikan gambar sesuai dengan data pelatihan.")
+                else:
+                    st.success(f"### 🔖 Kelas Prediksi: {predicted_label}")
+                    st.write(f"🎯 Probabilitas: {confidence:.2%}")
+
+            except Exception as e:
+                st.error(f"Terjadi kesalahan saat klasifikasi: {e}")
 
     else:
         st.info("⬆ Silakan unggah gambar terlebih dahulu untuk melakukan prediksi.")
