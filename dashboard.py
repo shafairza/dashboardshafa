@@ -96,7 +96,7 @@ elif page == "Prediksi Model":
                 confidence = np.max(prediction)
 
                 # Label kelas (⚠️ pastikan urutannya sesuai training)
-                class_labels = ["Kelas Basmati", "Kelas Ipsala", "Kelas Arborio", "Kelas Karacadag", "Kelas Jasmine"]
+                class_labels = ["Basmati", "Ipsala", "Arborio", "Karacadag", "Jasmine"]
                 predicted_label = class_labels[class_index]
 
                 # Ambang batas
