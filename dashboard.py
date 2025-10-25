@@ -759,7 +759,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
         }
 
     try:
-        # PENGGUNAAN MODEL 
+        # PENGGUNAAN MODEL (Tidak ada simulasi deterministik lagi)
         model = load_tensorflow_model() if model_type == "TensorFlow Model" else load_pytorch_model()
         
         if model is None:
@@ -1158,7 +1158,16 @@ if st.session_state.current_page == "Dashboard":
 
     st.info("Pilih **'🧠 Prediksi Model'** di sidebar untuk memulai deteksi atau klasifikasi gambar.")
     
-    col_info_2 = st.columns(1)
+    col_info_1, col_info_2 = st.columns(2)
+    with col_info_1:
+        st.markdown("""
+            <div class="glass-card" style="padding: 1.5rem; text-align: center;">
+                <h3 style="color: #a855f7;">Model Tersedia:</h3>
+                <p style="color: #000000;">
+                    TensorFlow (Keras) dan PyTorch (untuk klasifikasi)
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
     with col_info_2:
         st.markdown("""
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
@@ -1185,22 +1194,25 @@ elif st.session_state.current_page == "Model Prediction":
     
     st.markdown("---")
     
-    # Pemilihan Mode dan Model
-    st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
-    st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
-    
-    col_mode_select = st.columns(1)
+   # Pemilihan Mode
+st.markdown(
+    '<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', 
+    unsafe_allow_html=True
+)
+st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', 
+            unsafe_allow_html=True)
 
-    with col_mode_select:
-        task_type_select = st.selectbox(
-            "Pilih Mode:", 
-            ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"],
-            label_visibility="collapsed",
-            key="task_type_select"
-        )
-        st.session_state.task_type = task_type_select
+# Pilihan mode saja
+task_type_select = st.selectbox(
+    "Pilih Mode Prediksi:", 
+    ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"],
+    label_visibility="collapsed",
+    key="task_type_select"
+)
+st.session_state.task_type = task_type_select
 
-    st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
 
     # Logic for Image Upload and Prediction
     st.markdown("""
