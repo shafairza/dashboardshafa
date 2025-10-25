@@ -1081,7 +1081,7 @@ elif st.session_state.current_page == "Model Prediction":
                                 <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">CONFIDENCE: {result['confidence']:.2f}%</p></div>""", unsafe_allow_html=True)
                         st.success(result['success_message']) 
                         st.markdown("---")
-                        st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
+                        #st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
 
 
                     elif st.session_state.task_type == "Object Detection (YOLO)":
