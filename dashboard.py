@@ -1211,7 +1211,7 @@ elif st.session_state.current_page == "Analytics":
         col1, col2 = st.columns([1, 1])
 
         with col1:
-            st.markdown("### Class Distribution of Classification")
+            st.markdown("### Class Distribution")
             class_counts = df_history_classification['class'].value_counts()
             fig_pie = px.pie(
                 values=class_counts.values,
