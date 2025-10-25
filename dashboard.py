@@ -992,10 +992,10 @@ elif st.session_state.current_page == "Model Prediction":
     st.markdown("""
         <div style="text-align: center; padding: 1rem 2rem 2rem 2rem;">
             <h1 style="font-size: 2.5rem; font-weight: 700; color: #000000; margin: 0; letter-spacing: -0.03em;">
-                🧠 Prediksi Model Deteksi & Klasifikasi
+                Detection & Classification Model Prediction
             </h1>
             <p style="font-size: 1.125rem; color: #000000; margin: 0.75rem 0 0 0; font-weight: 500;">
-                Uji model Anda dalam mode Klasifikasi atau Deteksi Objek.
+                Let's try it and don't forget upload an Image.
             </p>
         </div>
     """, unsafe_allow_html=True)
