@@ -1053,28 +1053,29 @@ elif st.session_state.current_page == "Model Prediction":
             # Panggil fungsi prediksi
             result = predict_image(image, st.session_state.task_type, model_type_select)
             
-            # Tampilkan Bounding Box jika mode Deteksi dan ada objek
-            if st.session_state.task_type == "Deteksi Objek (YOLO)" and result.get('objects') and result.get('total_objects', 0) > 0:
+           if st.session_state.task_type == "Deteksi Objek (YOLO)" and result.get('objects') and result.get('total_objects', 0) > 0:
                 # Menggunakan plot() dari Ultralytics untuk menggambar kotak
-                try:
-                    results = yolo_model(image, conf=0.25, iou=0.45, verbose=False)
-                    # Ambil numpy array RGB dari plot
-                    result_img_array = results[0].plot() 
-                    # Konversi kembali ke PIL Image
-                    image_with_boxes = Image.fromarray(result_img_array)
-                    st.image(image_with_boxes, width='stretch', caption=f"Gambar dengan Deteksi: {uploaded_file.name}")
-                except Exception as e:
-                    st.error(f"Error menggambar bounding box: {e}")
-                    st.image(image, width='stretch', caption=f"Gambar yang Diunggah (Error Plotting): {uploaded_file.name}")
+                if yolo_model is not None:
+                    try:
+                        # Jalankan ulang inferensi untuk mendapatkan objek plot
+                        results = yolo_model(image, conf=0.25, iou=0.45, verbose=False)
+                        # Ambil numpy array RGB dari plot
+                        result_img_array = results[0].plot() 
+                        # Konversi kembali ke PIL Image
+                        image_with_boxes = Image.fromarray(result_img_array)
+                        st.image(image_with_boxes, width='stretch', caption=f"Gambar dengan Deteksi: {uploaded_file.name}")
+                    except Exception as e:
+                        st.error(f"Error menggambar bounding box: {e}")
+                        st.image(image, width='stretch', caption=f"Gambar yang Diunggah (Error Plotting): {uploaded_file.name}")
+                else:
+                    st.image(image, width='stretch', caption=f"Gambar yang Diunggah: {uploaded_file.name}")
             else:
                 st.image(image, width='stretch', caption=f"Gambar yang Diunggah: {uploaded_file.name}")
                 
             st.markdown("</div>", unsafe_allow_html=True)
 
         with col2:
-            st.markdown("""
-                <div style="background: rgba(168, 85, 247, 0.1); border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 20px; padding: 1rem; overflow: hidden;">
-            """, unsafe_allow_html=True)
+            st.markdown("""<div style="background: rgba(168, 85, 247, 0.1); border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 20px; padding: 1rem; overflow: hidden;">""", unsafe_allow_html=True)
 
             with st.spinner(f"Memproses gambar dengan mode {st.session_state.task_type}..."):
                 progress_bar = st.progress(0)
@@ -1082,114 +1083,53 @@ elif st.session_state.current_page == "Model Prediction":
                     time.sleep(0.01)
                     progress_bar.progress(i + 1)
                 
-                # Hasil sudah ada di variabel 'result'
-                
-                # Cek apakah ada error_message (Logika 2 & 3: Input Ditolak/Error)
                 if 'error_message' in result:
                     st.error(result['error_message'])
-                    
-                    # Tampilkan status khusus untuk penolakan
                     status_text = "INPUT DITOLAK" if result['class'] == "INPUT TIDAK COCOK" else "RUNTIME ERROR"
-                    color_start = "#ef4444"
-                    color_end = "#dc2626"
-                    
-                    st.markdown(f"""
-                        <div style="text-align: center; background: linear-gradient(135deg, {color_start} 0%, {color_end} 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5); margin-top: 1rem;">
-                            <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">
-                                STATUS: {status_text}
-                            </p>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
+                    color_start = "#ef4444"; color_end = "#dc2626"
+                    st.markdown(f"""<div style="text-align: center; background: linear-gradient(135deg, {color_start} 0%, {color_end} 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5); margin-top: 1rem;">
+                            <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">STATUS: {status_text}</p></div>""", unsafe_allow_html=True)
                     st.markdown("---")
-                    st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
-
-
+                    st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
                 else:
-                    # Logika Normal (Klasifikasi Beras atau Deteksi Smoking/NotSmoking)
                     st.session_state.total_predictions += 1
-                    
                     st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Hasil Prediksi:</h3>', unsafe_allow_html=True)
 
                     if st.session_state.task_type == "Klasifikasi Gambar":
-                        # Simpan ke histori
-                        st.session_state.prediction_history.append({
-                            'timestamp': datetime.now().strftime('%H:%M:%S'),
-                            'class': result['class'],
-                            'confidence': result['confidence'],
-                            'task_type': result['task_type']
-                        })
-
-                        st.markdown(f"""
-                            <div style="text-align: center; background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.5);">
-                                <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">
-                                    KELAS PREDISKI: <span style="font-size: 2rem;">{result['class']}</span>
-                                </p>
-                                <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">
-                                    CONFIDENCE: {result['confidence']:.2f}%
-                                </p>
-                            </div>
-                        """, unsafe_allow_html=True)
-                        st.success(result['success_message'])
-
+                        st.session_state.prediction_history.append({'timestamp': datetime.now().strftime('%H:%M:%S'), 'class': result['class'], 'confidence': result['confidence'], 'task_type': result['task_type']})
+                        st.markdown(f"""<div style="text-align: center; background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.5);">
+                                <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">KELAS PREDISKI: <span style="font-size: 2rem;">{result['class']}</span></p>
+                                <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">CONFIDENCE: {result['confidence']:.2f}%</p></div>""", unsafe_allow_html=True)
+                        st.success(result['success_message']) 
                         st.markdown("---")
-                        st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
+                        st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
 
 
                     elif st.session_state.task_type == "Deteksi Objek (YOLO)":
-                        # Simpan ke histori
-                        st.session_state.prediction_history.append({
-                            'timestamp': datetime.now().strftime('%H:%M:%S'),
-                            'class': result['class'],
-                            'confidence': result['confidence'],
-                            'task_type': result['task_type'],
-                            'objects_detected': result['total_objects']
-                        })
-
-                        # Logika: Deteksi Smoking/Not Smoking
+                        st.session_state.prediction_history.append({'timestamp': datetime.now().strftime('%H:%M:%S'), 'class': result['class'], 'confidence': result['confidence'], 'task_type': result['task_type'], 'objects_detected': result['total_objects']})
                         if result['total_objects'] > 0:
-                            # Warna hijau/kuning berdasarkan kelas teratas
                             color_start = "#00e676" if result['class'] == 'NotSmoking' else "#ffc400"
                             color_end = "#00c853" if result['class'] == 'NotSmoking' else "#ff9800"
                         else:
-                            # Warna abu-abu jika tidak ada deteksi (meskipun sudah melewati filter)
-                            color_start = "#9ca3af"
-                            color_end = "#6b7280"
+                            color_start = "#9ca3af"; color_end = "#6b7280"
                             
-                        st.markdown(f"""
-                            <div style="text-align: center; background: linear-gradient(135deg, {color_start} 0%, {color_end} 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.5);">
-                                <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">
-                                    HASIL DETEKSI: <span style="font-size: 2rem;">{result['class']}</span>
-                                </p>
-                                <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">
-                                    CONFIDENCE: {result['confidence']:.2f}% (Jumlah Objek: {result['total_objects']})
-                                </p>
-                            </div>
-                        """, unsafe_allow_html=True)
+                        st.markdown(f"""<div style="text-align: center; background: linear-gradient(135deg, {color_start} 0%, {color_end} 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.5);">
+                                <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">HASIL DETEKSI: <span style="font-size: 2rem;">{result['class']}</span></p>
+                                <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">CONFIDENCE: {result['confidence']:.2f}% (Jumlah Objek: {result['total_objects']})</p></div>""", unsafe_allow_html=True)
                         st.success(result['success_message'])
-
                         st.markdown("---")
-                        # Gunakan chart confidence untuk deteksi juga
-                        st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
+                        st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
 
             st.markdown("</div>", unsafe_allow_html=True)
             
     else:
-        st.markdown("""
-            <div style="text-align: center; padding: 4rem 2rem;">
-                <p style="color: #000000; font-size: 1.125rem;">
-                    ☝️ Pilih Mode di atas dan unggah gambar untuk memulai prediksi.
-                </p>
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown("""<div style="text-align: center; padding: 4rem 2rem;">
+                <p style="color: #000000; font-size: 1.125rem;">☝️ Pilih Mode di atas dan unggah gambar untuk memulai prediksi.</p>
+            </div>""", unsafe_allow_html=True)
         
-    st.markdown("""
-        <div style="text-align: center; margin: 4rem 0 2rem 0;">
-            <p style="font-size: 1.25rem; color: #000000; font-style: italic; margin: 0;">
-                "Disini Bisa Deteksi Berbagai Ekspresi Wajah (deteksi objek nyata)"
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown("""<div style="text-align: center; margin: 4rem 0 2rem 0;">
+            <p style="font-size: 1.25rem; color: #000000; font-style: italic; margin: 0;">"Disini Bisa Deteksi Berbagai Ekspresi Wajah (deteksi objek nyata)"</p>
+        </div>""", unsafe_allow_html=True)
 
 # 3. Analytics (Tidak Berubah Signifikan)
 elif st.session_state.current_page == "Analytics":
