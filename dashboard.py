@@ -712,9 +712,9 @@ def load_yolo_model():
         
 # KELAS UNTUK KLASIFIKASI (5 JENIS BERAS)
 CLASSIFICATION_CATEGORIES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag'] 
-# KELAS UNTUK DETEKSI (SMOKING/NOT SMOKING)
+# KELAS UNTUK DETEKSI (Smokers)
 # --- PERHATIAN: PASTIKAN URUTAN KELAS INI SAMA DENGAN data.yaml MODEL YOLO ANDA ---
-DETECTION_CLASSES = ['Smoking', 'Not Smoking'] 
+DETECTION_CLASSES = ['NotSmoking', 'Smoking'] 
 
 # --- FUNGSI INPUT KONSISTEN BERDASARKAN NAMA FILE (DETERMINISTIK) ---
 
@@ -839,7 +839,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
 
 def predict_detection(image):
     """
-    Object Detection Prediction (YOLO Nyata: Smoking/Not Smoking)
+    Object Detection Prediction (YOLO Nyata: NotSmoking/Smoking)
     """
     
     categories = DETECTION_CLASSES 
@@ -935,7 +935,7 @@ def predict_detection(image):
                 'objects': [],
                 'total_objects': 0,
                 'task_type': 'Detection',
-                'error_message': f"Tidak ada objek **Smoking/Not Smoking** yang terdeteksi di atas threshold (0.5)."
+                'error_message': f"Tidak ada objek **Smoking/NotSmoking** yang terdeteksi di atas threshold (0.5)."
             }
             
     except Exception as e:
@@ -972,7 +972,7 @@ def draw_bounding_boxes(image, detections):
         confidence = obj['confidence']
         
         # Pilih warna berdasarkan kelas
-        color = "lime" if class_name == "Not Smoking" else "red"
+        color = "lime" if class_name == "NotSmoking" else "red"
         
         # Gambar Bounding Box (4 pixel width)
         draw.rectangle(bbox, outline=color, width=4)
@@ -1408,8 +1408,8 @@ elif st.session_state.current_page == "Model Prediction":
                         # Logika: Deteksi Smoking/Not Smoking
                         if result['total_objects'] > 0:
                             # Warna hijau/kuning berdasarkan kelas teratas
-                            color_start = "#00e676" if result['class'] == 'Not Smoking' else "#ffc400"
-                            color_end = "#00c853" if result['class'] == 'Not Smoking' else "#ff9800"
+                            color_start = "#00e676" if result['class'] == 'NotSmoking' else "#ffc400"
+                            color_end = "#00c853" if result['class'] == 'NotSmoking' else "#ff9800"
                         else:
                             # Warna abu-abu jika tidak ada deteksi (meskipun sudah melewati filter)
                             color_start = "#9ca3af"
