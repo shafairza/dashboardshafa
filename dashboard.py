@@ -897,13 +897,29 @@ with st.sidebar:
 # --- MAIN CONTENT LOGIC ---
 
 # 1. Dashboard (Awal)
+# 1. Dashboard (Awal)
 if st.session_state.current_page == "Dashboard":
-    st.markdown("""<div style="text-align: center; padding: 3rem 2rem 2rem 2rem;">
-            <div style="width: 80px; height: 80px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 32px rgba(168, 85, 247, 0.5);">
-                <span style="font-size: 2rem;">🔬</span>
+    # Load and encode logo
+    import base64
+    logo_path = "assets/Logo Dashboard.png"
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as f:
+            logo_data = base64.b64encode(f.read()).decode()
+        logo_html = f'<img src="data:image/png;base64,{logo_data}" style="width: 80px; height: 80px; z-index: 1;">'
+    else:
+        logo_html = '<span style="font-size: 2rem;">🔬</span>'
+
+    st.markdown(f"""
+        <div style="text-align: center; padding: 3rem 2rem 2rem 2rem;">
+            <div style="width: 80px; height: 80px; margin: 0 auto 1.5rem; background: #ffffff; border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 32px rgba(168, 85, 247, 0.5);">
+                {logo_html}
             </div>
-            <h1 style="font-size: 2.5rem; font-weight: 700; color: #000000; margin: 0; letter-spacing: -0.03em;">Dashboard: Classification and Detection by S</h1>
-            <p style="font-size: 1.125rem; color: #000000; margin: 0.75rem 0 0 0; font-weight: 500;">Platform untuk pengujian Model Machine Learning</p>
+            <h1 style="font-size: 2.5rem; font-weight: 700; color: #000000; margin: 0; letter-spacing: -0.03em;">
+                Dashboard: Classification and Detection by S
+            </h1>
+            <p style="font-size: 1.125rem; color: #000000; margin: 0.75rem 0 0 0; font-weight: 500;">
+                Platform untuk pengujian Model Machine Learning
+            </p>
         </div>
     """, unsafe_allow_html=True)
 
@@ -913,18 +929,23 @@ if st.session_state.current_page == "Dashboard":
     
     col_info_1, col_info_2 = st.columns(2)
     with col_info_1:
-        st.markdown("""<div class="glass-card" style="padding: 1.5rem; text-align: center;">
+        st.markdown("""
+            <div class="glass-card" style="padding: 1.5rem; text-align: center;">
                 <h3 style="color: #a855f7;">Model Klasifikasi:</h3>
-                <p style="color: #000000;">Model yang dimuat: <b>Shafa_Laporan 2.h5</b> (TensorFlow) atau <b>Shafa_Laporan 4.pt</b> (PyTorch).</p>
+                <p style="color: #000000;">
+                    Model yang dimuat: <b>Shafa_Laporan 2.h5</b> (TensorFlow) atau <b>Shafa_Laporan 4.pt</b> (PyTorch).
+                </p>
             </div>
         """, unsafe_allow_html=True)
     with col_info_2:
-        st.markdown("""<div class="glass-card" style="padding: 1.5rem; text-align: center;">
+        st.markdown("""
+            <div class="glass-card" style="padding: 1.5rem; text-align: center;">
                 <h3 style="color: #a855f7;">Fitur Utama:</h3>
-                <p style="color: #000000;">Klasifikasi (Beras 5 Kelas) & Deteksi Objek (YOLO Shafa_Laporan 4.pt).</p>
+                <p style="color: #000000;">
+                    Klasifikasi (Beras 5 Kelas) & Deteksi Objek (YOLO Shafa_Laporan 4.pt).
+                </p>
             </div>
         """, unsafe_allow_html=True)
-
 
 # 2. Prediksi Model (Baru)
 elif st.session_state.current_page == "Model Prediction":
