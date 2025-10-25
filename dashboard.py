@@ -32,7 +32,7 @@ except ImportError:
     ULTRALYTICS_AVAILABLE = False
 
 st.set_page_config(
-    page_title="ML Dashboard",
+    page_title="Dashboard by S",
     page_icon="assets/Logo Dashboard.png",
     layout="wide",
     initial_sidebar_state="expanded"
