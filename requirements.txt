@@ -5,14 +5,15 @@ numpy>=1.24.0
 Pillow>=9.0.0
 plotly>=5.15.0
 
-# Optional ML dependencies (install if needed)
-# Uncomment the lines below if you want to use actual ML models
-# tensorflow>=2.13.0
-# torch>=2.0.0
-# torchvision>=0.15.0
+# ML DL dependencies
+tensorflow>=2.13.0
+torch>=2.0.0
+torchvision>=0.15.0
+ultralytics>=8.0.0
 
 # Additional dependencies
 scikit-learn>=1.4.0
 opencv-python-headless>=4.9.0
 matplotlib>=3.8.0
 seaborn>=0.13.0
+
