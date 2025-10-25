@@ -694,14 +694,8 @@ def load_pytorch_model():
     except Exception as e:
         st.error(f"Error loading PyTorch model: {e}")
         return None
-
-# Tambahkan daftar kelas untuk memudahkan validasi input
-# KELAS UNTUK KLASIFIKASI (5 JENIS BERAS)
-CLASSIFICATION_CATEGORIES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag'] 
-# KELAS UNTUK DETEKSI (SMOKING/NOT SMOKING)
-DETECTION_CLASSES = ['Smoking', 'Not Smoking'] 
-
-# KELAS INPUT YANG DIHARAPKAN UNTUK KLASIFIKASI (Gambar Biji-bijian)
+        
+# KELAS INPUT YANG DIHARAPKAN UNTUK KLASIFIKASI
 def is_rice_image(image):
     # Logika SIMULASI untuk menentukan apakah gambar adalah "Beras" atau "Random"
     # Di dunia nyata, ini dilakukan dengan model ML kedua atau feature extraction
@@ -712,7 +706,19 @@ def is_rice_image(image):
             return True
     
     # Jika tidak ada nama file (misalnya dari kamera), asumsikan acak
-    return random.choice([True, False, False]) # Lebih sering False untuk gambar random
+    # 'random' kini sudah terdefinisikan karena sudah diimpor
+    return random.choice([True, False, False]) 
+
+
+def is_person_image(image):
+    # Logika SIMULASI untuk menentukan apakah gambar terindikasi 'Orang'
+    if st.session_state.get('uploaded_filename'):
+        filename = st.session_state.uploaded_filename.lower()
+        if any(keyword in filename for keyword in ['face', 'person', 'people', 'human', 'smoke', 'vape']):
+            return True
+    
+    # 'random' kini sudah terdefinisikan karena sudah diimpor
+    return random.choice([True, True, False, False, False])
 
 
 def is_person_image(image):
