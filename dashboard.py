@@ -1003,7 +1003,7 @@ elif st.session_state.current_page == "Model Prediction":
     st.markdown("---")
 
    # Pemilihan Mode (SESUAI PERMINTAAN USER: Hanya SelectBox untuk Mode, tanpa pemilihan Framework)
-    st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Choose Prediction:</h3>', unsafe_allow_html=True)
 
     # Menggunakan satu kolom penuh untuk SelectBox Mode
     col_mode_only = st.columns([1])[0]
@@ -1012,7 +1012,7 @@ elif st.session_state.current_page == "Model Prediction":
         # Pilihan Mode (Klasifikasi atau Deteksi)
         task_type_select = st.selectbox(
             "Pilih Mode:",
-            ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"],
+            ["Image Classification (CNN)", "Object Detection (YOLO)"],
             label_visibility="collapsed",
             key="task_type_select"
         )
