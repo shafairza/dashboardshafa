@@ -1055,44 +1055,60 @@ elif st.session_state.current_page == "Analytics":
     st.markdown("# 📊 Analitik Prediksi")
     st.markdown("---")
 
-    df_history_classification = pd.DataFrame([h for h in st.session_state.prediction_history if h['task_type'] == 'Klasifikasi'])
+    df_history_classification = pd.DataFrame([h for h in st.session_state.prediction_history if h['task_type'] == 'Classification'])
 
     if not df_history_classification.empty:
-        col1, col2, col3, col4 = st.columns(4)
-        with col1: st.metric("Total Klasifikasi", len(df_history_classification))
-        with col2: st.metric("Rata-rata Confidence", f"{df_history_classification['confidence'].mean():.1f}%")
-        with col3: st.metric("Confidence Maksimum", f"{df_history_classification['confidence'].max():.1f}%")
-        with col4: st.metric("Kelas Terbanyak", df_history_classification['class'].mode()[0] if not df_history_classification['class'].mode().empty else "N/A")
-
-        st.markdown("---")
-
         col1, col2 = st.columns([1, 1])
+
         with col1:
             st.markdown("### Distribusi Kelas")
             class_counts = df_history_classification['class'].value_counts()
-            fig_pie = px.pie(values=class_counts.values, names=class_counts.index, title="Prediction Distribution (Classification)", color_discrete_sequence=['#a855f7', '#c084fc', '#9333ea', '#d8b4fe', '#7c3aed'])
-            fig_pie.update_layout(font=dict(size=12, color='#B4B4B4'), title_font=dict(size=16, color='#FFFFFF'), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(30, 25, 45, 0.4)')
+            fig_pie = px.pie(
+                values=class_counts.values,
+                names=class_counts.index,
+                title="Prediction Distribution (Classification)",
+                color_discrete_sequence=['#a855f7', '#c084fc', '#9333ea', '#d8b4fe', '#7c3aed']
+            )
+            fig_pie.update_layout(
+                font=dict(size=12, color='#B4B4B4'),
+                title_font=dict(size=16, color='#FFFFFF'),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(30, 25, 45, 0.4)'
+            )
             st.plotly_chart(fig_pie, use_container_width=True)
 
         with col2:
             st.markdown("### Trend Confidence")
             fig_line = create_history_chart(st.session_state.prediction_history)
-            if fig_line: st.plotly_chart(fig_line, use_container_width=True)
+            if fig_line:
+                st.plotly_chart(fig_line, use_container_width=True)
 
         st.markdown("---")
 
         st.markdown("### Riwayat Prediksi Lengkap")
+        # Gabungkan semua data, termasuk deteksi
         df_all_history = pd.DataFrame(st.session_state.prediction_history)
+        
+        # Sederhanakan tampilan untuk riwayat
         if 'objects_detected' in df_all_history.columns:
-            df_all_history['Result'] = df_all_history.apply(lambda row: f"Class: {row['class']} ({row['confidence']:.2f}%)" if row['task_type'] == 'Klasifikasi Gambar' else f"Object: {row['class']} ({row['confidence']:.2f}%) [{row['objects_detected']} items]", axis=1)
+            df_all_history['Result'] = df_all_history.apply(
+                lambda row: f"Class: {row['class']} ({row['confidence']:.2f}%)" if row['task_type'] == 'Classification' 
+                else f"Object: {row['class']} ({row['confidence']:.2f}%) [{row['objects_detected']} items]", axis=1
+            )
             df_display = df_all_history[['timestamp', 'task_type', 'Result']].rename(columns={'task_type': 'Mode'})
         else:
             df_display = df_all_history[['timestamp', 'task_type', 'class', 'confidence']].rename(columns={'task_type': 'Mode', 'class': 'Class'})
 
-        st.dataframe(df_display, width='stretch', hide_index=True)
+        st.dataframe(
+            df_display,
+            width='stretch',
+            hide_index=True
+        )
 
         if st.button("Clear History"):
-            st.session_state.prediction_history = []; st.session_state.total_predictions = 0; st.rerun()
+            st.session_state.prediction_history = []
+            st.session_state.total_predictions = 0
+            st.rerun()
 
     else:
         st.info("Tidak ada data prediksi **Klasifikasi** yang tersedia. Kunjungi halaman Prediksi Model untuk memulai.")
