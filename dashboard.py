@@ -928,35 +928,56 @@ if st.session_state.current_page == "Dashboard":
 
 # 2. Prediksi Model (Baru)
 elif st.session_state.current_page == "Model Prediction":
-    st.markdown("""<div style="text-align: center; padding: 1rem 2rem 2rem 2rem;">
-            <h1 style="font-size: 2.5rem; font-weight: 700; color: #000000; margin: 0; letter-spacing: -0.03em;">🧠 Prediksi Model Deteksi & Klasifikasi</h1>
-            <p style="font-size: 1.125rem; color: #000000; margin: 0.75rem 0 0 0; font-weight: 500;">Uji model Anda dalam mode Klasifikasi atau Deteksi Objek.</p>
+    st.markdown("""
+        <div style="text-align: center; padding: 1rem 2rem 2rem 2rem;">
+            <h1 style="font-size: 2.5rem; font-weight: 700; color: #000000; margin: 0; letter-spacing: -0.03em;">
+                🧠 Prediksi Model Deteksi & Klasifikasi
+            </h1>
+            <p style="font-size: 1.125rem; color: #000000; margin: 0.75rem 0 0 0; font-weight: 500;">
+                Uji model Anda dalam mode Klasifikasi atau Deteksi Objek.
+            </p>
         </div>
     """, unsafe_allow_html=True)
     
     st.markdown("---")
-    
-    st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
+
+    # Pemilihan Mode (SESUAI PERMINTAAN USER: Hanya SelectBox untuk Mode, tanpa pemilihan Framework)
     st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
-    
-    col_mode_only = st.columns([1])[0] 
+
+    # Menggunakan satu kolom penuh untuk SelectBox Mode
+    col_mode_only = st.columns([1])[0]
 
     with col_mode_only:
-        task_type_select = st.selectbox("Pilih Mode:", ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"], label_visibility="collapsed", key="task_type_select")
+        # Pilihan Mode (Klasifikasi atau Deteksi)
+        task_type_select = st.selectbox(
+            "Pilih Mode:",
+            ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"],
+            label_visibility="collapsed",
+            key="task_type_select"
+        )
         st.session_state.task_type = task_type_select
-        
+
+        # Penentuan Model/Framework secara Internal
         if st.session_state.task_type == "Klasifikasi Gambar":
-            model_type_select = "TensorFlow Model" 
+            # Default menggunakan TensorFlow Model. Anda bisa mengubahnya menjadi PyTorch Model jika diinginkan.
+            model_type_select = "TensorFlow Model"
             st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Klasifikasi yang digunakan: **{model_type_select}** (Shafa_Laporan 2.h5)</p>', unsafe_allow_html=True)
         else:
+            # Model Deteksi (YOLO Nyata)
             model_type_select = "YOLO Model (Ultralytics)"
             st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi yang digunakan: **{model_type_select}** (Shafa_Laporan 4.pt)</p>', unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown("""<div style="max-width: 600px; margin: 0 auto 2rem auto;">""", unsafe_allow_html=True)
+    # Logic for Image Upload and Prediction
+    st.markdown("""
+        <div style="max-width: 600px; margin: 0 auto 2rem auto;">
+    """, unsafe_allow_html=True)
     
-    uploaded_file = st.file_uploader("Upload Image", type=['png', 'jpg', 'jpeg'], help="Supported formats: PNG, JPG, JPEG (max 200MB)", label_visibility="collapsed")
+    uploaded_file = st.file_uploader(
+        "Upload Image",
+        type=['png', 'jpg', 'jpeg'],
+        help="Supported formats: PNG, JPG, JPEG (max 200MB)",
+        label_visibility="collapsed"
+    )
 
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -966,8 +987,11 @@ elif st.session_state.current_page == "Model Prediction":
         col1, col2 = st.columns([1, 1], gap="large")
 
         with col1:
-            st.markdown("""<div style="background: rgba(168, 85, 247, 0.1); border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 20px; padding: 1rem; overflow: hidden;">""", unsafe_allow_html=True)
+            st.markdown("""
+                <div style="background: rgba(168, 85, 247, 0.1); border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 20px; padding: 1rem; overflow: hidden;">
+            """, unsafe_allow_html=True)
             
+            # Panggil fungsi prediksi
             result = predict_image(image, st.session_state.task_type, model_type_select)
             
             # Tampilkan Bounding Box jika mode Deteksi dan ada objek
