@@ -1067,7 +1067,7 @@ elif st.session_state.current_page == "Model Prediction":
                     st.markdown(f"""<div style="text-align: center; background: linear-gradient(135deg, {color_start} 0%, {color_end} 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5); margin-top: 1rem;">
                             <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">STATUS: {status_text}</p></div>""", unsafe_allow_html=True)
                     st.markdown("---")
-                    st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
+                    #st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
                 else:
                     st.session_state.total_predictions += 1
                     st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Result Prediction:</h3>', unsafe_allow_html=True)
