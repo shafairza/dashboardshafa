@@ -895,7 +895,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     st.markdown("""
-        <p style='font-size: 0.7rem; font-weight: 600; color: #a855f7; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1rem;'> :</p>
+        <p style='font-size: 0.7rem; font-weight: 600; color: #a855f7; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1rem;'>  </p>
     """, unsafe_allow_html=True)
 
     # Opsi navigasi baru (Dapat menggunakan ikon untuk estetika)
