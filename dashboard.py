@@ -6,12 +6,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import time
-# Menghapus import random karena kita tidak akan menggunakan acak di prediksi
-# import random 
+# import random # Tidak digunakan dalam prediksi model, hanya simulasi deteksi
 
 # Import os untuk cek file path (debugging)
 import os 
-
+# TAMBAHKAN IMPORT DARI TORCHVISION UNTUK PRE-PROCESSING PYTORCH
 try:
     import torch
     from torchvision import transforms 
@@ -451,12 +450,6 @@ def load_css():
         border-color: rgba(239, 68, 68, 0.5) !important;
     }
 
-    .stInfo {
-        background: rgba(168, 85, 247, 0.2) !important;
-        color: #ffffff !important;
-        border-color: rgba(168, 85, 247, 0.5) !important;
-    }
-
     /* All Alert text should be BLACK */
     .stAlert div,
     .stAlert p,
@@ -667,6 +660,7 @@ def load_tensorflow_model():
     if not TENSORFLOW_AVAILABLE:
         return None
     try:
+        # KOREKSI PATH KE 'model/'
         model_path = 'model/Shafa_Laporan 2.h5' 
         
         if not os.path.exists(model_path):
@@ -685,6 +679,7 @@ def load_pytorch_model():
     if not TORCH_AVAILABLE:
         return None
     try:
+        # KOREKSI PATH KE 'model/'
         model_path = 'model/Shafa_Laporan 4.pt'
         
         if not os.path.exists(model_path):
@@ -769,7 +764,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
         
         if model is None:
             # Jika model gagal dimuat (FATAL ERROR), lemparkan kesalahan agar tidak melanjutkan prediksi
-            raise RuntimeError("Model tidak dapat dimuat (Lihat pesan FATAL error di atas).")
+            raise RuntimeError("Model Klasifikasi tidak dapat dimuat (Lihat pesan FATAL error di atas).")
         
         if model_type == "TensorFlow Model":
             # Kode prediksi TensorFlow/Keras
@@ -786,16 +781,16 @@ def predict_classification(image, model_type="TensorFlow Model"):
         elif model_type == "PyTorch Model":
             # Kode prediksi PyTorch
             
-            # Perlu dipastikan PyTorch dan torchvision terinstal
-            if not TORCH_AVAILABLE:
-                 raise ImportError("PyTorch tidak tersedia untuk prediksi.")
+            # Perlu dipastikan PyTorch dan torchvision terinstal, jika tidak akan crash
+            if 'transforms' not in globals():
+                 raise ImportError("PyTorch transforms diperlukan tetapi tidak terimport.")
 
             # Preprocess untuk PyTorch
             preprocess = transforms.Compose([
                 transforms.Resize(TARGET_SIZE),
                 transforms.ToTensor(),
-                # Gunakan normalisasi standar jika Anda tidak yakin:
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                # Asumsi normalisasi standar (DAPAT DISESUAIKAN JIKA PERLU)
+                # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
             
             img_tensor = preprocess(image).unsqueeze(0)
@@ -844,13 +839,11 @@ def predict_detection(image):
     # Logika 1: Ketika klik model Deteksi dan unggah gambar (terindikasi ada orang)
     if is_person_image(image):
         
-        # Output statis/konsisten (karena tidak ada model YOLO yang dimasukkan)
-        # Kita perlu menentukan kelas dan confidence secara konsisten
-        
-        # Menggunakan hash file untuk menentukan hasil (deterministik tanpa random.choice)
+        # Karena kita menghapus 'random', kita harus mendeterminasi hasil (misalnya dari hash)
         hash_value = hash(filename) % 100
-        simulated_class = categories[0] if hash_value < 50 else categories[1]
-        simulated_confidence = 90.0 + (hash_value % 10) / 2 # Example: 90.0 to 94.5
+        # Tentukan hasil secara deterministik: 
+        simulated_class = categories[0] if hash_value < 50 else categories[1] # Smoking atau Not Smoking
+        simulated_confidence = 90.0 + (hash_value % 10) / 2 
         
         probabilities = {c: 0.0 for c in categories}
         probabilities[simulated_class] = simulated_confidence
