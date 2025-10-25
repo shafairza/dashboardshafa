@@ -784,7 +784,7 @@ def predict_detection(image):
 
     try:
         # Mengatur confidence threshold menjadi 0.60 (ditingkatkan untuk mengurangi false positive)
-        results = yolo_model(image, conf=0.60, iou=0.45, verbose=False) 
+        results = results = yolo_model(image, conf=YOLO_CONF_THRESHOLD, iou=YOLO_IOU_THRESHOLD, verbose=False)
         
         detected_objects = []
         r = results[0]
@@ -1054,7 +1054,7 @@ elif st.session_state.current_page == "Model Prediction":
                     try:
                         # PERBAIKAN: Menggunakan YOLO_CONF_THRESHOLD yang konsisten untuk plotting
                         results_plot = yolo_model(image, conf=YOLO_CONF_THRESHOLD, iou=YOLO_IOU_THRESHOLD, verbose=False) 
-                        
+                     
                         # Ambil numpy array RGB dari plot
                         result_img_array = results_plot[0].plot() 
                         # Konversi kembali ke PIL Image
