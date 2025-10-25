@@ -684,11 +684,11 @@ def load_tensorflow_model():
     try:
         # PENTING: Pastikan path model ini benar di lingkungan Anda
         # Model Klasifikasi (untuk 5 jenis beras)
-        model = keras.models.load_model('models/Shafa_Laporan 2.h5') 
+        model = keras.models.load_model('model/Shafa_Laporan 2.h5') 
         return model
     except Exception as e:
         # Tambahkan debugging untuk memastikan file ada
-        if not os.path.exists('models/Shafa_Laporan 2.h5'):
+        if not os.path.exists('model/Shafa_Laporan 2.h5'):
              st.error(f"FATAL: File model TensorFlow tidak ditemukan di: models/Shafa_Laporan 2.h5")
         else:
             st.error(f"Error loading TensorFlow model: {e}")
