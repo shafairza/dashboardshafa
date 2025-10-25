@@ -1055,35 +1055,32 @@ elif st.session_state.current_page == "Model Prediction":
     """, unsafe_allow_html=True)
     
     st.markdown("---")
-    
+
     # Pemilihan Mode (SESUAI PERMINTAAN USER: Hanya SelectBox untuk Mode, tanpa pemilihan Framework)
-    st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
     st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
-    
+
     # Menggunakan satu kolom penuh untuk SelectBox Mode
-    col_mode_only = st.columns([1])[0] 
+    col_mode_only = st.columns([1])[0]
 
     with col_mode_only:
         # Pilihan Mode (Klasifikasi atau Deteksi)
         task_type_select = st.selectbox(
-            "Pilih Mode:", 
+            "Pilih Mode:",
             ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"],
             label_visibility="collapsed",
             key="task_type_select"
         )
         st.session_state.task_type = task_type_select
-        
+
         # Penentuan Model/Framework secara Internal
         if st.session_state.task_type == "Klasifikasi Gambar":
             # Default menggunakan TensorFlow Model. Anda bisa mengubahnya menjadi PyTorch Model jika diinginkan.
-            model_type_select = "TensorFlow Model" 
+            model_type_select = "TensorFlow Model"
             st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Klasifikasi yang digunakan: **{model_type_select}** (Shafa_Laporan 2.h5)</p>', unsafe_allow_html=True)
         else:
             # Model Deteksi (YOLO Nyata)
             model_type_select = "YOLO Model (Ultralytics)"
             st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi yang digunakan: **{model_type_select}** (Shafa_Laporan 4.pt)</p>', unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
 
     # Logic for Image Upload and Prediction
     st.markdown("""
@@ -1258,37 +1255,6 @@ elif st.session_state.current_page == "Analytics":
     df_history_classification = pd.DataFrame([h for h in st.session_state.prediction_history if h['task_type'] == 'Classification'])
 
     if not df_history_classification.empty:
-        col1, col2, col3, col4 = st.columns(4)
-
-        with col1:
-            st.metric(
-                "Total Klasifikasi",
-                len(df_history_classification)
-            )
-
-        with col2:
-            avg_confidence = df_history_classification['confidence'].mean()
-            st.metric(
-                "Rata-rata Confidence",
-                f"{avg_confidence:.1f}%"
-            )
-
-        with col3:
-            max_confidence = df_history_classification['confidence'].max()
-            st.metric(
-                "Confidence Maksimum",
-                f"{max_confidence:.1f}%"
-            )
-
-        with col4:
-            most_common = df_history_classification['class'].mode()[0] if not df_history_classification['class'].mode().empty else "N/A"
-            st.metric(
-                "Kelas Terbanyak",
-                most_common
-            )
-
-        st.markdown("---")
-
         col1, col2 = st.columns([1, 1])
 
         with col1:
@@ -1306,13 +1272,13 @@ elif st.session_state.current_page == "Analytics":
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(30, 25, 45, 0.4)'
             )
-            st.plotly_chart(fig_pie, width='stretch')
+            st.plotly_chart(fig_pie, use_container_width=True)
 
         with col2:
             st.markdown("### Trend Confidence")
             fig_line = create_history_chart(st.session_state.prediction_history)
             if fig_line:
-                st.plotly_chart(fig_line, width='stretch')
+                st.plotly_chart(fig_line, use_container_width=True)
 
         st.markdown("---")
 
