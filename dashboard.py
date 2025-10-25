@@ -1288,6 +1288,10 @@ elif st.session_state.current_page == "About":
     * **Visualization:** Plotly Express & Graph Objects  
     and so many engine used, if you want to see more check more below.
     
-    📫 *For collaboration or inquiries:*  
+    **For collaboration or inquiries:**  
     [GitHub](https://github.com/shafairza) | [LinkedIn](https://www.linkedin.com/in/shafarina-irzani-867479280/) | [Kaggle](https://www.kaggle.com/shfairzaa)
     """)
+
+# --- RUN FOOTER ---
+st.markdown("<hr>", unsafe_allow_html=True)
+st.caption("© 2025 Dashboard by S | Built with Streamlit and Kind of Love | Big Data Programming")
