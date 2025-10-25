@@ -847,17 +847,17 @@ def process_image(image):
 
 # --- FUNGSI CHART TETAP SAMA ---
 
-def create_confidence_chart(probabilities):
-    sorted_probs = sorted(probabilities.items(), key=lambda item: item[1], reverse=True)[:5]
-    categories = [item[0] for item in sorted_probs]; values = [item[1] for item in sorted_probs]
-    if not values or all(v == 0.0 for v in values):
-        categories = ["TIDAK ADA DATA"]; values = [100]; colors = ['rgba(239, 68, 68, 0.9)']; title = 'Confidence Distribution (TIDAK ADA HASIL)'
-        fig = go.Figure(data=[go.Bar(x=values, y=categories, orientation='h', marker=dict(color=colors[0], line=dict(color='rgba(255, 255, 255, 0.3)', width=2)), text=['N/A'], textposition='auto', textfont=dict(color='white', size=12, family='DM Sans'), hovertemplate='<b>TIDAK ADA HASIL VALID</b><extra></extra>',)])
-    else:
-        colors = ['rgba(168, 85, 247, 0.9)', 'rgba(192, 132, 252, 0.9)', 'rgba(147, 51, 234, 0.9)', 'rgba(216, 180, 254, 0.9)', 'rgba(139, 92, 246, 0.9)']; title = 'Confidence Distribution'
-        fig = go.Figure(data=[go.Bar(x=values, y=categories, orientation='h', marker=dict(color=colors[:len(categories)], line=dict(color='rgba(255, 255, 255, 0.3)', width=2),), text=[f'{v:.1f}%' for v in values], textposition='auto', textfont=dict(color='white', size=12, family='DM Sans'), hovertemplate='<b>%{y}</b><br>Confidence: %{x:.1f}%<extra></extra>',)]) 
-    fig.update_layout(title={'text': title, 'font': {'size': 18, 'color': '#FFFFFF', 'family': 'DM Sans'}, 'x': 0.5, 'xanchor': 'center'}, xaxis_title='Confidence (%)', yaxis_title='Category', font=dict(size=12, color='#B4B4B4', family='DM Sans'), plot_bgcolor='rgba(255, 255, 255, 0.03)', paper_bgcolor='rgba(0,0,0,0)', height=450, margin=dict(l=20, r=20, t=80, b=20), xaxis=dict(range=[0, 100], gridcolor='rgba(168, 85, 247, 0.2)', linecolor='rgba(255, 255, 255, 0.1)', tickfont=dict(color='#d8b4fe', family='DM Sans')), yaxis=dict(gridcolor='rgba(168, 85, 247, 0.2)', linecolor='rgba(255, 255, 255, 0.1)', tickfont=dict(color='#d8b4fe', family='DM Sans')), showlegend=False)
-    return fig
+#def create_confidence_chart(probabilities):
+ #   sorted_probs = sorted(probabilities.items(), key=lambda item: item[1], reverse=True)[:5]
+  #  categories = [item[0] for item in sorted_probs]; values = [item[1] for item in sorted_probs]
+   # if not values or all(v == 0.0 for v in values):
+    #    categories = ["TIDAK ADA DATA"]; values = [100]; colors = ['rgba(239, 68, 68, 0.9)']; title = 'Confidence Distribution (TIDAK ADA HASIL)'
+     #   fig = go.Figure(data=[go.Bar(x=values, y=categories, orientation='h', marker=dict(color=colors[0], line=dict(color='rgba(255, 255, 255, 0.3)', width=2)), text=['N/A'], textposition='auto', textfont=dict(color='white', size=12, family='DM Sans'), hovertemplate='<b>TIDAK ADA HASIL VALID</b><extra></extra>',)])
+    #else:
+     #   colors = ['rgba(168, 85, 247, 0.9)', 'rgba(192, 132, 252, 0.9)', 'rgba(147, 51, 234, 0.9)', 'rgba(216, 180, 254, 0.9)', 'rgba(139, 92, 246, 0.9)']; title = 'Confidence Distribution'
+      #  fig = go.Figure(data=[go.Bar(x=values, y=categories, orientation='h', marker=dict(color=colors[:len(categories)], line=dict(color='rgba(255, 255, 255, 0.3)', width=2),), text=[f'{v:.1f}%' for v in values], textposition='auto', textfont=dict(color='white', size=12, family='DM Sans'), hovertemplate='<b>%{y}</b><br>Confidence: %{x:.1f}%<extra></extra>',)]) 
+    #fig.update_layout(title={'text': title, 'font': {'size': 18, 'color': '#FFFFFF', 'family': 'DM Sans'}, 'x': 0.5, 'xanchor': 'center'}, xaxis_title='Confidence (%)', yaxis_title='Category', font=dict(size=12, color='#B4B4B4', family='DM Sans'), plot_bgcolor='rgba(255, 255, 255, 0.03)', paper_bgcolor='rgba(0,0,0,0)', height=450, margin=dict(l=20, r=20, t=80, b=20), xaxis=dict(range=[0, 100], gridcolor='rgba(168, 85, 247, 0.2)', linecolor='rgba(255, 255, 255, 0.1)', tickfont=dict(color='#d8b4fe', family='DM Sans')), yaxis=dict(gridcolor='rgba(168, 85, 247, 0.2)', linecolor='rgba(255, 255, 255, 0.1)', tickfont=dict(color='#d8b4fe', family='DM Sans')), showlegend=False)
+    #return fig
 
 def create_history_chart(history):
     if not history: return None
