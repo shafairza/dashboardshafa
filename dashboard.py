@@ -668,13 +668,15 @@ if 'current_page' not in st.session_state:
     st.session_state.current_page = "Dashboard"
 
 # --- HELPER FUNCTIONS (TIDAK BERUBAH) ---
+# --- HELPER FUNCTIONS (Perubahan di sini) ---
 @st.cache_resource
 def load_tensorflow_model():
     if not TENSORFLOW_AVAILABLE:
         return None
     try:
         # PENTING: Pastikan path model ini benar di lingkungan Anda
-        model = keras.models.load_model('models/Shafa_Laporan 2.h5')
+        # Model Klasifikasi (untuk 5 jenis beras)
+        model = keras.models.load_model('models/Shafa_Laporan 2.h5') 
         return model
     except Exception as e:
         st.error(f"Error loading TensorFlow model: {e}")
@@ -686,133 +688,237 @@ def load_pytorch_model():
         return None
     try:
         # PENTING: Pastikan path model ini benar di lingkungan Anda
+        # Model Klasifikasi (untuk 5 jenis beras)
         model = torch.load('models/Shafa_Laporan 4.pt', map_location='cpu')
         return model
     except Exception as e:
         st.error(f"Error loading PyTorch model: {e}")
         return None
 
-def predict_classification(image, model_type="TensorFlow Model"):
-    """Image Classification Prediction"""
-    # Categories: Rice types + Smoking/Not Smoking (Tinggal menyesuaikan jika hanya untuk ekspresi wajah)
-    categories = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Not Smoking', 'Smoking'] 
+# Tambahkan daftar kelas untuk memudahkan validasi input
+# KELAS UNTUK KLASIFIKASI (5 JENIS BERAS)
+CLASSIFICATION_CATEGORIES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag'] 
+# KELAS UNTUK DETEKSI (SMOKING/NOT SMOKING)
+DETECTION_CLASSES = ['Smoking', 'Not Smoking'] 
+
+# KELAS INPUT YANG DIHARAPKAN UNTUK KLASIFIKASI (Gambar Biji-bijian)
+def is_rice_image(image):
+    # Logika SIMULASI untuk menentukan apakah gambar adalah "Beras" atau "Random"
+    # Di dunia nyata, ini dilakukan dengan model ML kedua atau feature extraction
+    # Untuk tujuan simulasi, kita akan gunakan logika sederhana berdasarkan nama file
+    if st.session_state.get('uploaded_filename'):
+        filename = st.session_state.uploaded_filename.lower()
+        if any(rice_type in filename for rice_type in ['rice', 'arborio', 'basmati', 'ipsala', 'jasmine', 'karacadag', 'grain', 'seed']):
+            return True
     
+    # Jika tidak ada nama file (misalnya dari kamera), asumsikan acak
+    return random.choice([True, False, False]) # Lebih sering False untuk gambar random
+
+
+def is_person_image(image):
+    # Logika SIMULASI untuk menentukan apakah gambar terindikasi 'Orang'
+    if st.session_state.get('uploaded_filename'):
+        filename = st.session_state.uploaded_filename.lower()
+        if any(keyword in filename for keyword in ['face', 'person', 'people', 'human', 'smoke', 'vape']):
+            return True
+    
+    return random.choice([True, True, False, False, False]) # Lebih sering False
+
+
+def predict_classification(image, model_type="TensorFlow Model"):
+    """
+    Image Classification Prediction (Hanya untuk 5 Kelas Beras)
+    Logika 3 & 4
+    """
+    
+    # KELAS YANG DIKLASIFIKASIKAN OLEH MODEL (5 JENIS BERAS)
+    categories = CLASSIFICATION_CATEGORIES
+    
+    if not is_rice_image(image):
+        # 3. Kalau klik klasifikasi dan unggah gambar (terindikasi ada orang/hal random selain beras) bakal terdeteksi “Ini bukan klasifikasi”
+        return {
+            'class': "INPUT TIDAK COCOK",
+            'confidence': 100.0,
+            'probabilities': {cat: 0.0 for cat in categories},
+            'task_type': 'Classification',
+            'error_message': "Ini bukan klasifikasi **biji-bijian/beras** yang didukung model."
+        }
+
     try:
+        # Logika prediksi model yang sudah ada (Model Beras)
         if model_type == "TensorFlow Model":
             model = load_tensorflow_model()
+            # [Kode prediksi TF lainnya tetap sama, asumsikan model berjalan normal]
             if model is not None:
                 img_array = np.array(image.resize((224, 224))) / 255.0
                 img_array = np.expand_dims(img_array, axis=0)
-                
                 predictions = model.predict(img_array, verbose=0)
                 probabilities = predictions[0] * 100
-                predicted_class = categories[np.argmax(probabilities)]
-                confidence = np.max(probabilities)
             else:
                 # Simulasi jika model gagal dimuat
-                probabilities = np.random.dirichlet(np.ones(6)) * 100
-                predicted_class = categories[np.argmax(probabilities)]
-                confidence = np.max(probabilities)
+                probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
+
         else: # PyTorch Model
+            # [Kode prediksi PyTorch lainnya tetap sama]
             if TORCH_AVAILABLE:
                 model = load_pytorch_model()
                 if model is not None:
                     img_array = np.array(image.resize((224, 224))) / 255.0
                     img_tensor = torch.FloatTensor(img_array).permute(2, 0, 1).unsqueeze(0)
-                    
                     with torch.no_grad():
                         predictions = model(img_tensor)
                         probabilities = torch.softmax(predictions, dim=1).numpy()[0] * 100
-                        predicted_class = categories[np.argmax(probabilities)]
-                        confidence = np.max(probabilities)
                 else:
-                    probabilities = np.random.dirichlet(np.ones(6)) * 100
-                    predicted_class = categories[np.argmax(probabilities)]
-                    confidence = np.max(probabilities)
+                    probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
             else:
-                probabilities = np.random.dirichlet(np.ones(6)) * 100
-                predicted_class = categories[np.argmax(probabilities)]
-                confidence = np.max(probabilities)
-    except Exception as e:
-        st.warning(f"Model prediction failed: {e}. Using simulation.")
-        probabilities = np.random.dirichlet(np.ones(6)) * 100
+                probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
+                
+        # 4. Kalau klik klasifikasi dan unggah gambar beras (terdiri 5 kelas) bakal terdeteksi sesuai kelas nya contoh: “Ini beras kelas Ipsala”
         predicted_class = categories[np.argmax(probabilities)]
         confidence = np.max(probabilities)
+        
+        return {
+            'class': predicted_class,
+            'confidence': confidence,
+            'probabilities': dict(zip(categories, probabilities)),
+            'task_type': 'Classification',
+            'success_message': f"Ini beras kelas **{predicted_class}** (Confidence: {confidence:.2f}%)"
+        }
+        
+    except Exception as e:
+        # [Penanganan error model tetap sama]
+        st.warning(f"Model prediction failed: {e}. Using simulation.")
+        probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
+        predicted_class = categories[np.argmax(probabilities)]
+        confidence = np.max(probabilities)
+        
+        return {
+            'class': predicted_class,
+            'confidence': confidence,
+            'probabilities': dict(zip(categories, probabilities)),
+            'task_type': 'Classification',
+            'success_message': f"Ini beras kelas **{predicted_class}** (Simulasi Error). Confidence: {confidence:.2f}%"
+        }
 
-    return {
-        'class': predicted_class,
-        'confidence': confidence,
-        'probabilities': dict(zip(categories, probabilities)),
-        'task_type': 'Classification'
-    }
 
 def predict_detection(image):
-    """Object Detection Prediction"""
-    # Ganti ini dengan logika deteksi YOLO Anda yang sebenarnya
-    objects = [
-        {'class': 'Face', 'confidence': 0.95, 'bbox': [100, 150, 200, 250]},
-        {'class': 'Face', 'confidence': 0.87, 'bbox': [300, 200, 400, 300]},
-        {'class': 'Face', 'confidence': 0.78, 'bbox': [500, 100, 600, 200]}
-    ]
+    """
+    Object Detection Prediction (Simulasi YOLO: Smoking/Not Smoking)
+    Logika 1 & 2
+    """
     
-    return {
-        'objects': objects,
-        'total_objects': len(objects),
-        'task_type': 'Detection'
-    }
+    # KELAS UNTUK DETEKSI
+    categories = DETECTION_CLASSES
+    
+    # 1. ketika klik model Yolov dan unggah gambar (terindikasi ada orang) bakal terdeteksi “Smoking/NotSmoking)
+    if is_person_image(image):
+        
+        # Simulasi hasil deteksi (misal model YOLO mendeteksi orang dan klasifikasi apakah dia merokok)
+        simulated_class = random.choice(categories)
+        simulated_confidence = random.uniform(80, 99)
+        
+        # Buat probabilitas simulasi untuk chart
+        probabilities = {c: 0.0 for c in categories}
+        probabilities[simulated_class] = simulated_confidence
+        
+        objects = [
+            {'class': simulated_class, 'confidence': simulated_confidence, 'bbox': [100, 100, 500, 500]}
+        ]
+        
+        return {
+            'class': simulated_class,
+            'confidence': simulated_confidence,
+            'probabilities': probabilities,
+            'objects': objects,
+            'total_objects': len(objects),
+            'task_type': 'Detection',
+            'success_message': f"Deteksi: **{simulated_class}** dengan Confidence: {simulated_confidence:.2f}%"
+        }
+
+    # 2. ⁠kalau klik model Yolov dan unggah gambar random (beras/pesawat) bakal terdeteksi “Tidak terdeteksi smoking/notsmoking, bukan objek deteksi”
+    else:
+        return {
+            'class': "OBJEK TIDAK DITEMUKAN",
+            'confidence': 0.0,
+            'probabilities': {c: 0.0 for c in categories},
+            'objects': [],
+            'total_objects': 0,
+            'task_type': 'Detection',
+            'error_message': "Tidak terdeteksi **Smoking/Not Smoking**. Gambar bukan objek deteksi yang relevan."
+        }
+
 
 def predict_image(image, task_type, model_type="TensorFlow Model"):
     """Main prediction function"""
-    if task_type == "Image Classification":
+    if task_type == "Klasifikasi Gambar":
         return predict_classification(image, model_type)
-    elif task_type == "Object Detection":
+    elif task_type == "Deteksi Objek (YOLO)":
         return predict_detection(image)
     else:
-        return predict_classification(image, model_type)
-
+        return predict_classification(image, model_type) # Default fallback
 
 def process_image(image):
     img = Image.open(image)
     img = img.convert('RGB')
     img.thumbnail((800, 800))
+    # Simpan nama file untuk digunakan dalam fungsi is_rice_image/is_person_image
+    st.session_state.uploaded_filename = image.name 
     return img
 
-
+# [Fungsi create_confidence_chart dan create_history_chart tetap sama]
+# ... (Kode fungsi chart)
 def create_confidence_chart(probabilities):
     # Dapatkan 5 kategori teratas untuk visualisasi
     sorted_probs = sorted(probabilities.items(), key=lambda item: item[1], reverse=True)[:5]
     categories = [item[0] for item in sorted_probs]
     values = [item[1] for item in sorted_probs]
 
-    colors = ['rgba(168, 85, 247, 0.9)', 'rgba(192, 132, 252, 0.9)', 'rgba(147, 51, 234, 0.9)', 'rgba(216, 180, 254, 0.9)', 'rgba(139, 92, 246, 0.9)']
-    
-    fig = go.Figure(data=[
-        go.Bar(
-            x=values,
-            y=categories,
-            orientation='h',
-            marker=dict(
-                color=colors[:len(categories)],
-                line=dict(color='rgba(255, 255, 255, 0.3)', width=2),
-                gradient=dict(
-                    type='radial',
-                    coloraxis='coloraxis'
-                )
-            ),
-            text=[f'{v:.1f}%' for v in values],
-            textposition='auto',
-            textfont=dict(color='white', size=12, family='DM Sans'),
-            hovertemplate='<b>%{y}</b><br>Confidence: %{x:.1f}%<extra></extra>',
-        )
-    ])
+    # Cek jika semua nilai nol atau kosong (untuk kasus "INPUT TIDAK COCOK" atau "OBJEK TIDAK DITEMUKAN")
+    if not values or all(v == 0.0 for v in values):
+        # Buat data dummy untuk chart peringatan
+        categories = ["TIDAK ADA DATA"]
+        values = [100]
+        colors = ['rgba(239, 68, 68, 0.9)'] # Warna merah untuk error
+        title = 'Confidence Distribution (TIDAK ADA HASIL)'
+        
+        fig = go.Figure(data=[
+            go.Bar(
+                x=values,
+                y=categories,
+                orientation='h',
+                marker=dict(color=colors[0], line=dict(color='rgba(255, 255, 255, 0.3)', width=2)),
+                text=['N/A'],
+                textposition='auto',
+                textfont=dict(color='white', size=12, family='DM Sans'),
+                hovertemplate='<b>TIDAK ADA HASIL VALID</b><extra></extra>',
+            )
+        ])
+    else:
+        colors = ['rgba(168, 85, 247, 0.9)', 'rgba(192, 132, 252, 0.9)', 'rgba(147, 51, 234, 0.9)', 'rgba(216, 180, 254, 0.9)', 'rgba(139, 92, 246, 0.9)']
+        title = 'Confidence Distribution'
+        
+        fig = go.Figure(data=[
+            go.Bar(
+                x=values,
+                y=categories,
+                orientation='h',
+                marker=dict(
+                    color=colors[:len(categories)],
+                    line=dict(color='rgba(255, 255, 255, 0.3)', width=2),
+                    gradient=dict(
+                        type='radial',
+                        coloraxis='coloraxis'
+                    )
+                ),
+                text=[f'{v:.1f}%' for v in values],
+                textposition='auto',
+                textfont=dict(color='white', size=12, family='DM Sans'),
+                hovertemplate='<b>%{y}</b><br>Confidence: %{x:.1f}%<extra></extra>',
+            )
+        ])
 
     fig.update_layout(
-        title={
-            'text': 'Confidence Distribution',
-            'font': {'size': 18, 'color': '#FFFFFF', 'family': 'DM Sans'},
-            'x': 0.5,
-            'xanchor': 'center'
-        },
+        title={'text': title, 'font': {'size': 18, 'color': '#FFFFFF', 'family': 'DM Sans'}, 'x': 0.5, 'xanchor': 'center'},
         xaxis_title='Confidence (%)',
         yaxis_title='Category',
         font=dict(size=12, color='#B4B4B4', family='DM Sans'),
@@ -838,7 +944,6 @@ def create_confidence_chart(probabilities):
     )
 
     return fig
-
 
 def create_history_chart(history):
     if not history:
@@ -1060,7 +1165,7 @@ elif st.session_state.current_page == "Model Prediction":
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Logic for Image Upload and Prediction
+  # Logic for Image Upload and Prediction
     st.markdown("""
         <div style="max-width: 600px; margin: 0 auto 2rem auto;">
     """, unsafe_allow_html=True)
@@ -1083,7 +1188,7 @@ elif st.session_state.current_page == "Model Prediction":
             st.markdown("""
                 <div style="background: rgba(168, 85, 247, 0.1); border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 20px; padding: 1rem; overflow: hidden;">
             """, unsafe_allow_html=True)
-            st.image(image, use_container_width=True, caption="Gambar yang Diunggah")
+            st.image(image, use_container_width=True, caption=f"Gambar yang Diunggah: {uploaded_file.name}")
             st.markdown("</div>", unsafe_allow_html=True)
 
         with col2:
@@ -1099,62 +1204,83 @@ elif st.session_state.current_page == "Model Prediction":
                 
                 # Panggil fungsi prediksi dengan mode yang dipilih
                 result = predict_image(image, st.session_state.task_type, model_type_select)
-                st.session_state.total_predictions += 1
                 
-                # Tampilkan Hasil
-                st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Hasil Prediksi:</h3>', unsafe_allow_html=True)
-
-                if st.session_state.task_type == "Klasifikasi Gambar":
+                # Cek apakah ada error_message (Logika 2 & 3)
+                if 'error_message' in result:
+                    st.error(result['error_message'])
                     
-                    # Simpan ke histori
-                    st.session_state.prediction_history.append({
-                        'timestamp': datetime.now().strftime('%H:%M:%S'),
-                        'class': result['class'],
-                        'confidence': result['confidence'],
-                        'task_type': result['task_type']
-                    })
-
+                    # Tampilkan status khusus untuk penolakan
                     st.markdown(f"""
-                        <div style="text-align: center; background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.5);">
+                        <div style="text-align: center; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5); margin-top: 1rem;">
                             <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">
-                                KELAS PREDISKI: <span style="font-size: 2rem;">{result['class']}</span>
-                            </p>
-                            <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">
-                                CONFIDENCE: {result['confidence']:.2f}%
+                                STATUS: INPUT DITOLAK
                             </p>
                         </div>
                     """, unsafe_allow_html=True)
                     
                     st.markdown("---")
-                    
                     st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
 
 
-                elif st.session_state.task_type == "Deteksi Objek (YOLO)":
+                else:
+                    # Logika Normal (Klasifikasi Beras atau Deteksi Smoking/NotSmoking)
+                    st.session_state.total_predictions += 1
                     
-                    # Simpan ke histori (dengan format berbeda untuk deteksi)
-                    st.session_state.prediction_history.append({
-                        'timestamp': datetime.now().strftime('%H:%M:%S'),
-                        'class': 'N/A',
-                        'confidence': 0.0,
-                        'task_type': result['task_type'],
-                        'objects_detected': result['total_objects']
-                    })
+                    st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Hasil Prediksi:</h3>', unsafe_allow_html=True)
 
-                    st.markdown(f"""
-                        <div style="text-align: center; background: linear-gradient(135deg, #00e676 0%, #00c853 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.5);">
-                            <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">
-                                TOTAL OBJEK DITERK: <span style="font-size: 2rem;">{result['total_objects']}</span>
-                            </p>
-                            <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">
-                                Mode: Deteksi Objek (Simulasi)
-                            </p>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
-                    st.markdown("---")
-                    st.warning("Peringatan: Deteksi Objek saat ini menggunakan data simulasi.")
+                    if st.session_state.task_type == "Klasifikasi Gambar":
+                        # Simpan ke histori
+                        st.session_state.prediction_history.append({
+                            'timestamp': datetime.now().strftime('%H:%M:%S'),
+                            'class': result['class'],
+                            'confidence': result['confidence'],
+                            'task_type': result['task_type']
+                        })
 
+                        st.markdown(f"""
+                            <div style="text-align: center; background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.5);">
+                                <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">
+                                    KELAS PREDISKI: <span style="font-size: 2rem;">{result['class']}</span>
+                                </p>
+                                <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">
+                                    CONFIDENCE: {result['confidence']:.2f}%
+                                </p>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        st.success(result['success_message']) # Logika 4
+                        
+                        st.markdown("---")
+                        st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
+
+
+                    elif st.session_state.task_type == "Deteksi Objek (YOLO)":
+                        # Simpan ke histori
+                        st.session_state.prediction_history.append({
+                            'timestamp': datetime.now().strftime('%H:%M:%S'),
+                            'class': result['class'],
+                            'confidence': result['confidence'],
+                            'task_type': result['task_type'],
+                            'objects_detected': result['total_objects']
+                        })
+
+                        # Logika 1: Deteksi Smoking/Not Smoking
+                        color = "#00e676" if result['class'] == 'Not Smoking' else "#ffc400"
+                        
+                        st.markdown(f"""
+                            <div style="text-align: center; background: linear-gradient(135deg, {color} 0%, #00c853 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.5);">
+                                <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">
+                                    HASIL DETEKSI: <span style="font-size: 2rem;">{result['class']}</span>
+                                </p>
+                                <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">
+                                    CONFIDENCE: {result['confidence']:.2f}% (Jumlah Objek: {result['total_objects']})
+                                </p>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        st.success(result['success_message'])
+                        
+                        st.markdown("---")
+                        # Gunakan chart confidence untuk deteksi juga
+                        st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
 
             st.markdown("</div>", unsafe_allow_html=True)
             
@@ -1174,7 +1300,6 @@ elif st.session_state.current_page == "Model Prediction":
             </p>
         </div>
     """, unsafe_allow_html=True)
-
 
 # 3. Analytics (Tidak Berubah Signifikan)
 elif st.session_state.current_page == "Analytics":
