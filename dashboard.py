@@ -1093,7 +1093,7 @@ elif st.session_state.current_page == "Model Prediction":
                             color_start = "#9ca3af"; color_end = "#6b7280"
                             
                         st.markdown(f"""<div style="text-align: center; background: linear-gradient(135deg, {color_start} 0%, {color_end} 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.5);">
-                                <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">HASIL DETEKSI: <span style="font-size: 2rem;">{result['class']}</span></p>
+                                <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">Result Prediction: <span style="font-size: 2rem;">{result['class']}</span></p>
                                 <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">CONFIDENCE: {result['confidence']:.2f}% (Jumlah Objek: {result['total_objects']})</p></div>""", unsafe_allow_html=True)
                         st.success(result['success_message'])
                         st.markdown("---")
