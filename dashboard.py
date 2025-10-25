@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw 
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
@@ -9,11 +9,11 @@ import time
 # import random # Tidak digunakan dalam prediksi model, hanya simulasi deteksi
 
 # Import os untuk cek file path (debugging)
-import os
+import os 
 # TAMBAHKAN IMPORT DARI TORCHVISION UNTUK PRE-PROCESSING PYTORCH
 try:
     import torch
-    from torchvision import transforms
+    from torchvision import transforms 
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -117,19 +117,19 @@ def load_css():
     }
 
     @keyframes backgroundShift {
-        0%, 100% {
+        0%, 100% { 
             transform: translateX(0) translateY(0) scale(1);
             opacity: 1;
         }
-        25% {
+        25% { 
             transform: translateX(-10px) translateY(-5px) scale(1.02);
             opacity: 0.8;
         }
-        50% {
+        50% { 
             transform: translateX(5px) translateY(-10px) scale(0.98);
             opacity: 0.9;
         }
-        75% {
+        75% { 
             transform: translateX(-5px) translateY(5px) scale(1.01);
             opacity: 0.85;
         }
@@ -317,28 +317,6 @@ def load_css():
         border-radius: 0 4px 4px 0;
     }
 
-    /* Add selected style to the label */
-    .stRadio > div > label[data-baseweb="radio"]:has(input:checked) {
-        border-color: var(--primary) !important;
-        background: rgba(168, 85, 247, 0.15) !important; /* Slightly more visible selected state */
-        transform: translateX(0) !important; /* Prevent hover effect on selected item */
-        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3) !important;
-    }
-
-    .stRadio > div > label[data-baseweb="radio"]:has(input:checked)::before {
-        background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
-        width: 6px; /* Make the bar thicker when selected */
-    }
-
-    /* Remove the default hover effect on the selected item */
-    .stRadio > div > label[data-baseweb="radio"]:has(input:checked):hover {
-        background: rgba(168, 85, 247, 0.15) !important;
-        border-color: var(--primary) !important;
-        transform: none !important;
-        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3) !important;
-    }
-
-
     .stRadio > div > label:hover {
         background: rgba(255, 255, 255, 0.08) !important;
         border-color: var(--primary) !important;
@@ -365,17 +343,6 @@ def load_css():
         margin-left: 0rem !important;
         width: 100% !important;
     }
-    
-    /* Override radio button text color in main content (for balance card) */
-    .main .stRadio > div > label > div {
-        color: #000000 !important;
-    }
-    
-    /* Ensure selected radio button text is black in main content */
-    .main .stRadio > div > label[data-baseweb="radio"]:has(input:checked) > div {
-         color: #000000 !important;
-    }
-
 
     /* Slider Styling */
     .stSlider > div > div > div {
@@ -663,29 +630,6 @@ def load_css():
         border-color: rgba(255, 255, 255, 0.08) !important;
         margin: 2rem 0 !important;
     }
-    
-    /* Perbaikan Visual untuk st.selectbox di Prediksi Model */
-    [data-testid="stSelectbox"] div[data-baseweb="select"] {
-        background: var(--surface) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 14px !important;
-        color: #ffffff !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-    }
-
-    [data-testid="stSelectbox"] div[data-baseweb="select"] input {
-        color: #ffffff !important;
-    }
-
-    /* Override for selectbox in the main content to match purple theme */
-    .main [data-testid="stSelectbox"] div[data-baseweb="select"] {
-        background: rgba(168, 85, 247, 0.05) !important;
-        border: 1px solid rgba(168, 85, 247, 0.3) !important;
-    }
-    .main [data-testid="stSelectbox"] div[data-baseweb="select"] input {
-        color: #000000 !important;
-    }
-
     </style>
     """
 
@@ -699,9 +643,7 @@ if 'total_predictions' not in st.session_state:
 if 'accuracy_score' not in st.session_state:
     st.session_state.accuracy_score = 95.7
 if 'task_type' not in st.session_state:
-    st.session_state.task_type = "Klasifikasi Gambar" # Default
-if 'model_type' not in st.session_state:
-    st.session_state.model_type = "TensorFlow Model" # Default model for classification
+    st.session_state.task_type = "Image Classification" # Default
 if 'model_loaded' not in st.session_state:
     st.session_state.model_loaded = False
 if 'current_page' not in st.session_state:
@@ -722,9 +664,9 @@ def load_tensorflow_model():
         model_path = 'model/Shafa_Laporan 2.h5' 
         
         if not os.path.exists(model_path):
-            st.error(f"FATAL: File model TensorFlow tidak ditemukan di: {model_path}")
-            return None
-            
+             st.error(f"FATAL: File model TensorFlow tidak ditemukan di: {model_path}")
+             return None
+             
         model = keras.models.load_model(model_path) 
         return model
     except Exception as e:
@@ -741,8 +683,8 @@ def load_pytorch_model():
         model_path = 'model/Shafa_Laporan 4.pt'
         
         if not os.path.exists(model_path):
-            st.error(f"FATAL: File model PyTorch tidak ditemukan di: {model_path}")
-            return None
+             st.error(f"FATAL: File model PyTorch tidak ditemukan di: {model_path}")
+             return None
 
         # Memuat model PyTorch asli
         model = torch.load(model_path, map_location='cpu')
@@ -817,13 +759,13 @@ def predict_classification(image, model_type="TensorFlow Model"):
         }
 
     try:
-        # PENGGUNAAN MODEL (Mengambil dari st.session_state.model_type yang defaultnya TF)
+        # PENGGUNAAN MODEL 
         model = load_tensorflow_model() if model_type == "TensorFlow Model" else load_pytorch_model()
         
         if model is None:
             # Jika model gagal dimuat (FATAL ERROR), lemparkan kesalahan agar tidak melanjutkan prediksi
-            raise RuntimeError(f"Model Klasifikasi ({model_type}) tidak dapat dimuat (Lihat pesan FATAL error di atas).")
-            
+            raise RuntimeError("Model Klasifikasi tidak dapat dimuat (Lihat pesan FATAL error di atas).")
+        
         if model_type == "TensorFlow Model":
             # Kode prediksi TensorFlow/Keras
             
@@ -841,7 +783,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
             
             # Perlu dipastikan PyTorch dan torchvision terinstal, jika tidak akan crash
             if 'transforms' not in globals():
-                raise ImportError("PyTorch transforms diperlukan tetapi tidak terimport.")
+                 raise ImportError("PyTorch transforms diperlukan tetapi tidak terimport.")
 
             # Preprocess untuk PyTorch
             preprocess = transforms.Compose([
@@ -855,7 +797,6 @@ def predict_classification(image, model_type="TensorFlow Model"):
             
             with torch.no_grad():
                 predictions = model(img_tensor)
-                # Pastikan output torch adalah array numpy
                 probabilities = torch.softmax(predictions, dim=1).cpu().numpy()[0] * 100
         
         # 4. Hasil klasifikasi beras yang sukses
@@ -877,7 +818,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
             'confidence': 0.0,
             'probabilities': {cat: 0.0 for cat in categories},
             'task_type': 'Classification',
-            'error_message': f"Error Runtime Model: Model gagal memproses input ({model_type}). {str(e)[:100]}..."
+            'error_message': f"Error Runtime Model: Model gagal memproses input. {str(e)[:100]}..."
         }
 
 # --- PREDICT DETECTION ---
@@ -979,7 +920,7 @@ def draw_bounding_boxes(image, detections):
     return img_copy
 
 
-def predict_image(image, task_type, model_type):
+def predict_image(image, task_type, model_type="TensorFlow Model"):
     """Main prediction function"""
     if task_type == "Klasifikasi Gambar":
         return predict_classification(image, model_type)
@@ -1184,8 +1125,14 @@ with st.sidebar:
         st.session_state.current_page = "About"
     
     # Tetap sediakan variabel untuk kompatibilitas
-    # st.session_state.task_type_default dan lainnya tidak lagi diperlukan
+    task_type_default = "Image Classification"
+    model_type_default = "TensorFlow Model"
+    confidence_threshold_default = 70
 
+    st.session_state.task_type_default = task_type_default
+    st.session_state.model_type_default = model_type_default
+    st.session_state.confidence_threshold_default = confidence_threshold_default
+    
     st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
 
 
@@ -1211,22 +1158,13 @@ if st.session_state.current_page == "Dashboard":
 
     st.info("Pilih **'🧠 Prediksi Model'** di sidebar untuk memulai deteksi atau klasifikasi gambar.")
     
-    col_info_1, col_info_2 = st.columns(2)
-    with col_info_1:
-        st.markdown("""
-            <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-                <h3 style="color: #a855f7;">Model Klasifikasi:</h3>
-                <p style="color: #000000;">
-                    Default: TensorFlow/Keras. (Model PyTorch juga tersedia di kode).
-                </p>
-            </div>
-        """, unsafe_allow_html=True)
+    col_info_2 = st.columns(1)
     with col_info_2:
         st.markdown("""
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
                 <h3 style="color: #a855f7;">Fitur Utama:</h3>
                 <p style="color: #000000;">
-                    Klasifikasi (Beras 5 Kelas) & Deteksi Objek (Simulasi)
+                    Klasifikasi & Deteksi Objek pada Gambar
                 </p>
             </div>
         """, unsafe_allow_html=True)
@@ -1247,39 +1185,32 @@ elif st.session_state.current_page == "Model Prediction":
     
     st.markdown("---")
     
-    # Pemilihan Mode (Sesuai permintaan user: hanya satu selectbox)
+    # Pemilihan Mode dan Model
     st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
+    st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
     
-    # --- PERUBAHAN UTAMA: Hanya menggunakan st.selectbox sederhana ---
-    
-    col_mode_main, col_info_mode = st.columns([1, 1])
-    
-    with col_mode_main:
-        st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
+    col_mode_select, col_model_select = st.columns([1, 1])
+
+    with col_mode_select:
         task_type_select = st.selectbox(
             "Pilih Mode:", 
             ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"],
             label_visibility="collapsed",
-            key="task_type_select_simple" # Menggunakan key baru
+            key="task_type_select"
         )
         st.session_state.task_type = task_type_select
-
-    with col_info_mode:
+        
+    with col_model_select:
         if st.session_state.task_type == "Klasifikasi Gambar":
-            # Default Model Type (dapat diganti di state jika diperlukan)
-            st.session_state.model_type = st.selectbox(
+            model_type_select = st.selectbox(
                 "Pilih Framework:",
                 ["TensorFlow Model", "PyTorch Model"],
                 label_visibility="collapsed",
-                key="model_type_select_simple"
+                key="model_type_select"
             )
-            st.markdown(f'<div style="margin-top: 0.5rem;"><p style="color: #000000; font-size: 0.9rem; font-weight: 600;">Model Klasifikasi:</p><p style="color: #000000; font-size: 0.9rem;">{st.session_state.model_type}</p></div>', unsafe_allow_html=True)
-
         else:
-            st.session_state.model_type = "Detection Model (Simulated)"
-            st.markdown(f'<div style="margin-top: 0.5rem;"><p style="color: #000000; font-size: 0.9rem; font-weight: 600;">Model yang Digunakan:</p><p style="color: #000000; font-size: 0.9rem;">Deteksi Objek (Simulated YOLO)</p></div>', unsafe_allow_html=True)
-
-    # --- AKHIR PERBAIKAN ---
+            model_type_select = "Detection Model (Simulated)"
+            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi digunakan.</p>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1308,7 +1239,8 @@ elif st.session_state.current_page == "Model Prediction":
             """, unsafe_allow_html=True)
             
             # Panggil fungsi prediksi untuk mendapatkan hasil
-            result = predict_image(image, st.session_state.task_type, st.session_state.model_type)
+            # Logika ini dipanggil di sini untuk mengisi 'result' sebelum ditampilkan di kolom 1
+            result = predict_image(image, st.session_state.task_type, model_type_select)
             
             # Tampilkan Bounding Box jika mode Deteksi dan ada objek
             if st.session_state.task_type == "Deteksi Objek (YOLO)" and result['objects'] and result['total_objects'] > 0:
