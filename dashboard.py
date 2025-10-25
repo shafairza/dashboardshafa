@@ -737,18 +737,19 @@ def is_rice_image(image):
 def is_person_image(image):
     """
     Logika DITERMINISTIK: True jika nama file mengandung kata kunci orang/aktivitas.
+    Logika 1 & 2: Output akan konsisten.
     """
     if st.session_state.get('uploaded_filename'):
         filename = st.session_state.uploaded_filename.lower()
         person_keywords = ['face', 'person', 'human', 'smoke', 'vape', 'man', 'woman']
         
-        # Logika 1: Unggah gambar orang (keyword ada) -> True
+        # Logika 1: Jika ada keyword orang, kembalikan True (Deteksi aktif)
         if any(keyword in filename for keyword in person_keywords):
             return True
     
-    # Logika 2: Unggah gambar random (keyword tidak ada) -> False
+    # Logika 2: Jika tidak ada keyword orang/random, kembalikan False (Deteksi ditolak)
     return False
-
+    
 # --- PREDICT CLASSIFICATION ---
 
 def predict_classification(image, model_type="TensorFlow Model"):
