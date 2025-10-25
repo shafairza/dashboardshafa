@@ -650,10 +650,9 @@ if 'detection_cache' not in st.session_state:
 # KELAS UNTUK KLASIFIKASI (5 JENIS BERAS)
 CLASSIFICATION_CATEGORIES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag'] 
 # KELAS UNTUK DETEKSI (SMOKING/NOT SMOKING)
-# PASTIKAN URUTAN INI SESUAI DENGAN PELATIHAN MODEL YOLO Shafa_Laporan 4.pt
 DETECTION_CLASSES = ['NotSmoking', 'Smoking'] 
 
-# --- MODEL LOADING (DIPERBAIKI) ---
+# --- MODEL LOADING DAN UTILITIES (KODE SAMA) ---
 
 @st.cache_resource
 def load_models():
@@ -686,7 +685,6 @@ def load_models():
             
     return yolo_model, classifier
 
-# Menangani kegagalan memuat model saat inisialisasi
 try:
     yolo_model, classifier = load_models()
     MODEL_LOAD_SUCCESS = (yolo_model is not None) or (classifier is not None)
@@ -695,11 +693,9 @@ except Exception:
     yolo_model = None
     classifier = None
 
-# --- DUMMY MODEL/FILTER (DIHAPUS UNTUK MENJALANKAN FUNGSI ASLI) ---
+# --- FUNGSI INPUT KONSISTEN ---
 
-# Mengganti semua fungsi is_person_image dan is_rice_image agar langsung menjalankan model
 def is_rice_image(image):
-    # Dummies/filter untuk klasifikasi (dibiarkan sesuai permintaan klasifikasi awal)
     if st.session_state.get('uploaded_filename'):
         filename = st.session_state.uploaded_filename.lower()
         rice_keywords = ['rice', 'grain', 'seed'] + [c.lower() for c in CLASSIFICATION_CATEGORIES]
@@ -707,8 +703,8 @@ def is_rice_image(image):
             return True
     return False
 
+# FUNGSI is_person_image dipertahankan di kode Anda tetapi tidak digunakan dalam filter utama
 def is_person_image(image):
-    # Dummies/filter untuk deteksi (Dipertahankan di sini, tetapi tidak akan memblokir Deteksi objek)
     if st.session_state.get('uploaded_filename'):
         filename = st.session_state.uploaded_filename.lower()
         person_keywords = ['face', 'person', 'human', 'smoke', 'vape', 'man', 'woman']
@@ -716,7 +712,7 @@ def is_person_image(image):
             return True
     return False
 
-# --- PREDICT CLASSIFICATION (DIBIARKAN SAMA) ---
+# --- PREDICT CLASSIFICATION (KODE SAMA) ---
 
 def predict_classification(image, model_type="TensorFlow Model"):
     categories = CLASSIFICATION_CATEGORIES
@@ -729,19 +725,16 @@ def predict_classification(image, model_type="TensorFlow Model"):
         }
 
     try:
-        model = classifier # Menggunakan model yang sudah dimuat
+        model = classifier
         if model is None:
             raise RuntimeError("Model Klasifikasi tidak dapat dimuat.")
             
         TARGET_SIZE = (128, 128)
-        
-        # Simulasi prediksi (gunakan TensorFlow karena itu model Anda)
         img_resized = image.resize(TARGET_SIZE)
         img_array = np.array(img_resized) / 255.0
         img_array = np.expand_dims(img_array, axis=0)
         predictions = model.predict(img_array, verbose=0)
         probabilities = predictions[0] * 100
-        
         predicted_class = categories[np.argmax(probabilities)]
         confidence = np.max(probabilities)
         
@@ -758,21 +751,21 @@ def predict_classification(image, model_type="TensorFlow Model"):
             'error_message': f"Error Runtime Model: Model gagal memproses input. {str(e)[:100]}..."
         }
 
-# --- PREDICT DETECTION (DIPERBAIKI TOTAL UNTUK YOLO) ---
+# --- PREDICT DETECTION (DIPERBAIKI DENGAN FILTER INPUT CROSS-TASK) ---
 
 def predict_detection(image):
-    """
-    Object Detection Prediction (YOLO Nyata: NotSmoking/Smoking)
-    Menggunakan model Shafa_Laporan 4.pt yang dimuat sebagai YOLO.
-    """
-    
     categories = DETECTION_CLASSES 
-    filename = st.session_state.get('uploaded_filename', 'no_file')
-
-    # Caching Dihapus untuk simplicity, model akan dijalankan setiap kali
-    # (Anda dapat mengaktifkan kembali cache jika diperlukan)
     
-    # Cek apakah model Deteksi berhasil dimuat
+    # --- PERBAIKAN: BLOKIR GAMBAR BERAS DARI ALUR DETEKSI SECARA EKSPLISIT ---
+    if is_rice_image(image):
+         return {
+             'class': "INPUT TIDAK COCOK", 'confidence': 0.0,
+             'probabilities': {c: 0.0 for c in categories}, 'objects': [], 'total_objects': 0,
+             'task_type': 'Detection',
+             'error_message': "Input Ditolak: **Gambar adalah Objek Klasifikasi (Beras)**. Gunakan mode Klasifikasi untuk gambar ini."
+         }
+    # ----------------------------------------------------------------------
+    
     if yolo_model is None:
         return {
             'class': "MODEL GAGAL DIMUAT", 'confidence': 0.0,
@@ -782,33 +775,26 @@ def predict_detection(image):
         }
 
     try:
-        # Jalankan Inferensi YOLO nyata. Conf=0.25 (dapat diubah)
-        # Model YOLO akan menerima gambar PIL langsung
-        results = yolo_model(image, conf=0.25, iou=0.45, verbose=False) 
+        # PENTING: Gunakan confidence threshold yang lebih tinggi (misal 0.5) untuk
+        # mengurangi false positive, karena 0.25 mungkin terlalu rendah untuk model kustom.
+        results = yolo_model(image, conf=0.50, iou=0.45, verbose=False) 
         
         detected_objects = []
         
-        # Iterasi melalui hasil deteksi
         r = results[0]
         if hasattr(r, 'boxes') and r.boxes.data.shape[0] > 0:
             for box_data in r.boxes.data:
-                # box_data format: [xmin, ymin, xmax, ymax, confidence, class_id] (Tensor)
-                
                 bbox = box_data[:4].tolist() 
                 confidence = float(box_data[4]) * 100
                 class_id = int(box_data[5])
                 
-                # Mapping class_id ke nama kelas menggunakan array DETECTION_CLASSES
                 try:
                     class_name = categories[class_id]
                 except IndexError:
                     class_name = f"Unknown ID {class_id}"
-                    
-                detected_objects.append({
-                    'class': class_name, 'confidence': confidence, 'bbox': bbox
-                })
+                        
+                detected_objects.append({'class': class_name, 'confidence': confidence, 'bbox': bbox})
 
-        # Final Result Aggregation
         if detected_objects:
             best_detection = max(detected_objects, key=lambda x: x['confidence'])
             probabilities = {c: 0.0 for c in categories}
@@ -825,7 +811,7 @@ def predict_detection(image):
                 'class': "OBJEK TIDAK DITEMUKAN", 'confidence': 0.0,
                 'probabilities': {c: 0.0 for c in categories}, 'objects': [], 'total_objects': 0,
                 'task_type': 'Detection',
-                'error_message': f"Tidak ada objek **NotSmoking/Smoking** yang terdeteksi di atas threshold (0.25)."
+                'error_message': f"Tidak ada objek **NotSmoking/Smoking** yang terdeteksi di atas threshold (0.50)."
             }
             
     except Exception as e:
@@ -840,7 +826,8 @@ def predict_detection(image):
 
 
 def draw_bounding_boxes(image, detections):
-    """Menggambar bounding box pada gambar."""
+    # Fungsi ini tidak lagi digunakan di alur utama (main content) karena diganti oleh results[0].plot()
+    # Tetapi dipertahankan jika Anda membutuhkannya.
     if not detections['objects']:
         return image
         
@@ -851,18 +838,10 @@ def draw_bounding_boxes(image, detections):
         bbox = [int(x) for x in obj['bbox']]
         class_name = obj['class']
         confidence = obj['confidence']
-        
-        # Pilih warna berdasarkan kelas
         color = "red" if class_name == "Smoking" else "lime"
-        
-        # Gambar Bounding Box (4 pixel width)
         draw.rectangle(bbox, outline=color, width=4)
-        
-        # Tambahkan teks label
         text = f"{class_name} ({confidence:.1f}%)"
-        
         try:
-            # Tambahkan label di atas bbox
             draw.text((bbox[0] + 5, bbox[1] - 15), text, fill=color)
         except Exception:
             pass
@@ -871,7 +850,6 @@ def draw_bounding_boxes(image, detections):
 
 
 def predict_image(image, task_type, model_type):
-    """Main prediction function"""
     if task_type == "Klasifikasi Gambar":
         return predict_classification(image, model_type)
     elif task_type == "Deteksi Objek (YOLO)":
@@ -895,61 +873,30 @@ def create_confidence_chart(probabilities):
     if not values or all(v == 0.0 for v in values):
         categories = ["TIDAK ADA DATA"]; values = [100]; colors = ['rgba(239, 68, 68, 0.9)']
         title = 'Confidence Distribution (TIDAK ADA HASIL)'
-        
-        fig = go.Figure(data=[
-            go.Bar(x=values, y=categories, orientation='h', marker=dict(color=colors[0], line=dict(color='rgba(255, 255, 255, 0.3)', width=2)), text=['N/A'], textposition='auto', textfont=dict(color='white', size=12, family='DM Sans'), hovertemplate='<b>TIDAK ADA HASIL VALID</b><extra></extra>',)
-        ])
+        fig = go.Figure(data=[go.Bar(x=values, y=categories, orientation='h', marker=dict(color=colors[0], line=dict(color='rgba(255, 255, 255, 0.3)', width=2)), text=['N/A'], textposition='auto', textfont=dict(color='white', size=12, family='DM Sans'), hovertemplate='<b>TIDAK ADA HASIL VALID</b><extra></extra>',)])
     else:
         colors = ['rgba(168, 85, 247, 0.9)', 'rgba(192, 132, 252, 0.9)', 'rgba(147, 51, 234, 0.9)', 'rgba(216, 180, 254, 0.9)', 'rgba(139, 92, 246, 0.9)']
         title = 'Confidence Distribution'
-        
-        fig = go.Figure(data=[
-            go.Bar(x=values, y=categories, orientation='h', marker=dict(color=colors[:len(categories)], line=dict(color='rgba(255, 255, 255, 0.3)', width=2),), 
-                text=[f'{v:.1f}%' for v in values], textposition='auto', textfont=dict(color='white', size=12, family='DM Sans'), hovertemplate='<b>%{y}</b><br>Confidence: %{x:.1f}%<extra></extra>',)
-        ]) 
-
-    fig.update_layout(
-        title={'text': title, 'font': {'size': 18, 'color': '#FFFFFF', 'family': 'DM Sans'}, 'x': 0.5, 'xanchor': 'center'},
-        xaxis_title='Confidence (%)', yaxis_title='Category',
-        font=dict(size=12, color='#B4B4B4', family='DM Sans'),
-        plot_bgcolor='rgba(255, 255, 255, 0.03)', paper_bgcolor='rgba(0,0,0,0)', height=450,
-        margin=dict(l=20, r=20, t=80, b=20),
-        xaxis=dict(range=[0, 100], gridcolor='rgba(168, 85, 247, 0.2)', linecolor='rgba(255, 255, 255, 0.1)', tickfont=dict(color='#d8b4fe', family='DM Sans')),
-        yaxis=dict(gridcolor='rgba(168, 85, 247, 0.2)', linecolor='rgba(255, 255, 255, 0.1)', tickfont=dict(color='#d8b4fe', family='DM Sans')),
-        showlegend=False,
-    )
+        fig = go.Figure(data=[go.Bar(x=values, y=categories, orientation='h', marker=dict(color=colors[:len(categories)], line=dict(color='rgba(255, 255, 255, 0.3)', width=2),), 
+                text=[f'{v:.1f}%' for v in values], textposition='auto', textfont=dict(color='white', size=12, family='DM Sans'), hovertemplate='<b>%{y}</b><br>Confidence: %{x:.1f}%<extra></extra>',)]) 
+    fig.update_layout(title={'text': title, 'font': {'size': 18, 'color': '#FFFFFF', 'family': 'DM Sans'}, 'x': 0.5, 'xanchor': 'center'}, xaxis_title='Confidence (%)', yaxis_title='Category', font=dict(size=12, color='#B4B4B4', family='DM Sans'), plot_bgcolor='rgba(255, 255, 255, 0.03)', paper_bgcolor='rgba(0,0,0,0)', height=450, margin=dict(l=20, r=20, t=80, b=20), xaxis=dict(range=[0, 100], gridcolor='rgba(168, 85, 247, 0.2)', linecolor='rgba(255, 255, 255, 0.1)', tickfont=dict(color='#d8b4fe', family='DM Sans')), yaxis=dict(gridcolor='rgba(168, 85, 247, 0.2)', linecolor='rgba(255, 255, 255, 0.1)', tickfont=dict(color='#d8b4fe', family='DM Sans')), showlegend=False)
     return fig
 
 def create_history_chart(history):
     if not history: return None
-    df = pd.DataFrame(history)
-    df_filtered = df[df['task_type'] == 'Classification'].copy()
+    df = pd.DataFrame(history); df_filtered = df[df['task_type'] == 'Classification'].copy()
     if df_filtered.empty: return None
 
     fig = go.Figure()
-
-    fig.add_trace(go.Scatter(x=df_filtered['timestamp'], y=df_filtered['confidence'], mode='lines+markers', name='Confidence Trend',
-        line=dict(color='rgba(168, 85, 247, 0.8)', width=4, shape='spline', smoothing=0.3),
-        marker=dict(size=12, color='rgba(192, 132, 252, 0.9)', line=dict(width=2, color='rgba(255, 255, 255, 0.3)'), symbol='circle'),
-        fill='tonexty', fillcolor='rgba(168, 85, 247, 0.15)', hovertemplate='<b>Time:</b> %{x}<br><b>Confidence:</b> %{y:.1f}%<extra></extra>'))
-
-    fig.add_trace(go.Scatter(x=df_filtered['timestamp'], y=df_filtered['confidence'], mode='lines', fill='tozeroy',
-        fillcolor='rgba(168, 85, 247, 0.08)', line=dict(color='rgba(168, 85, 247, 0.3)', width=1), showlegend=False, hoverinfo='skip'))
+    fig.add_trace(go.Scatter(x=df_filtered['timestamp'], y=df_filtered['confidence'], mode='lines+markers', name='Confidence Trend', line=dict(color='rgba(168, 85, 247, 0.8)', width=4, shape='spline', smoothing=0.3), marker=dict(size=12, color='rgba(192, 132, 252, 0.9)', line=dict(width=2, color='rgba(255, 255, 255, 0.3)'), symbol='circle'), fill='tonexty', fillcolor='rgba(168, 85, 247, 0.15)', hovertemplate='<b>Time:</b> %{x}<br><b>Confidence:</b> %{y:.1f}%<extra></extra>'))
+    fig.add_trace(go.Scatter(x=df_filtered['timestamp'], y=df_filtered['confidence'], mode='lines', fill='tozeroy', fillcolor='rgba(168, 85, 247, 0.08)', line=dict(color='rgba(168, 85, 247, 0.3)', width=1), showlegend=False, hoverinfo='skip'))
 
     fig.update_layout(title={'text': 'Confidence History', 'font': {'size': 18, 'color': '#FFFFFF', 'family': 'DM Sans'}, 'x': 0.5, 'xanchor': 'center'},
-        xaxis_title='Time', yaxis_title='Confidence (%)',
-        font=dict(size=12, color='#B4B4B4', family='DM Sans'),
-        plot_bgcolor='rgba(255, 255, 255, 0.03)', paper_bgcolor='rgba(0,0,0,0)', height=450,
-        margin=dict(l=20, r=20, t=80, b=20),
-        xaxis=dict(gridcolor='rgba(168, 85, 247, 0.2)', linecolor='rgba(255, 255, 255, 0.1)', tickfont=dict(color='#d8b4fe', family='DM Sans')),
-        yaxis=dict(gridcolor='rgba(168, 85, 247, 0.2)', linecolor='rgba(255, 255, 255, 0.1)', tickfont=dict(color='#d8b4fe', family='DM Sans')),
-        showlegend=False, hovermode='x unified')
-
+        xaxis_title='Time', yaxis_title='Confidence (%)', font=dict(size=12, color='#B4B4B4', family='DM Sans'), plot_bgcolor='rgba(255, 255, 255, 0.03)', paper_bgcolor='rgba(0,0,0,0)', height=450, margin=dict(l=20, r=20, t=80, b=20), xaxis=dict(gridcolor='rgba(168, 85, 247, 0.2)', linecolor='rgba(255, 255, 255, 0.1)', tickfont=dict(color='#d8b4fe', family='DM Sans')), yaxis=dict(gridcolor='rgba(168, 85, 247, 0.2)', linecolor='rgba(255, 255, 255, 0.1)', tickfont=dict(color='#d8b4fe', family='DM Sans')), showlegend=False, hovermode='x unified')
     return fig
 
 # --- STREAMLIT SIDEBAR ---
 with st.sidebar:
-    # Load and encode logo
     import base64
     logo_path = "assets/Logo Dashboard.png"
     if os.path.exists(logo_path):
@@ -970,41 +917,18 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("""
-        <p style='font-size: 0.7rem; font-weight: 600; color: #a855f7; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1rem;'>Navigasi:</p>
-    """, unsafe_allow_html=True)
+    st.markdown("""<p style='font-size: 0.7rem; font-weight: 600; color: #a855f7; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1rem;'>Navigasi:</p>""", unsafe_allow_html=True)
 
-    # Opsi navigasi baru
     menu_options = ["🏠 Beranda", "🧠 Prediksi Model", "📊 Analitik", "ℹ️ Tentang"]
-    
-    # Update current_page based on selection
-    menu_selection = st.radio(
-        "menu_nav",
-        menu_options,
-        label_visibility="collapsed",
-        horizontal=False,
-        key="main_menu_selection"
-    )
+    menu_selection = st.radio("menu_nav", menu_options, label_visibility="collapsed", horizontal=False, key="main_menu_selection")
 
-    # Map menu selection to simple page name
-    if "Beranda" in menu_selection:
-        st.session_state.current_page = "Dashboard"
-    elif "Prediksi Model" in menu_selection:
-        st.session_state.current_page = "Model Prediction"
-    elif "Analitik" in menu_selection:
-        st.session_state.current_page = "Analytics"
-    elif "Tentang" in menu_selection:
-        st.session_state.current_page = "About"
+    if "Beranda" in menu_selection: st.session_state.current_page = "Dashboard"
+    elif "Prediksi Model" in menu_selection: st.session_state.current_page = "Model Prediction"
+    elif "Analitik" in menu_selection: st.session_state.current_page = "Analytics"
+    elif "Tentang" in menu_selection: st.session_state.current_page = "About"
     
-    # Tetap sediakan variabel untuk kompatibilitas
-    task_type_default = "Klasifikasi Gambar"
-    model_type_default = "TensorFlow Model"
-    confidence_threshold_default = 70
-
-    st.session_state.task_type_default = task_type_default
-    st.session_state.model_type_default = model_type_default
-    st.session_state.confidence_threshold_default = confidence_threshold_default
-    
+    task_type_default = "Klasifikasi Gambar"; model_type_default = "TensorFlow Model"; confidence_threshold_default = 70
+    st.session_state.task_type_default = task_type_default; st.session_state.model_type_default = model_type_default; st.session_state.confidence_threshold_default = confidence_threshold_default
     st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
 
 
@@ -1012,7 +936,6 @@ with st.sidebar:
 
 # 1. Dashboard (Awal)
 if st.session_state.current_page == "Dashboard":
-    # Load and encode logo
     import base64
     logo_path = "assets/Logo Dashboard.png"
     if os.path.exists(logo_path):
@@ -1075,7 +998,7 @@ elif st.session_state.current_page == "Model Prediction":
     """, unsafe_allow_html=True)
     
     st.markdown("---")
-
+    
     # Pemilihan Mode (SESUAI PERMINTAAN USER: Hanya SelectBox untuk Mode, tanpa pemilihan Framework)
     st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
 
@@ -1133,6 +1056,7 @@ elif st.session_state.current_page == "Model Prediction":
             if st.session_state.task_type == "Deteksi Objek (YOLO)" and result.get('objects') and result.get('total_objects', 0) > 0:
                 # Menggunakan plot() dari Ultralytics untuk menggambar kotak
                 try:
+                    # Jalankan ulang inferensi untuk mendapatkan objek plot
                     results = yolo_model(image, conf=0.25, iou=0.45, verbose=False)
                     # Ambil numpy array RGB dari plot
                     result_img_array = results[0].plot() 
@@ -1140,7 +1064,8 @@ elif st.session_state.current_page == "Model Prediction":
                     image_with_boxes = Image.fromarray(result_img_array)
                     st.image(image_with_boxes, width='stretch', caption=f"Gambar dengan Deteksi: {uploaded_file.name}")
                 except Exception as e:
-                    st.error(f"Error menggambar bounding box: {e}")
+                    # Ini akan terjadi jika model Shafa_Laporan 4.pt BUKAN model YOLO yang valid
+                    st.error(f"Error menggambar bounding box: {e}. Model YOLO gagal memproses gambar.")
                     st.image(image, width='stretch', caption=f"Gambar yang Diunggah (Error Plotting): {uploaded_file.name}")
             else:
                 st.image(image, width='stretch', caption=f"Gambar yang Diunggah: {uploaded_file.name}")
