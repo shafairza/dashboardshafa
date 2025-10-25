@@ -969,8 +969,7 @@ if st.session_state.current_page == "Dashboard":
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
                 <h3 style="color: #a855f7;">Information Model:</h3>
                 <p style="color: #000000;">
-                    Loaded Models: <b>Shafa_Laporan 2.h5</b> (TensorFlow) or <b>Shafa_Laporan 4.pt</b> (PyTorch).
-                    The <b>Shafa_Laporan 2.h5</b> model is a CNN-based image classification model, while 
+                    Loaded models <b>Shafa_Laporan 2.h5</b> model is a CNN-based image classification model, while 
                     <b>Shafa_Laporan 4.pt</b> is a YOLOv-based object detection model.
                 </p>
             </div>
@@ -978,9 +977,11 @@ if st.session_state.current_page == "Dashboard":
     with col_info_2:
         st.markdown("""
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-                <h3 style="color: #a855f7;">Fitur Utama:</h3>
+                <h3 style="color: #a855f7;">Feature Information:</h3>
                 <p style="color: #000000;">
-                    Klasifikasi (Beras 5 Kelas) & Deteksi Objek (YOLO Shafa_Laporan 4.pt).
+                1. <b>Image Classification</b> — Focused on rice grains labeled by predefined classes to recognize different rice categories.
+                2. <b>Object Detection</b> — Detects and identifies objects in images to classify individuals as smokers or non-smokers.
+                3. <b>User Analytics</b> — Displays a classification activity history, allowing users to monitor how many times image classification has been performed.
                 </p>
             </div>
         """, unsafe_allow_html=True)
