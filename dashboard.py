@@ -1056,12 +1056,13 @@ elif st.session_state.current_page == "Model Prediction":
             result = predict_image(image, st.session_state.task_type, model_type_select)
             
             # Tampilkan Bounding Box jika mode Deteksi dan ada objek
+            # Tampilkan Bounding Box jika mode Deteksi dan ada objek
             is_successful_detection = st.session_state.task_type == "Deteksi Objek (YOLO)" and result.get('objects') and result.get('total_objects', 0) > 0
 
             if is_successful_detection:
                 if yolo_model is not None:
                     try:
-                        # >>> PERBAIKAN: Menggunakan YOLO_CONF_THRESHOLD yang konsisten untuk plotting <<<
+                        # PERBAIKAN: Menggunakan YOLO_CONF_THRESHOLD yang konsisten untuk plotting
                         results_plot = yolo_model(image, conf=YOLO_CONF_THRESHOLD, iou=YOLO_IOU_THRESHOLD, verbose=False) 
                         
                         # Ambil numpy array RGB dari plot
