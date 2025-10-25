@@ -991,14 +991,14 @@ if st.session_state.current_page == "Dashboard":
 elif st.session_state.current_page == "Model Prediction":
     st.markdown("""<div style="text-align: center; padding: 1rem 2rem 2rem 2rem;">
             <h1 style="font-size: 2.5rem; font-weight: 700; color: #000000; margin: 0; letter-spacing: -0.03em;">Detection & Classification Model Prediction</h1>
-            <p style="font-size: 1.125rem; color: #000000; margin: 0.75rem 0 0 0; font-weight: 500;">Uji model Anda dalam mode Klasifikasi atau Deteksi Objek.</p>
+            <p style="font-size: 1.125rem; color: #000000; margin: 0.75rem 0 0 0; font-weight: 500;">Let's try it and don't forget uploaded image.</p>
         </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("---")
+    #st.markdown("---")
     
-    st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
-    st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Choose Prediction:</h3>', unsafe_allow_html=True)
+    #st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
+    #st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Choose Prediction:</h3>', unsafe_allow_html=True)
     
     col_mode_only = st.columns([1])[0] 
 
