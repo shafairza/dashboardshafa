@@ -1016,7 +1016,19 @@ elif st.session_state.current_page == "Model Prediction":
             label_visibility="collapsed",
             key="task_type_select"
         )
-        st.session_state.task_type = task_type_select
+        
+        # Perbaikan mapping task_type untuk konsistensi di predict_image
+        st.session_state.task_type = task_type_select.split('(')[0].strip() if '(' in task_type_select else task_type_select 
+
+        # Penentuan Model/Framework secara Internal
+        if "Classification" in st.session_state.task_type:
+            model_type_select = "TensorFlow Model"
+            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Detection model used: **{model_type_select}** (Shafa_Laporan 2.h5)</p>', unsafe_allow_html=True)
+        else:
+            model_type_select = "YOLO Model (Ultralytics)"
+            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Detection model used: **{model_type_select}** (Shafa_Laporan 4.pt)</p>', unsafe_allow_html=True)
+
+        #st.session_state.task_type = task_type_select
 
     # Logic for Image Upload and Prediction
     st.markdown("""
