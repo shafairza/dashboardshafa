@@ -1,12 +1,12 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw # Import ImageDraw untuk menggambar bounding box
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import time
-import random # Ditambahkan untuk simulasi
+import random
 
 try:
     import torch
@@ -669,6 +669,9 @@ if 'current_page' not in st.session_state:
     st.session_state.current_page = "Dashboard"
 if 'uploaded_filename' not in st.session_state:
     st.session_state.uploaded_filename = None
+# State untuk menyimpan hasil deteksi (agar konsisten untuk gambar yang sama)
+if 'detection_cache' not in st.session_state:
+    st.session_state.detection_cache = {}
 
 # --- HELPER FUNCTIONS ---
 @st.cache_resource
@@ -799,25 +802,33 @@ def predict_classification(image, model_type="TensorFlow Model"):
 def predict_detection(image):
     """
     Object Detection Prediction (Simulasi YOLO: Smoking/Not Smoking)
-    Logika 1 & 2
+    Logika 1 & 2. Menggunakan cache agar konsisten.
     """
     
     categories = DETECTION_CLASSES
+    filename = st.session_state.get('uploaded_filename')
     
+    # Cek cache berdasarkan nama file
+    if filename and filename in st.session_state.detection_cache:
+        return st.session_state.detection_cache[filename]
+
     # 1. Ketika klik model Deteksi dan unggah gambar (terindikasi ada orang)
     if is_person_image(image):
         
+        # Tentukan hasil simulasi secara acak, tapi hanya sekali per file
         simulated_class = random.choice(categories)
         simulated_confidence = random.uniform(80, 99)
         
         probabilities = {c: 0.0 for c in categories}
         probabilities[simulated_class] = simulated_confidence
         
+        # Simulasi bounding box (di tengah gambar, sedikit besar)
+        # Bbox: [xmin, ymin, xmax, ymax]
         objects = [
-            {'class': simulated_class, 'confidence': simulated_confidence, 'bbox': [100, 100, 500, 500]}
+            {'class': simulated_class, 'confidence': simulated_confidence, 'bbox': [100, 100, image.width - 100, image.height - 100]}
         ]
         
-        return {
+        result = {
             'class': simulated_class,
             'confidence': simulated_confidence,
             'probabilities': probabilities,
@@ -829,7 +840,7 @@ def predict_detection(image):
 
     # 2. Ketika klik model Deteksi dan unggah gambar random
     else:
-        return {
+        result = {
             'class': "OBJEK TIDAK DITEMUKAN",
             'confidence': 0.0,
             'probabilities': {c: 0.0 for c in categories},
@@ -838,6 +849,45 @@ def predict_detection(image):
             'task_type': 'Detection',
             'error_message': "Tidak terdeteksi **Smoking/Not Smoking**. Gambar bukan objek deteksi yang relevan."
         }
+        
+    # Simpan hasil ke cache
+    if filename:
+        st.session_state.detection_cache[filename] = result
+        
+    return result
+
+
+def draw_bounding_boxes(image, detections):
+    """Menggambar bounding box pada gambar."""
+    if not detections['objects']:
+        return image
+        
+    img_copy = image.copy()
+    draw = ImageDraw.Draw(img_copy)
+    
+    for obj in detections['objects']:
+        # Bbox harus berupa integer
+        bbox = [int(x) for x in obj['bbox']]
+        class_name = obj['class']
+        confidence = obj['confidence']
+        
+        # Pilih warna berdasarkan kelas
+        color = "green" if class_name == "Not Smoking" else "red"
+        
+        # Gambar Bounding Box (4 pixel width)
+        draw.rectangle(bbox, outline=color, width=4)
+        
+        # Tambahkan teks label
+        text = f"{class_name} ({confidence:.1f}%)"
+        
+        try:
+            # Tambahkan label di atas bbox
+            draw.text((bbox[0] + 5, bbox[1] - 15), text, fill=color)
+        except Exception:
+            # Fallback jika error menggambar teks
+            pass
+            
+    return img_copy
 
 
 def predict_image(image, task_type, model_type="TensorFlow Model"):
@@ -896,13 +946,13 @@ def create_confidence_chart(probabilities):
                 marker=dict(
                     color=colors[:len(categories)],
                     line=dict(color='rgba(255, 255, 255, 0.3)', width=2),
-                ), # <--- Tanda kurung kurawal marker ditutup di sini.
+                ), 
                 text=[f'{v:.1f}%' for v in values],
                 textposition='auto',
                 textfont=dict(color='white', size=12, family='DM Sans'),
                 hovertemplate='<b>%{y}</b><br>Confidence: %{x:.1f}%<extra></extra>',
             )
-        ]) # <--- Tanda kurung siku data dan kurung biasa Figure ditutup di sini.
+        ]) 
 
     fig.update_layout(
         title={'text': title, 'font': {'size': 18, 'color': '#FFFFFF', 'family': 'DM Sans'}, 'x': 0.5, 'xanchor': 'center'},
@@ -1166,7 +1216,17 @@ elif st.session_state.current_page == "Model Prediction":
             st.markdown("""
                 <div style="background: rgba(168, 85, 247, 0.1); border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 20px; padding: 1rem; overflow: hidden;">
             """, unsafe_allow_html=True)
-            st.image(image, width='stretch', caption=f"Gambar yang Diunggah: {uploaded_file.name}")
+            
+            # Panggil fungsi prediksi untuk mendapatkan hasil
+            result = predict_image(image, st.session_state.task_type, model_type_select)
+            
+            # --- Perbaikan: Tampilkan Bounding Box jika mode Deteksi ---
+            if st.session_state.task_type == "Deteksi Objek (YOLO)" and result['objects']:
+                image_with_boxes = draw_bounding_boxes(image, result)
+                st.image(image_with_boxes, width='stretch', caption=f"Gambar dengan Deteksi: {uploaded_file.name}")
+            else:
+                st.image(image, width='stretch', caption=f"Gambar yang Diunggah: {uploaded_file.name}")
+                
             st.markdown("</div>", unsafe_allow_html=True)
 
         with col2:
@@ -1175,13 +1235,13 @@ elif st.session_state.current_page == "Model Prediction":
             """, unsafe_allow_html=True)
 
             with st.spinner(f"Memproses gambar dengan mode {st.session_state.task_type}..."):
+                # Animasi loading (dipertahankan)
                 progress_bar = st.progress(0)
                 for i in range(100):
                     time.sleep(0.01)
                     progress_bar.progress(i + 1)
                 
-                # Panggil fungsi prediksi dengan mode yang dipilih
-                result = predict_image(image, st.session_state.task_type, model_type_select)
+                # Hasil sudah ada di variabel 'result' dari blok col1
                 
                 # Cek apakah ada error_message (Logika 2 & 3)
                 if 'error_message' in result:
