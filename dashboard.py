@@ -1202,7 +1202,7 @@ elif st.session_state.current_page == "Model Prediction":
 
 # 3. Analytics (Tidak Berubah Signifikan)
 elif st.session_state.current_page == "Analytics":
-    st.markdown("# 📊 Predictive Analytics")
+    st.markdown("# Predictive Analytics")
     st.markdown("---")
 
     df_history_classification = pd.DataFrame([h for h in st.session_state.prediction_history if h['task_type'] == 'Classification'])
@@ -1265,22 +1265,32 @@ elif st.session_state.current_page == "Analytics":
 
 # 4. About (Tidak Berubah)
 elif st.session_state.current_page == "About":
-    st.markdown("# ℹ️ Tentang")
+    st.markdown("# About")
     st.markdown("---")
 
     st.markdown("""
-    ### ML Image Prediction Dashboard
+    ### About the Developer
 
-    Platform untuk pengujian model machine learning (ML) secara real-time. Dashboard ini dirancang untuk menunjukkan kapabilitas model **Klasifikasi Gambar** (menggunakan TensorFlow atau PyTorch) dan **Deteksi Objek** (YOLO Nyata).
+    Hello! I'm **Shafarina Irzani**, the developer of this dashboard.  
+    This platform was created as a demonstration of applying **Machine Learning (ML)** and **Deep Learning (DL)** techniques for real-time image analysis.
 
-    #### Fitur Utama:
-    * **Klasifikasi Gambar:** Mengklasifikasikan gambar yang diunggah ke dalam kategori tertentu dengan nilai *confidence* (5 kelas Beras).
-    * **Deteksi Objek (YOLO):** Melakukan pendeteksian objek **Smoking/Not Smoking** menggunakan model YOLO (Ultralytics).
-    * **Visualisasi Data:** Menampilkan distribusi *confidence* dan riwayat prediksi.
+    My interests include **Data Engineer**, **computer vision**, **AI model development**, and **data visualization** combining design and analytical thinking to create interactive and educational dashboards.
 
-    #### Teknologi
-    * **Framework Utama:** Streamlit
-    * **Machine Learning:** TensorFlow/Keras & PyTorch (Klasifikasi), **Ultralytics YOLO** (Deteksi)
-    * **Data Analysis:** Pandas, NumPy
-    * **Visualisasi:** Plotly Express & Graph Objects
+    #### Project Overview
+    This dashboard is designed to showcase two main capabilities:
+    * **Image Classification:** Classifies uploaded images into predefined categories (5 rice varieties) using TensorFlow and PyTorch models.  
+    * **Object Detection (YOLO):** Detects and identifies objects in images (Smoking / Not Smoking) using Ultralytics YOLO.  
+    * **Data Visualization:** Displays prediction history and confidence distribution interactively.
+
+    #### Technologies Used
+    * **Framework:** Streamlit  
+    * **Machine Learning:** TensorFlow / Keras, PyTorch  
+    * **Object Detection:** Ultralytics YOLO  
+    * **Data Analysis:** Pandas, NumPy  
+    * **Visualization:** Plotly Express & Graph Objects  
+    and so many engine used, if you want to see more check more below.
+    ---
+    📫 *For collaboration or inquiries:*  
+    [GitHub](https://github.com/) | [LinkedIn](https://www.linkedin.com/)
     """)
+
