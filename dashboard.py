@@ -750,7 +750,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
         return {
             'class': predicted_class, 'confidence': confidence, 
             'probabilities': dict(zip(categories, probabilities)), 'task_type': 'Classification',
-            'success_message': f"Hasil: **Class {predicted_class}** (Confidence: {confidence:.2f}%)"
+            'success_message': f"Result: **Class {predicted_class}** (Confidence: {confidence:.2f}%)"
         }
         
     except Exception as e:
