@@ -1158,7 +1158,7 @@ elif st.session_state.current_page == "Model Prediction":
                     """, unsafe_allow_html=True)
                     
                     st.markdown("---")
-                    st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
+                    st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
 
 
                 else:
@@ -1186,10 +1186,10 @@ elif st.session_state.current_page == "Model Prediction":
                                 </p>
                             </div>
                         """, unsafe_allow_html=True)
-                        st.success(result['success_message']) 
-                        
+                        st.success(result['success_message'])
+
                         st.markdown("---")
-                        st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
+                        st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
 
 
                     elif st.session_state.task_type == "Deteksi Objek (YOLO)":
@@ -1223,10 +1223,10 @@ elif st.session_state.current_page == "Model Prediction":
                             </div>
                         """, unsafe_allow_html=True)
                         st.success(result['success_message'])
-                        
+
                         st.markdown("---")
                         # Gunakan chart confidence untuk deteksi juga
-                        st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
+                        st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
 
             st.markdown("</div>", unsafe_allow_html=True)
             
