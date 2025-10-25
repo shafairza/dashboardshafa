@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from PIL import Image, ImageDraw 
+from PIL import Image, ImageDraw
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
@@ -9,11 +9,11 @@ import time
 # import random # Tidak digunakan dalam prediksi model, hanya simulasi deteksi
 
 # Import os untuk cek file path (debugging)
-import os 
+import os
 # TAMBAHKAN IMPORT DARI TORCHVISION UNTUK PRE-PROCESSING PYTORCH
 try:
     import torch
-    from torchvision import transforms 
+    from torchvision import transforms
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -630,6 +630,19 @@ def load_css():
         border-color: rgba(255, 255, 255, 0.08) !important;
         margin: 2rem 0 !important;
     }
+    
+    /* Perbaikan Visual untuk st.selectbox di Prediksi Model */
+    [data-testid="stSelectbox"] div[data-baseweb="select"] {
+        background: rgba(168, 85, 247, 0.05) !important;
+        border: 1px solid rgba(168, 85, 247, 0.3) !important;
+        border-radius: 14px !important;
+        color: #000000 !important; /* Teks SelectBox di main content harus hitam */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    [data-testid="stSelectbox"] div[data-baseweb="select"] input {
+        color: #000000 !important;
+    }
     </style>
     """
 
@@ -643,7 +656,7 @@ if 'total_predictions' not in st.session_state:
 if 'accuracy_score' not in st.session_state:
     st.session_state.accuracy_score = 95.7
 if 'task_type' not in st.session_state:
-    st.session_state.task_type = "Image Classification" # Default
+    st.session_state.task_type = "Klasifikasi Gambar" # Default diperbarui ke Bahasa Indonesia
 if 'model_loaded' not in st.session_state:
     st.session_state.model_loaded = False
 if 'current_page' not in st.session_state:
@@ -664,9 +677,9 @@ def load_tensorflow_model():
         model_path = 'model/Shafa_Laporan 2.h5' 
         
         if not os.path.exists(model_path):
-             st.error(f"FATAL: File model TensorFlow tidak ditemukan di: {model_path}")
-             return None
-             
+            st.error(f"FATAL: File model TensorFlow tidak ditemukan di: {model_path}")
+            return None
+            
         model = keras.models.load_model(model_path) 
         return model
     except Exception as e:
@@ -683,8 +696,8 @@ def load_pytorch_model():
         model_path = 'model/Shafa_Laporan 4.pt'
         
         if not os.path.exists(model_path):
-             st.error(f"FATAL: File model PyTorch tidak ditemukan di: {model_path}")
-             return None
+            st.error(f"FATAL: File model PyTorch tidak ditemukan di: {model_path}")
+            return None
 
         # Memuat model PyTorch asli
         model = torch.load(model_path, map_location='cpu')
@@ -759,13 +772,13 @@ def predict_classification(image, model_type="TensorFlow Model"):
         }
 
     try:
-        # PENGGUNAAN MODEL (Tidak ada simulasi deterministik lagi)
+        # PENGGUNAAN MODEL 
         model = load_tensorflow_model() if model_type == "TensorFlow Model" else load_pytorch_model()
         
         if model is None:
             # Jika model gagal dimuat (FATAL ERROR), lemparkan kesalahan agar tidak melanjutkan prediksi
-            raise RuntimeError("Model Klasifikasi tidak dapat dimuat (Lihat pesan FATAL error di atas).")
-        
+            raise RuntimeError(f"Model Klasifikasi ({model_type}) tidak dapat dimuat (Lihat pesan FATAL error di atas).")
+            
         if model_type == "TensorFlow Model":
             # Kode prediksi TensorFlow/Keras
             
@@ -781,9 +794,8 @@ def predict_classification(image, model_type="TensorFlow Model"):
         elif model_type == "PyTorch Model":
             # Kode prediksi PyTorch
             
-            # Perlu dipastikan PyTorch dan torchvision terinstal, jika tidak akan crash
             if 'transforms' not in globals():
-                 raise ImportError("PyTorch transforms diperlukan tetapi tidak terimport.")
+                raise ImportError("PyTorch transforms diperlukan tetapi tidak terimport.")
 
             # Preprocess untuk PyTorch
             preprocess = transforms.Compose([
@@ -818,7 +830,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
             'confidence': 0.0,
             'probabilities': {cat: 0.0 for cat in categories},
             'task_type': 'Classification',
-            'error_message': f"Error Runtime Model: Model gagal memproses input. {str(e)[:100]}..."
+            'error_message': f"Error Runtime Model: Model gagal memproses input ({model_type}). {str(e)[:100]}..."
         }
 
 # --- PREDICT DETECTION ---
@@ -830,16 +842,16 @@ def predict_detection(image):
     """
     
     categories = DETECTION_CLASSES
-    filename = st.session_state.get('uploaded_filename')
-    
+    filename = st.session_state.get('uploaded_filename', 'no_file') # Default ke 'no_file'
+
     # Gunakan nama file untuk konsistensi cache
-    if filename and filename in st.session_state.detection_cache:
+    if filename in st.session_state.detection_cache:
         return st.session_state.detection_cache[filename]
 
     # Logika 1: Ketika klik model Deteksi dan unggah gambar (terindikasi ada orang)
     if is_person_image(image):
         
-        # Karena kita menghapus 'random', kita harus mendeterminasi hasil (misalnya dari hash)
+        # Logika Deterministik untuk hasil simulasi:
         hash_value = hash(filename) % 100
         # Tentukan hasil secara deterministik: 
         simulated_class = categories[0] if hash_value < 50 else categories[1] # Smoking atau Not Smoking
@@ -848,11 +860,14 @@ def predict_detection(image):
         probabilities = {c: 0.0 for c in categories}
         probabilities[simulated_class] = simulated_confidence
         
-        # Bbox yang statis (konsisten)
+        # Bbox yang statis (konsisten) - Skala dinamis berdasarkan ukuran gambar
+        w, h = image.size
         if simulated_class == 'Smoking':
-            bbox = [150, 150, image.width - 200, image.height - 250]
+            # Bbox di bagian tengah kiri (asumsi orang memegang sesuatu di wajah)
+            bbox = [int(w * 0.2), int(h * 0.25), int(w * 0.8), int(h * 0.7)]
         else: # Not Smoking
-            bbox = [120, 120, image.width - 150, image.height - 180]
+            # Bbox di bagian tengah yang lebih lebar
+            bbox = [int(w * 0.1), int(h * 0.15), int(w * 0.9), int(h * 0.85)]
             
         objects = [
             {'class': simulated_class, 'confidence': simulated_confidence, 'bbox': bbox}
@@ -877,7 +892,7 @@ def predict_detection(image):
             'objects': [],
             'total_objects': 0,
             'task_type': 'Detection',
-            'error_message': "Input Ditolak: **Bukan Objek Deteksi**. Tidak terdeteksi Smoking/Not Smoking."
+            'error_message': "Input Ditolak: **Bukan Objek Deteksi**. Model ini hanya mendeteksi **Smoking/Not Smoking** pada objek yang terindikasi orang."
         }
         
     # Simpan hasil ke cache untuk konsistensi di sesi yang sama
@@ -920,14 +935,15 @@ def draw_bounding_boxes(image, detections):
     return img_copy
 
 
-def predict_image(image, task_type, model_type="TensorFlow Model"):
+def predict_image(image, task_type, model_type):
     """Main prediction function"""
     if task_type == "Klasifikasi Gambar":
         return predict_classification(image, model_type)
     elif task_type == "Deteksi Objek (YOLO)":
         return predict_detection(image)
     else:
-        return predict_classification(image, model_type) # Default fallback
+        # Default fallback
+        return predict_classification(image, model_type) 
 
 def process_image(image):
     img = Image.open(image)
@@ -938,6 +954,8 @@ def process_image(image):
     return img
 
 # [Fungsi create_confidence_chart dan create_history_chart]
+# ... (Fungsi chart tetap sama) ... 
+
 def create_confidence_chart(probabilities):
     # Dapatkan 5 kategori teratas untuk visualisasi
     sorted_probs = sorted(probabilities.items(), key=lambda item: item[1], reverse=True)[:5]
@@ -1125,7 +1143,7 @@ with st.sidebar:
         st.session_state.current_page = "About"
     
     # Tetap sediakan variabel untuk kompatibilitas
-    task_type_default = "Image Classification"
+    task_type_default = "Klasifikasi Gambar"
     model_type_default = "TensorFlow Model"
     confidence_threshold_default = 70
 
@@ -1162,9 +1180,9 @@ if st.session_state.current_page == "Dashboard":
     with col_info_1:
         st.markdown("""
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-                <h3 style="color: #a855f7;">Model Tersedia:</h3>
+                <h3 style="color: #a855f7;">Model Klasifikasi:</h3>
                 <p style="color: #000000;">
-                    TensorFlow (Keras) dan PyTorch (untuk klasifikasi)
+                    Default: TensorFlow/Keras. (Model PyTorch juga tersedia di kode).
                 </p>
             </div>
         """, unsafe_allow_html=True)
@@ -1173,7 +1191,7 @@ if st.session_state.current_page == "Dashboard":
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
                 <h3 style="color: #a855f7;">Fitur Utama:</h3>
                 <p style="color: #000000;">
-                    Klasifikasi & Deteksi Objek pada Gambar
+                    Klasifikasi (Beras 5 Kelas) & Deteksi Objek (Simulasi)
                 </p>
             </div>
         """, unsafe_allow_html=True)
@@ -1194,13 +1212,15 @@ elif st.session_state.current_page == "Model Prediction":
     
     st.markdown("---")
     
-    # Pemilihan Mode dan Model
+    # Pemilihan Mode (SESUAI PERMINTAAN USER: Hanya SelectBox untuk Mode, tanpa pemilihan Framework)
     st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
     st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
     
-    col_mode_select, col_model_select = st.columns([1, 1])
+    # Menggunakan satu kolom penuh untuk SelectBox Mode
+    col_mode_only = st.columns([1])[0] 
 
-    with col_mode_select:
+    with col_mode_only:
+        # Pilihan Mode (Klasifikasi atau Deteksi)
         task_type_select = st.selectbox(
             "Pilih Mode:", 
             ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"],
@@ -1209,17 +1229,15 @@ elif st.session_state.current_page == "Model Prediction":
         )
         st.session_state.task_type = task_type_select
         
-    with col_model_select:
+        # Penentuan Model/Framework secara Internal
         if st.session_state.task_type == "Klasifikasi Gambar":
-            model_type_select = st.selectbox(
-                "Pilih Framework:",
-                ["TensorFlow Model", "PyTorch Model"],
-                label_visibility="collapsed",
-                key="model_type_select"
-            )
+            # Default menggunakan TensorFlow Model. Anda bisa mengubahnya menjadi PyTorch Model jika diinginkan.
+            model_type_select = "TensorFlow Model" 
+            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Klasifikasi yang digunakan: **{model_type_select}** (Default)</p>', unsafe_allow_html=True)
         else:
+            # Model Deteksi (Simulasi)
             model_type_select = "Detection Model (Simulated)"
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi digunakan.</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi yang digunakan: **Simulated YOLO**</p>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1247,12 +1265,12 @@ elif st.session_state.current_page == "Model Prediction":
                 <div style="background: rgba(168, 85, 247, 0.1); border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 20px; padding: 1rem; overflow: hidden;">
             """, unsafe_allow_html=True)
             
-            # Panggil fungsi prediksi untuk mendapatkan hasil
-            # Logika ini dipanggil di sini untuk mengisi 'result' sebelum ditampilkan di kolom 1
+            # Panggil fungsi prediksi
+            # PENTING: model_type_select sudah didefinisikan di atas
             result = predict_image(image, st.session_state.task_type, model_type_select)
             
             # Tampilkan Bounding Box jika mode Deteksi dan ada objek
-            if st.session_state.task_type == "Deteksi Objek (YOLO)" and result['objects'] and result['total_objects'] > 0:
+            if st.session_state.task_type == "Deteksi Objek (YOLO)" and result.get('objects') and result.get('total_objects', 0) > 0:
                 image_with_boxes = draw_bounding_boxes(image, result)
                 st.image(image_with_boxes, width='stretch', caption=f"Gambar dengan Deteksi: {uploaded_file.name}")
             else:
