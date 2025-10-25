@@ -961,24 +961,26 @@ if st.session_state.current_page == "Dashboard":
 
     st.markdown("---")
 
-    st.info("Pilih **'🧠 Prediksi Model'** di sidebar untuk memulai deteksi atau klasifikasi gambar.")
+    st.info("Select **'Model Prediction'** in the sidebar to start image detection or classification.")
     
     col_info_1, col_info_2 = st.columns(2)
     with col_info_1:
         st.markdown("""
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-                <h3 style="color: #a855f7;">Model Klasifikasi:</h3>
+                <h3 style="color: #a855f7;">💡 Model Information:</h3>
                 <p style="color: #000000;">
-                    Model yang dimuat: <b>Shafa_Laporan 2.h5</b> (TensorFlow) atau <b>Shafa_Laporan 4.pt</b> (PyTorch).
+                    Loaded models of <b>Shafa_Laporan 2.h5</b> model is a CNN-based image classification model, 
+                    while <b>Shafa_Laporan 4.pt</b> is a YOLOv-based object detection model.
                 </p>
             </div>
         """, unsafe_allow_html=True)
     with col_info_2:
         st.markdown("""
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-                <h3 style="color: #a855f7;">Fitur Utama:</h3>
+                <h3 style="color: #a855f7;">💡 Feature Information</h3>
                 <p style="color: #000000;">
-                    Klasifikasi (Beras 5 Kelas) & Deteksi Objek (YOLO Shafa_Laporan 4.pt).
+                The platform provides three main features are <b>Image Classification</b> to recognize image categories, 
+                <b>Object Detection</b> to identify and label objects, and <b>User Analytics</b> to monitor prediction activity and usage history.
                 </p>
             </div>
         """, unsafe_allow_html=True)
