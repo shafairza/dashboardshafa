@@ -61,7 +61,6 @@ pip install -r requirements.txt
 3. **Select Model:**
    - TensorFlow Model: Uses `models/Shafa_Laporan 2.h5`
    - PyTorch Model: Uses `models/Shafa_Laporan 4.pt`
-   - Simulation Model: Demo mode without ML frameworks
 
 4. **Upload Image:**
    - Supported formats: PNG, JPG, JPEG
