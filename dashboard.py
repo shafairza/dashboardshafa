@@ -872,6 +872,8 @@ with st.sidebar:
     # Load and encode logo
     import base64
     logo_path = "assets/Logo Dashboard.png"
+    # Pastikan os diimpor di bagian atas file utama (asumsi sudah ada)
+    # import os 
     if os.path.exists(logo_path):
         with open(logo_path, "rb") as f:
             logo_data = base64.b64encode(f.read()).decode()
@@ -894,8 +896,8 @@ with st.sidebar:
         <p style='font-size: 0.7rem; font-weight: 600; color: #a855f7; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1rem;'>Navigasi:</p>
     """, unsafe_allow_html=True)
 
-    # Opsi navigasi baru
-    menu_options = ["Home", "Model Prediction", "Analytics", "About"]
+    # Opsi navigasi baru (Dapat menggunakan ikon untuk estetika)
+    menu_options = ["🏠 Home", "🧠 Model Prediction", "📊 Analytics", "ℹ️ About"]
     
     # Update current_page based on selection
     menu_selection = st.radio(
@@ -906,17 +908,18 @@ with st.sidebar:
         key="main_menu_selection"
     )
 
-    # Map menu selection to simple page name
-    if "Beranda" in menu_selection:
-        st.session_state.current_page = "Dashboard"
-    elif "Prediksi Model" in menu_selection:
+    # Map menu selection to simple page name (LOGIKA INI DIPERBAIKI)
+    if "Home" in menu_selection:
+        st.session_state.current_page = "Dashboard" # Dashboard adalah nama yang Anda gunakan untuk Beranda
+    elif "Model Prediction" in menu_selection:
         st.session_state.current_page = "Model Prediction"
-    elif "Analitik" in menu_selection:
+    elif "Analytics" in menu_selection:
         st.session_state.current_page = "Analytics"
-    elif "Tentang" in menu_selection:
+    elif "About" in menu_selection:
         st.session_state.current_page = "About"
     
     # Tetap sediakan variabel untuk kompatibilitas
+    # Nilai default ini sebaiknya dipertahankan dalam Bahasa Indonesia sesuai logika predict_image Anda
     task_type_default = "Klasifikasi Gambar"
     model_type_default = "TensorFlow Model"
     confidence_threshold_default = 70
