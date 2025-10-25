@@ -1032,7 +1032,7 @@ elif st.session_state.current_page == "Model Prediction":
             result = predict_image(image, st.session_state.task_type, model_type_select)
             
             # Tampilkan Bounding Box jika mode Deteksi dan ada objek
-            if st.session_state.task_type == "Deteksi Objek (YOLO)" and result.get('objects') and result.get('total_objects', 0) > 0:
+            if st.session_state.task_type == "Object Detection (YOLO)" and result.get('objects') and result.get('total_objects', 0) > 0:
                 # Menggunakan plot() dari Ultralytics untuk menggambar kotak
                 if yolo_model is not None:
                     try:
@@ -1084,7 +1084,7 @@ elif st.session_state.current_page == "Model Prediction":
                         st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
 
 
-                    elif st.session_state.task_type == "Deteksi Objek (YOLO)":
+                    elif st.session_state.task_type == "Object Detection (YOLO)":
                         st.session_state.prediction_history.append({'timestamp': datetime.now().strftime('%H:%M:%S'), 'class': result['class'], 'confidence': result['confidence'], 'task_type': result['task_type'], 'objects_detected': result['total_objects']})
                         if result['total_objects'] > 0:
                             color_start = "#00e676" if result['class'] == 'NotSmoking' else "#ffc400"
