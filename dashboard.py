@@ -636,7 +636,7 @@ if 'total_predictions' not in st.session_state:
 if 'accuracy_score' not in st.session_state:
     st.session_state.accuracy_score = 95.7
 if 'task_type' not in st.session_state:
-    st.session_state.task_type = "Klasifikasi Gambar" # Default diperbarui ke Bahasa Indonesia
+    st.session_state.task_type = "Image Classification (CNN)" # Default diperbarui ke Bahasa Indonesia
 if 'model_loaded' not in st.session_state:
     st.session_state.model_loaded = False
 if 'current_page' not in st.session_state:
@@ -837,8 +837,8 @@ def draw_bounding_boxes(image, detections):
     pass 
 
 def predict_image(image, task_type, model_type):
-    if task_type == "Klasifikasi Gambar": return predict_classification(image, model_type)
-    elif task_type == "Deteksi Objek (YOLO)": return predict_detection(image)
+    if task_type == "Image Classification (CNN)r": return predict_classification(image, model_type)
+    elif task_type == "Object Detection (YOLO)": return predict_detection(image)
     else: return predict_classification(image, model_type) 
 
 def process_image(image):
@@ -922,7 +922,7 @@ with st.sidebar:
     
     # Tetap sediakan variabel untuk kompatibilitas
     # Nilai default ini sebaiknya dipertahankan dalam Bahasa Indonesia sesuai logika predict_image Anda
-    task_type_default = "Klasifikasi Gambar"
+    task_type_default = "Image Classification (CNN)"
     model_type_default = "TensorFlow Model"
     confidence_threshold_default = 70
 
@@ -1074,7 +1074,7 @@ elif st.session_state.current_page == "Model Prediction":
                     st.session_state.total_predictions += 1
                     st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Hasil Prediksi:</h3>', unsafe_allow_html=True)
 
-                    if st.session_state.task_type == "Klasifikasi Gambar":
+                    if st.session_state.task_type == "Image Classification (CNN)":
                         st.session_state.prediction_history.append({'timestamp': datetime.now().strftime('%H:%M:%S'), 'class': result['class'], 'confidence': result['confidence'], 'task_type': result['task_type']})
                         st.markdown(f"""<div style="text-align: center; background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.5);">
                                 <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">KELAS PREDISKI: <span style="font-size: 2rem;">{result['class']}</span></p>
