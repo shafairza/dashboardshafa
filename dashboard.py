@@ -667,8 +667,7 @@ def load_tensorflow_model():
     if not TENSORFLOW_AVAILABLE:
         return None
     try:
-        # PENTING: KOREKSI PATH ke 'models/'
-        model_path = 'models/Shafa_Laporan 2.h5' 
+        model_path = 'model/Shafa_Laporan 2.h5' 
         
         if not os.path.exists(model_path):
              st.error(f"FATAL: File model TensorFlow tidak ditemukan di: {model_path}")
@@ -686,8 +685,7 @@ def load_pytorch_model():
     if not TORCH_AVAILABLE:
         return None
     try:
-        # PENTING: KOREKSI PATH ke 'models/'
-        model_path = 'models/Shafa_Laporan 4.pt'
+        model_path = 'model/Shafa_Laporan 4.pt'
         
         if not os.path.exists(model_path):
              st.error(f"FATAL: File model PyTorch tidak ditemukan di: {model_path}")
