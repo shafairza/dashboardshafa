@@ -1055,35 +1055,11 @@ elif st.session_state.current_page == "Model Prediction":
     """, unsafe_allow_html=True)
     
     st.markdown("---")
-    
-    # Pemilihan Mode (SESUAI PERMINTAAN USER: Hanya SelectBox untuk Mode, tanpa pemilihan Framework)
-    st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
-    st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
-    
-    # Menggunakan satu kolom penuh untuk SelectBox Mode
-    col_mode_only = st.columns([1])[0] 
 
-    with col_mode_only:
-        # Pilihan Mode (Klasifikasi atau Deteksi)
-        task_type_select = st.selectbox(
-            "Pilih Mode:", 
-            ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"],
-            label_visibility="collapsed",
-            key="task_type_select"
-        )
-        st.session_state.task_type = task_type_select
-        
-        # Penentuan Model/Framework secara Internal
-        if st.session_state.task_type == "Klasifikasi Gambar":
-            # Default menggunakan TensorFlow Model. Anda bisa mengubahnya menjadi PyTorch Model jika diinginkan.
-            model_type_select = "TensorFlow Model" 
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Klasifikasi yang digunakan: **{model_type_select}** (Shafa_Laporan 2.h5)</p>', unsafe_allow_html=True)
-        else:
-            # Model Deteksi (YOLO Nyata)
-            model_type_select = "YOLO Model (Ultralytics)"
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi yang digunakan: **{model_type_select}** (Shafa_Laporan 4.pt)</p>', unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Set default task type
+    task_type_select = "Klasifikasi Gambar"
+    model_type_select = "TensorFlow Model"
+    st.session_state.task_type = task_type_select
 
     # Logic for Image Upload and Prediction
     st.markdown("""
