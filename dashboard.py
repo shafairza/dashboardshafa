@@ -981,8 +981,8 @@ if st.session_state.current_page == "Dashboard":
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
                 <h3 style="color: #a855f7;">💡 Feature Information</h3>
                 <p style="color: #000000;">
-                The platform offers several key features including Image Classification to recognize categories, Object Detection to identify image objects, 
-                and User Analytics to track prediction activities and usage history.
+                The platform offers several key features including image classification to recognize categories, object detection to identify image objects, 
+                and user analytics to track prediction activities and usage history.
                 </p>
             </div>
         """, unsafe_allow_html=True)
