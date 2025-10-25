@@ -131,4 +131,4 @@ This project is open source by Shafa and available under laboratory Big Data Pro
 
 ---
 
-**Note:** This dashboard works in both demo mode (simulation) and production mode (with actual ML models). The demo mode is perfect for testing and development, while production mode provides real model predictions.
+**Note:** This dashboard works in production mode (with actual ML and DL models). The production mode provides real model predictions by creator.
