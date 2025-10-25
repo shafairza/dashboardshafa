@@ -1202,7 +1202,7 @@ elif st.session_state.current_page == "Model Prediction":
 
 # 3. Analytics (Tidak Berubah Signifikan)
 elif st.session_state.current_page == "Analytics":
-    st.markdown("# 📊 Analitik Prediksi")
+    st.markdown("# 📊 Predictive Analytics")
     st.markdown("---")
 
     df_history_classification = pd.DataFrame([h for h in st.session_state.prediction_history if h['task_type'] == 'Classification'])
@@ -1211,7 +1211,7 @@ elif st.session_state.current_page == "Analytics":
         col1, col2 = st.columns([1, 1])
 
         with col1:
-            st.markdown("### Distribusi Kelas")
+            st.markdown("### Class Distribution of Classification")
             class_counts = df_history_classification['class'].value_counts()
             fig_pie = px.pie(
                 values=class_counts.values,
@@ -1228,14 +1228,14 @@ elif st.session_state.current_page == "Analytics":
             st.plotly_chart(fig_pie, use_container_width=True)
 
         with col2:
-            st.markdown("### Trend Confidence")
+            st.markdown("### Trend Confidence of All Model")
             fig_line = create_history_chart(st.session_state.prediction_history)
             if fig_line:
                 st.plotly_chart(fig_line, use_container_width=True)
 
         st.markdown("---")
 
-        st.markdown("### Riwayat Prediksi Lengkap")
+        st.markdown("### Prediction History")
         # Gabungkan semua data, termasuk deteksi
         df_all_history = pd.DataFrame(st.session_state.prediction_history)
         
