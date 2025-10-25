@@ -1026,7 +1026,7 @@ elif st.session_state.current_page == "Model Prediction":
         else:
             # Model Deteksi (YOLO Nyata)
             model_type_select = "YOLO Model (Ultralytics)"
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi yang digunakan: **{model_type_select}** (Shafa_Laporan 4.pt)</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Detection Model Used: **{model_type_select}** (Shafa_Laporan 4.pt)</p>', unsafe_allow_html=True)
 
     # Logic for Image Upload and Prediction
     st.markdown("""
@@ -1187,7 +1187,7 @@ elif st.session_state.current_page == "Model Prediction":
         st.markdown("""
             <div style="text-align: center; padding: 4rem 2rem;">
                 <p style="color: #000000; font-size: 1.125rem;">
-                    ☝️ Pilih Mode di atas dan unggah gambar untuk memulai prediksi.
+                    ☝️ Select the Mode above and upload an image to start the prediction.
                 </p>
             </div>
         """, unsafe_allow_html=True)
@@ -1195,7 +1195,7 @@ elif st.session_state.current_page == "Model Prediction":
     st.markdown("""
         <div style="text-align: center; margin: 4rem 0 2rem 0;">
             <p style="font-size: 1.25rem; color: #000000; font-style: italic; margin: 0;">
-                "Disini Bisa Deteksi Berbagai Ekspresi Wajah (deteksi objek nyata)"
+                " "
             </p>
         </div>
     """, unsafe_allow_html=True)
