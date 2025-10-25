@@ -6,10 +6,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import time
-# Menghapus import random karena tidak lagi digunakan
-import os 
-from typing import Dict, Any
+# import random # Tidak digunakan dalam prediksi model, hanya simulasi deteksi
 
+# Import os untuk cek file path (debugging)
+import os 
+# TAMBAHKAN IMPORT DARI TORCHVISION UNTUK PRE-PROCESSING PYTORCH
 try:
     import torch
     from torchvision import transforms 
@@ -428,6 +429,27 @@ def load_css():
         margin-bottom: 0.5rem !important;
     }
 
+    /* Alert Boxes - Glass with Better Visibility */
+    .stAlert {
+        backdrop-filter: blur(10px);
+        border-radius: 14px;
+        border: 1px solid;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+    }
+
+    .stSuccess {
+        background: rgba(34, 197, 94, 0.2) !important;
+        color: #ffffff !important;
+        border-color: rgba(34, 197, 94, 0.5) !important;
+    }
+
+    .stError {
+        background: rgba(239, 68, 68, 0.2) !important;
+        color: #ffffff !important;
+        border-color: rgba(239, 68, 68, 0.5) !important;
+    }
+
     /* All Alert text should be BLACK */
     .stAlert div,
     .stAlert p,
@@ -474,6 +496,10 @@ def load_css():
         border-color: rgba(255, 255, 255, 0.05) !important;
     }
 
+    .dataframe tbody tr:hover {
+        background: rgba(139, 92, 246, 0.08) !important;
+    }
+
     /* Hide Streamlit Elements */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
@@ -488,12 +514,126 @@ def load_css():
     [data-testid="stSidebar"] button[kind="header"] {
         display: none !important;
     }
-    </style>
-""", unsafe_allow_html=True)
 
-def load_css():
-    # ... (Isi CSS function tetap sama, definisi di atas) ...
-    pass # Didefinisikan ulang di atas
+    /* Hide all collapse control buttons */
+    button[aria-label*="collapse"] {
+        display: none !important;
+    }
+
+    /* Hide Material Icon text fallback */
+    .material-icons {
+        font-size: 0 !important;
+    }
+
+    /* Hide keyboard_double_arrow text specifically */
+    [data-testid="stSidebar"] button {
+        font-size: 0 !important;
+    }
+
+    [data-testid="stSidebar"] button svg {
+        display: block !important;
+    }
+
+    /* Alternative: hide the entire sidebar nav button area */
+    section[data-testid="stSidebar"] > div > div > button {
+        display: none !important;
+    }
+
+    /* Hide the collapsible trigger */
+    .css-1544g2n, .css-nahz7x, .css-10trblm {
+        display: none !important;
+    }
+
+    /* Balance/Result Card - Purple Theme */
+    .balance-card {
+        background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(147, 51, 234, 0.15) 100%);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(168, 85, 247, 0.4);
+        border-radius: 24px;
+        padding: 2.5rem;
+        box-shadow:
+            0 8px 32px rgba(168, 85, 247, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s ease;
+    }
+
+    .balance-card:hover {
+        border-color: rgba(192, 132, 252, 0.6);
+        box-shadow:
+            0 12px 40px rgba(168, 85, 247, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        transform: translateY(-4px);
+    }
+
+    /* Chart Container - Glass */
+    .js-plotly-plot {
+        background: rgba(255, 255, 255, 0.03) !important;
+        backdrop-filter: blur(10px);
+        border-radius: 16px !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        padding: 1rem !important;
+    }
+
+    /* Image Container */
+    [data-testid="stImage"] {
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Custom Loading Animation */
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .loading-dots {
+        display: flex;
+        gap: 8px;
+        margin-top: 1rem;
+    }
+
+    .loading-dot {
+        width: 12px;
+        height: 12px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        border-radius: 50%;
+        animation: bounce 1.4s ease-in-out infinite both;
+    }
+
+    .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+    .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+    .loading-dot:nth-child(3) { animation-delay: 0s; }
+
+    @keyframes bounce {
+        0%, 80%, 100% {
+            transform: scale(0);
+        }
+        40% {
+            transform: scale(1);
+        }
+    }
+
+    /* Divider */
+    hr {
+        border-color: rgba(255, 255, 255, 0.08) !important;
+        margin: 2rem 0 !important;
+    }
+    </style>
+    """
+
+st.markdown(load_css(), unsafe_allow_html=True)
 
 # --- SESSION STATE INITIALIZATION ---
 if 'prediction_history' not in st.session_state:
@@ -510,7 +650,9 @@ if 'current_page' not in st.session_state:
     st.session_state.current_page = "Dashboard"
 if 'uploaded_filename' not in st.session_state:
     st.session_state.uploaded_filename = None
-# HAPUS 'detection_cache'
+# State untuk menyimpan hasil deteksi (agar konsisten untuk gambar yang sama)
+if 'detection_cache' not in st.session_state:
+    st.session_state.detection_cache = {}
 
 # --- HELPER FUNCTIONS ---
 @st.cache_resource
@@ -518,7 +660,7 @@ def load_tensorflow_model():
     if not TENSORFLOW_AVAILABLE:
         return None
     try:
-        # PENTING: Menggunakan 'model/'
+        # KOREKSI PATH KE 'model/'
         model_path = 'model/Shafa_Laporan 2.h5' 
         
         if not os.path.exists(model_path):
@@ -528,6 +670,7 @@ def load_tensorflow_model():
         model = keras.models.load_model(model_path) 
         return model
     except Exception as e:
+        # Menampilkan error asli dari Keras/TensorFlow
         st.error(f"Error loading TensorFlow model: {e}")
         return None
 
@@ -536,40 +679,21 @@ def load_pytorch_model():
     if not TORCH_AVAILABLE:
         return None
     try:
-        # PENTING: Menggunakan 'model/'
+        # KOREKSI PATH KE 'model/'
         model_path = 'model/Shafa_Laporan 4.pt'
         
         if not os.path.exists(model_path):
              st.error(f"FATAL: File model PyTorch tidak ditemukan di: {model_path}")
              return None
 
+        # Memuat model PyTorch asli
         model = torch.load(model_path, map_location='cpu')
+        # Penting: Model perlu diatur ke mode evaluasi
         model.eval() 
         return model
     except Exception as e:
+        # Menangani error jika file ditemukan tetapi gagal dimuat
         st.error(f"Error loading PyTorch model: {e}")
-        return None
-
-@st.cache_resource
-def load_yolo_model():
-    # Model Deteksi harus menggunakan path Anda
-    if not TENSORFLOW_AVAILABLE and not TORCH_AVAILABLE:
-        return None
-        
-    try:
-        # ASUMSI: Nama file model YOLO Anda
-        yolo_path = 'model/Shafa_YOLO.pt' 
-        
-        if not os.path.exists(yolo_path):
-             st.error(f"FATAL: File model Deteksi (YOLO) tidak ditemukan di: {yolo_path}")
-             return None
-        
-        # NOTE: Placeholder untuk model yang dimuat sukses
-        # Jika model Anda adalah PyTorch/YOLOv5/v8, Anda akan memuatnya di sini
-        return {"loaded": True, "path": yolo_path} 
-        
-    except Exception as e:
-        st.error(f"Error loading YOLO model: {e}")
         return None
         
 # KELAS UNTUK KLASIFIKASI (5 JENIS BERAS)
@@ -577,25 +701,37 @@ CLASSIFICATION_CATEGORIES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacad
 # KELAS UNTUK DETEKSI (SMOKING/NOT SMOKING)
 DETECTION_CLASSES = ['Smoking', 'Not Smoking'] 
 
-# --- FUNGSI INPUT KONSISTEN (TETAP SAMA) ---
+# --- FUNGSI INPUT KONSISTEN BERDASARKAN NAMA FILE (DETERMINISTIK) ---
 
 def is_rice_image(image):
-    """Logika DITERMINISTIK: True jika nama file mengandung kata kunci beras/kelas."""
+    """
+    Logika DITERMINISTIK: True jika nama file mengandung kata kunci beras/kelas.
+    """
     if st.session_state.get('uploaded_filename'):
         filename = st.session_state.uploaded_filename.lower()
         rice_keywords = ['rice', 'grain', 'seed'] + [c.lower() for c in CLASSIFICATION_CATEGORIES]
+        
+        # Logika 4: Unggah gambar beras (keyword ada) -> True
         if any(keyword in filename for keyword in rice_keywords):
             return True
+    
+    # Logika 3: Unggah gambar orang/selain beras (keyword tidak ada) -> False
     return False
 
 
 def is_person_image(image):
-    """Logika DITERMINISTIK: True jika nama file mengandung kata kunci orang/aktivitas."""
+    """
+    Logika DITERMINISTIK: True jika nama file mengandung kata kunci orang/aktivitas.
+    """
     if st.session_state.get('uploaded_filename'):
         filename = st.session_state.uploaded_filename.lower()
         person_keywords = ['face', 'person', 'human', 'smoke', 'vape', 'man', 'woman']
+        
+        # Logika 1: Jika ada keyword orang, kembalikan True (Deteksi aktif)
         if any(keyword in filename for keyword in person_keywords):
             return True
+    
+    # Logika 2: Jika tidak ada keyword orang/random, kembalikan False (Deteksi ditolak)
     return False
     
 # --- PREDICT CLASSIFICATION ---
@@ -608,28 +744,35 @@ def predict_classification(image, model_type="TensorFlow Model"):
     
     categories = CLASSIFICATION_CATEGORIES
     filename = st.session_state.get('uploaded_filename')
+    
+    # KOREKSI UKURAN INPUT: Disesuaikan dengan permintaan user (128x128)
     TARGET_SIZE = (128, 128)
     
     if not is_rice_image(image):
         # 3. Input ditolak jika bukan gambar beras
         return {
             'class': "INPUT TIDAK COCOK",
-            'confidence': 0.0, 
+            'confidence': 0.0, # Confidence 0.0 saat ditolak
             'probabilities': {cat: 0.0 for cat in categories},
             'task_type': 'Classification',
             'error_message': "Input Ditolak: **Bukan Objek Klasifikasi**. Model ini hanya mendukung klasifikasi **biji-bijian/beras**."
         }
 
     try:
+        # PENGGUNAAN MODEL (Tidak ada simulasi deterministik lagi)
         model = load_tensorflow_model() if model_type == "TensorFlow Model" else load_pytorch_model()
         
         if model is None:
-            raise RuntimeError("Model Klasifikasi tidak dapat dimuat (Cek pesan FATAL error di atas).")
+            # Jika model gagal dimuat (FATAL ERROR), lemparkan kesalahan agar tidak melanjutkan prediksi
+            raise RuntimeError("Model Klasifikasi tidak dapat dimuat (Lihat pesan FATAL error di atas).")
         
         if model_type == "TensorFlow Model":
             # Kode prediksi TensorFlow/Keras
+            
+            # --- KOREKSI KRUSIAL UKURAN INPUT KE 128x128 ---
             img_resized = image.resize(TARGET_SIZE)
             img_array = np.array(img_resized) / 255.0
+            # -----------------------------------------------
             
             img_array = np.expand_dims(img_array, axis=0)
             predictions = model.predict(img_array, verbose=0)
@@ -637,12 +780,16 @@ def predict_classification(image, model_type="TensorFlow Model"):
             
         elif model_type == "PyTorch Model":
             # Kode prediksi PyTorch
+            
+            # Perlu dipastikan PyTorch dan torchvision terinstal, jika tidak akan crash
             if 'transforms' not in globals():
-                 raise ImportError("PyTorch transforms diperlukan.")
+                 raise ImportError("PyTorch transforms diperlukan tetapi tidak terimport.")
 
+            # Preprocess untuk PyTorch
             preprocess = transforms.Compose([
                 transforms.Resize(TARGET_SIZE),
                 transforms.ToTensor(),
+                # Asumsi normalisasi standar (DAPAT DISESUAIKAN JIKA PERLU)
                 # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
             
@@ -665,62 +812,53 @@ def predict_classification(image, model_type="TensorFlow Model"):
         }
         
     except Exception as e:
+        # Jika terjadi error saat memuat/menjalankan model, return error message.
         return {
             'class': "RUNTIME ERROR",
             'confidence': 0.0,
             'probabilities': {cat: 0.0 for cat in categories},
             'task_type': 'Classification',
-            'error_message': f"Error Runtime Model Klasifikasi: {str(e)[:100]}..."
+            'error_message': f"Error Runtime Model: Model gagal memproses input. {str(e)[:100]}..."
         }
 
 # --- PREDICT DETECTION ---
 
-def predict_detection(image) -> Dict[str, Any]:
+def predict_detection(image):
     """
-    Object Detection Prediction (Menggunakan model YOLO asli).
-    Logika 1 & 2.
+    Object Detection Prediction (Simulasi YOLO: Smoking/Not Smoking)
+    Logika 1 & 2. Output statis/cache.
     """
     
     categories = DETECTION_CLASSES
     filename = st.session_state.get('uploaded_filename')
     
-    # 1. CEK MODEL DETEKSI DULU
-    yolo_model = load_yolo_model()
-    
-    if yolo_model is None:
-        # Model GAGAL dimuat (error sudah ditampilkan di FATAL)
-        return {
-            'class': "MODEL GAGAL",
-            'confidence': 0.0,
-            'probabilities': {c: 0.0 for c in categories},
-            'objects': [],
-            'total_objects': 0,
-            'task_type': 'Detection',
-            'error_message': "Model Deteksi (YOLO) gagal dimuat atau tidak ditemukan di server."
-        }
-        
-    # --- JALANKAN PREDIKSI DETEKSI (Placeholder KONSISTEN TANPA SIMULASI ACAK) ---
-    
+    # Gunakan nama file untuk konsistensi cache
+    if filename and filename in st.session_state.detection_cache:
+        return st.session_state.detection_cache[filename]
+
+    # Logika 1: Ketika klik model Deteksi dan unggah gambar (terindikasi ada orang)
     if is_person_image(image):
         
-        # Di dunia nyata, Anda akan menjalankan yolo_model(image) di sini.
-        # Karena ini masih simulasi, kita gunakan hasil deterministik (berdasarkan hash)
-        
+        # Karena kita menghapus 'random', kita harus mendeterminasi hasil (misalnya dari hash)
         hash_value = hash(filename) % 100
-        simulated_class = categories[0] if hash_value < 50 else categories[1] 
+        # Tentukan hasil secara deterministik: 
+        simulated_class = categories[0] if hash_value < 50 else categories[1] # Smoking atau Not Smoking
         simulated_confidence = 90.0 + (hash_value % 10) / 2 
         
         probabilities = {c: 0.0 for c in categories}
         probabilities[simulated_class] = simulated_confidence
         
+        # Bbox yang statis (konsisten)
         if simulated_class == 'Smoking':
             bbox = [150, 150, image.width - 200, image.height - 250]
-        else:
+        else: # Not Smoking
             bbox = [120, 120, image.width - 150, image.height - 180]
             
-        objects = [{'class': simulated_class, 'confidence': simulated_confidence, 'bbox': bbox}]
+        objects = [
+            {'class': simulated_class, 'confidence': simulated_confidence, 'bbox': bbox}
+        ]
         
-        return { # Logika 1: Terdeteksi orang
+        result = {
             'class': simulated_class,
             'confidence': simulated_confidence,
             'probabilities': probabilities,
@@ -730,9 +868,9 @@ def predict_detection(image) -> Dict[str, Any]:
             'success_message': f"Deteksi Sukses: **{simulated_class}** (Confidence: {simulated_confidence:.2f}%)"
         }
 
+    # 2. Ketika klik model Deteksi dan unggah gambar random
     else:
-        # Logika 2: Input ditolak jika bukan gambar orang
-        return {
+        result = {
             'class': "OBJEK TIDAK DITEMUKAN",
             'confidence': 0.0,
             'probabilities': {c: 0.0 for c in categories},
@@ -741,6 +879,12 @@ def predict_detection(image) -> Dict[str, Any]:
             'task_type': 'Detection',
             'error_message': "Input Ditolak: **Bukan Objek Deteksi**. Tidak terdeteksi Smoking/Not Smoking."
         }
+        
+    # Simpan hasil ke cache untuk konsistensi di sesi yang sama
+    if filename:
+        st.session_state.detection_cache[filename] = result
+        
+    return result
 
 
 def draw_bounding_boxes(image, detections):
@@ -752,18 +896,25 @@ def draw_bounding_boxes(image, detections):
     draw = ImageDraw.Draw(img_copy)
     
     for obj in detections['objects']:
+        # Bbox harus berupa integer
         bbox = [int(x) for x in obj['bbox']]
         class_name = obj['class']
         confidence = obj['confidence']
         
+        # Pilih warna berdasarkan kelas
         color = "lime" if class_name == "Not Smoking" else "red"
         
+        # Gambar Bounding Box (4 pixel width)
         draw.rectangle(bbox, outline=color, width=4)
+        
+        # Tambahkan teks label
         text = f"{class_name} ({confidence:.1f}%)"
         
         try:
+            # Tambahkan label di atas bbox
             draw.text((bbox[0] + 5, bbox[1] - 15), text, fill=color)
         except Exception:
+            # Fallback jika error menggambar teks
             pass
             
     return img_copy
@@ -782,6 +933,7 @@ def process_image(image):
     img = Image.open(image)
     img = img.convert('RGB')
     
+    # Simpan nama file untuk digunakan dalam fungsi is_rice_image/is_person_image
     st.session_state.uploaded_filename = image.name 
     return img
 
@@ -794,6 +946,7 @@ def create_confidence_chart(probabilities):
 
     # Cek jika semua nilai nol atau kosong (untuk kasus "INPUT DITOLAK")
     if not values or all(v == 0.0 for v in values):
+        # Buat data dummy untuk chart peringatan
         categories = ["TIDAK ADA DATA"]
         values = [100]
         colors = ['rgba(239, 68, 68, 0.9)'] # Warna merah untuk error
@@ -1065,7 +1218,7 @@ elif st.session_state.current_page == "Model Prediction":
                 key="model_type_select"
             )
         else:
-            model_type_select = "Detection Model (YOLO)"
+            model_type_select = "Detection Model (Simulated)"
             st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi digunakan.</p>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
@@ -1095,6 +1248,7 @@ elif st.session_state.current_page == "Model Prediction":
             """, unsafe_allow_html=True)
             
             # Panggil fungsi prediksi untuk mendapatkan hasil
+            # Logika ini dipanggil di sini untuk mengisi 'result' sebelum ditampilkan di kolom 1
             result = predict_image(image, st.session_state.task_type, model_type_select)
             
             # Tampilkan Bounding Box jika mode Deteksi dan ada objek
@@ -1114,13 +1268,12 @@ elif st.session_state.current_page == "Model Prediction":
             with st.spinner(f"Memproses gambar dengan mode {st.session_state.task_type}..."):
                 progress_bar = st.progress(0)
                 for i in range(100):
-                    # Simulasi proses
                     time.sleep(0.01)
                     progress_bar.progress(i + 1)
                 
                 # Hasil sudah ada di variabel 'result'
                 
-                # Cek apakah ada error_message (Logika 2 & 3: Input Ditolak atau Model Gagal Dimuat)
+                # Cek apakah ada error_message (Logika 2 & 3: Input Ditolak)
                 if 'error_message' in result:
                     st.error(result['error_message'])
                     
