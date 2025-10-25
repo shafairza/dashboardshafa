@@ -1263,12 +1263,13 @@ elif st.session_state.current_page == "Analytics":
     else:
         st.info("Tidak ada data prediksi **Klasifikasi** yang tersedia. Kunjungi halaman Prediksi Model untuk memulai.")
 
-# 4. About (Tidak Berubah)
+# 4. About 
 elif st.session_state.current_page == "About":
     st.markdown("# About the Developer")
     st.markdown("""
 
-    Hello! I'm **Shafarina Irzani**, the developer of this dashboard.  
+    Hello! I'm **Shafarina Irzani**, the developer of this dashboard. 
+    I'm Statistics student at Universitas Syiah Kuala, Indonesia.
     This platform was created as a demonstration of applying **Machine Learning (ML)** and **Deep Learning (DL)** techniques for real-time image analysis.
 
     My interests include **Data Engineer**, **computer vision**, **AI model development**, and **data visualization** combining design and analytical thinking to create interactive and educational dashboards.
@@ -1286,8 +1287,7 @@ elif st.session_state.current_page == "About":
     * **Data Analysis:** Pandas, NumPy  
     * **Visualization:** Plotly Express & Graph Objects  
     and so many engine used, if you want to see more check more below.
-    ---
+    
     📫 *For collaboration or inquiries:*  
-    [GitHub](https://github.com/) | [LinkedIn](https://www.linkedin.com/)
+    [GitHub](https://github.com/shafairza) | [LinkedIn](https://www.linkedin.com/in/shafarina-irzani-867479280/) | [Kaggle](https://www.kaggle.com/shfairzaa)
     """)
-
