@@ -688,27 +688,6 @@ def load_pytorch_model():
         # Menangani error jika file ditemukan tetapi gagal dimuat
         st.error(f"Error loading PyTorch model: {e}")
         return None
-
-@st.cache_resource
-def load_yolo_model():
-    if not ULTRALYTICS_AVAILABLE:
-        st.error("FATAL: Pustaka 'ultralytics' tidak terinstal. Deteksi objek tidak akan berfungsi.")
-        return None
-    try:
-        # --- PERHATIAN: SILAKAN GANTI PATH INI ---
-        # GANTI PATH INI ke model YOLO (.pt atau .onnx) Anda
-        model_path = 'model/yolov8_custom_deteksi.pt' 
-        
-        if not os.path.exists(model_path):
-            st.warning(f"PERINGATAN: File model YOLO kustom tidak ditemukan di: {model_path}. Mencoba menggunakan model pre-trained 'yolov8n.pt' untuk demonstrasi umum.")
-            # Fallback ke model YOLO pre-trained jika file custom tidak ada
-            model_path = 'yolov8n.pt' 
-            
-        model = YOLO(model_path)
-        return model
-    except Exception as e:
-        st.error(f"Error loading YOLO model: {e}")
-        return None
         
 # KELAS UNTUK KLASIFIKASI (5 JENIS BERAS)
 CLASSIFICATION_CATEGORIES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag'] 
