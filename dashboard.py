@@ -1103,7 +1103,7 @@ elif st.session_state.current_page == "Model Prediction":
             
     else:
         st.markdown("""<div style="text-align: center; padding: 4rem 2rem;">
-                <p style="color: #000000; font-size: 1.125rem;">☝️ Pilih Mode di atas dan unggah gambar untuk memulai prediksi.</p>
+                <p style="color: #000000; font-size: 1.125rem;">Select the mode above and upload an image to start the prediction</p>
             </div>""", unsafe_allow_html=True)
         
     st.markdown("""<div style="text-align: center; margin: 4rem 0 2rem 0;">
