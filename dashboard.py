@@ -1072,7 +1072,7 @@ elif st.session_state.current_page == "Model Prediction":
                     st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
                 else:
                     st.session_state.total_predictions += 1
-                    st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Hasil Prediksi:</h3>', unsafe_allow_html=True)
+                    st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Result Prediction:</h3>', unsafe_allow_html=True)
 
                     if st.session_state.task_type == "Image Classification (CNN)":
                         st.session_state.prediction_history.append({'timestamp': datetime.now().strftime('%H:%M:%S'), 'class': result['class'], 'confidence': result['confidence'], 'task_type': result['task_type']})
