@@ -1195,7 +1195,7 @@ elif st.session_state.current_page == "Model Prediction":
     st.markdown("""
         <div style="text-align: center; margin: 4rem 0 2rem 0;">
             <p style="font-size: 1.25rem; color: #000000; font-style: italic; margin: 0;">
-                " "
+                
             </p>
         </div>
     """, unsafe_allow_html=True)
