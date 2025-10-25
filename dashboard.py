@@ -6,11 +6,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import time
-# import random # Tidak digunakan dalam prediksi model, hanya simulasi deteksi
 
 # Import os untuk cek file path (debugging)
 import os
-# TAMBAHKAN IMPORT DARI TORCHVISION UNTUK PRE-PROCESSING PYTORCH
+
+# TAMBAHKAN IMPORT DARI TORCHVISION DAN ULTRALYTICS
 try:
     import torch
     from torchvision import transforms
@@ -24,6 +24,12 @@ try:
     TENSORFLOW_AVAILABLE = True
 except ImportError:
     TENSORFLOW_AVAILABLE = False
+    
+try:
+    from ultralytics import YOLO
+    ULTRALYTICS_AVAILABLE = True
+except ImportError:
+    ULTRALYTICS_AVAILABLE = False
 
 st.set_page_config(
     page_title="ML Dashboard",
@@ -708,10 +714,31 @@ def load_pytorch_model():
         # Menangani error jika file ditemukan tetapi gagal dimuat
         st.error(f"Error loading PyTorch model: {e}")
         return None
+
+@st.cache_resource
+def load_yolo_model():
+    if not ULTRALYTICS_AVAILABLE:
+        st.error("FATAL: Pustaka 'ultralytics' tidak terinstal. Deteksi objek tidak akan berfungsi.")
+        return None
+    try:
+        # GANTI PATH INI ke model YOLO (.pt atau .onnx) Anda
+        model_path = 'model/yolov8_custom_deteksi.pt' 
+        
+        if not os.path.exists(model_path):
+            st.warning(f"PERINGATAN: File model YOLO tidak ditemukan di: {model_path}. Menggunakan model pre-trained 'yolov8n.pt' (jika diizinkan).")
+            # Fallback ke model YOLO pre-trained jika diizinkan
+            model_path = 'yolov8n.pt' 
+            
+        model = YOLO(model_path)
+        return model
+    except Exception as e:
+        st.error(f"Error loading YOLO model: {e}")
+        return None
         
 # KELAS UNTUK KLASIFIKASI (5 JENIS BERAS)
 CLASSIFICATION_CATEGORIES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag'] 
 # KELAS UNTUK DETEKSI (SMOKING/NOT SMOKING)
+# PASTIKAN URUTAN INI SAMA DENGAN URUTAN KELAS DI MODEL YOLO ANDA
 DETECTION_CLASSES = ['Smoking', 'Not Smoking'] 
 
 # --- FUNGSI INPUT KONSISTEN BERDASARKAN NAMA FILE (DETERMINISTIK) ---
@@ -745,6 +772,7 @@ def is_person_image(image):
             return True
     
     # Logika 2: Jika tidak ada keyword orang/random, kembalikan False (Deteksi ditolak)
+    # Catatan: Jika ingin model YOLO selalu berjalan tanpa filter nama file, kembalikan True di sini
     return False
     
 # --- PREDICT CLASSIFICATION ---
@@ -801,7 +829,6 @@ def predict_classification(image, model_type="TensorFlow Model"):
             preprocess = transforms.Compose([
                 transforms.Resize(TARGET_SIZE),
                 transforms.ToTensor(),
-                # Asumsi normalisasi standar (DAPAT DISESUAIKAN JIKA PERLU)
                 # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
             
@@ -833,60 +860,26 @@ def predict_classification(image, model_type="TensorFlow Model"):
             'error_message': f"Error Runtime Model: Model gagal memproses input ({model_type}). {str(e)[:100]}..."
         }
 
-# --- PREDICT DETECTION ---
+# --- PREDICT DETECTION (MENGGUNAKAN YOLO NYATA) ---
 
 def predict_detection(image):
     """
-    Object Detection Prediction (Simulasi YOLO: Smoking/Not Smoking)
-    Logika 1 & 2. Output statis/cache.
+    Object Detection Prediction (YOLO Nyata: Smoking/Not Smoking)
     """
     
-    categories = DETECTION_CLASSES
-    filename = st.session_state.get('uploaded_filename', 'no_file') # Default ke 'no_file'
+    categories = DETECTION_CLASSES 
+    filename = st.session_state.get('uploaded_filename', 'no_file')
 
-    # Gunakan nama file untuk konsistensi cache
+    # Logika Caching untuk Deteksi (agar hasil konsisten di sesi yang sama)
     if filename in st.session_state.detection_cache:
-        return st.session_state.detection_cache[filename]
-
-    # Logika 1: Ketika klik model Deteksi dan unggah gambar (terindikasi ada orang)
-    if is_person_image(image):
-        
-        # Logika Deterministik untuk hasil simulasi:
-        hash_value = hash(filename) % 100
-        # Tentukan hasil secara deterministik: 
-        simulated_class = categories[0] if hash_value < 50 else categories[1] # Smoking atau Not Smoking
-        simulated_confidence = 90.0 + (hash_value % 10) / 2 
-        
-        probabilities = {c: 0.0 for c in categories}
-        probabilities[simulated_class] = simulated_confidence
-        
-        # Bbox yang statis (konsisten) - Skala dinamis berdasarkan ukuran gambar
-        w, h = image.size
-        if simulated_class == 'Smoking':
-            # Bbox di bagian tengah kiri (asumsi orang memegang sesuatu di wajah)
-            bbox = [int(w * 0.2), int(h * 0.25), int(w * 0.8), int(h * 0.7)]
-        else: # Not Smoking
-            # Bbox di bagian tengah yang lebih lebar
-            bbox = [int(w * 0.1), int(h * 0.15), int(w * 0.9), int(h * 0.85)]
-            
-        objects = [
-            {'class': simulated_class, 'confidence': simulated_confidence, 'bbox': bbox}
-        ]
-        
-        result = {
-            'class': simulated_class,
-            'confidence': simulated_confidence,
-            'probabilities': probabilities,
-            'objects': objects,
-            'total_objects': len(objects),
-            'task_type': 'Detection',
-            'success_message': f"Deteksi Sukses: **{simulated_class}** (Confidence: {simulated_confidence:.2f}%)"
-        }
-
-    # 2. Ketika klik model Deteksi dan unggah gambar random
-    else:
-        result = {
-            'class': "OBJEK TIDAK DITEMUKAN",
+        cached_result = st.session_state.detection_cache[filename]
+        if 'error_message' not in cached_result and cached_result['total_objects'] > 0:
+             return cached_result
+    
+    # Logika Awal: Cek apakah gambar terindikasi objek orang (Filter)
+    if not is_person_image(image) and "rice" not in filename: # Tambahkan pengecualian beras
+         return {
+            'class': "INPUT TIDAK COCOK",
             'confidence': 0.0,
             'probabilities': {c: 0.0 for c in categories},
             'objects': [],
@@ -894,8 +887,93 @@ def predict_detection(image):
             'task_type': 'Detection',
             'error_message': "Input Ditolak: **Bukan Objek Deteksi**. Model ini hanya mendeteksi **Smoking/Not Smoking** pada objek yang terindikasi orang."
         }
+
+
+    # --- INFERENSI YOLO NYATA ---
+    yolo_model = load_yolo_model()
+    if yolo_model is None:
+        return {
+            'class': "MODEL GAGAL DIMUAT",
+            'confidence': 0.0,
+            'probabilities': {c: 0.0 for c in categories},
+            'objects': [],
+            'total_objects': 0,
+            'task_type': 'Detection',
+            'error_message': "Model Deteksi (YOLO) gagal dimuat. Pastikan `ultralytics` terinstal dan path model benar."
+        }
+
+    try:
+        # Jalankan Inferensi (Mode Stream, menerima PIL Image)
+        # Threshold: conf=0.5 (dapat disesuaikan)
+        results = yolo_model(image, conf=0.5, iou=0.7, verbose=False) 
         
-    # Simpan hasil ke cache untuk konsistensi di sesi yang sama
+        detected_objects = []
+        
+        for r in results:
+            if r.boxes.data.shape[0] > 0:
+                for box_data in r.boxes.data:
+                    # box_data format: [xmin, ymin, xmax, ymax, confidence, class_id] (Tensor)
+                    
+                    # Mengambil dan mengkonversi data
+                    bbox = box_data[:4].tolist() # [xmin, ymin, xmax, ymax]
+                    confidence = float(box_data[4]) * 100
+                    class_id = int(box_data[5])
+                    
+                    # Mapping class_id ke nama kelas
+                    if class_id < len(categories):
+                        class_name = categories[class_id]
+                    else:
+                        class_name = f"Unknown ID {class_id}"
+                        
+                    detected_objects.append({
+                        'class': class_name, 
+                        'confidence': confidence, 
+                        'bbox': bbox
+                    })
+
+        # Final Result Aggregation
+        if detected_objects:
+            # Cari objek dengan confidence tertinggi
+            best_detection = max(detected_objects, key=lambda x: x['confidence'])
+            
+            # Buat dictionary probabilitas (untuk chart confidence)
+            probabilities = {c: 0.0 for c in categories}
+            probabilities[best_detection['class']] = best_detection['confidence']
+            
+            result = {
+                'class': best_detection['class'],
+                'confidence': best_detection['confidence'],
+                'probabilities': probabilities,
+                'objects': detected_objects,
+                'total_objects': len(detected_objects),
+                'task_type': 'Detection',
+                'success_message': f"Deteksi Sukses: **{best_detection['class']}** ({len(detected_objects)} objek terdeteksi)"
+            }
+        else:
+            # Tidak ada objek yang terdeteksi di atas threshold
+            result = {
+                'class': "OBJEK TIDAK DITEMUKAN",
+                'confidence': 0.0,
+                'probabilities': {c: 0.0 for c in categories},
+                'objects': [],
+                'total_objects': 0,
+                'task_type': 'Detection',
+                'error_message': "Tidak ada objek **Smoking/Not Smoking** yang terdeteksi di atas threshold (0.5)."
+            }
+            
+    except Exception as e:
+        # Menangani error runtime YOLO
+        result = {
+            'class': "RUNTIME ERROR",
+            'confidence': 0.0,
+            'probabilities': {c: 0.0 for c in categories},
+            'objects': [],
+            'total_objects': 0,
+            'task_type': 'Detection',
+            'error_message': f"Error Runtime Model YOLO: {str(e)}"
+        }
+        
+    # Simpan hasil ke cache
     if filename:
         st.session_state.detection_cache[filename] = result
         
@@ -952,9 +1030,6 @@ def process_image(image):
     # Simpan nama file untuk digunakan dalam fungsi is_rice_image/is_person_image
     st.session_state.uploaded_filename = image.name 
     return img
-
-# [Fungsi create_confidence_chart dan create_history_chart]
-# ... (Fungsi chart tetap sama) ... 
 
 def create_confidence_chart(probabilities):
     # Dapatkan 5 kategori teratas untuk visualisasi
@@ -1191,7 +1266,7 @@ if st.session_state.current_page == "Dashboard":
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
                 <h3 style="color: #a855f7;">Fitur Utama:</h3>
                 <p style="color: #000000;">
-                    Klasifikasi (Beras 5 Kelas) & Deteksi Objek (Simulasi)
+                    Klasifikasi (Beras 5 Kelas) & Deteksi Objek (YOLO Nyata)
                 </p>
             </div>
         """, unsafe_allow_html=True)
@@ -1235,9 +1310,9 @@ elif st.session_state.current_page == "Model Prediction":
             model_type_select = "TensorFlow Model" 
             st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Klasifikasi yang digunakan: **{model_type_select}** (Default)</p>', unsafe_allow_html=True)
         else:
-            # Model Deteksi (Simulasi)
-            model_type_select = "Detection Model (Simulated)"
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi yang digunakan: **Simulated YOLO**</p>', unsafe_allow_html=True)
+            # Model Deteksi (YOLO Nyata)
+            model_type_select = "YOLO Model (Ultralytics)"
+            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi yang digunakan: **{model_type_select}**</p>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1291,15 +1366,19 @@ elif st.session_state.current_page == "Model Prediction":
                 
                 # Hasil sudah ada di variabel 'result'
                 
-                # Cek apakah ada error_message (Logika 2 & 3: Input Ditolak)
+                # Cek apakah ada error_message (Logika 2 & 3: Input Ditolak/Error)
                 if 'error_message' in result:
                     st.error(result['error_message'])
                     
                     # Tampilkan status khusus untuk penolakan
+                    status_text = "INPUT DITOLAK" if result['class'] == "INPUT TIDAK COCOK" else "RUNTIME ERROR"
+                    color_start = "#ef4444"
+                    color_end = "#dc2626"
+                    
                     st.markdown(f"""
-                        <div style="text-align: center; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5); margin-top: 1rem;">
+                        <div style="text-align: center; background: linear-gradient(135deg, {color_start} 0%, {color_end} 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5); margin-top: 1rem;">
                             <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">
-                                STATUS: INPUT DITOLAK
+                                STATUS: {status_text}
                             </p>
                         </div>
                     """, unsafe_allow_html=True)
@@ -1333,7 +1412,7 @@ elif st.session_state.current_page == "Model Prediction":
                                 </p>
                             </div>
                         """, unsafe_allow_html=True)
-                        st.success(result['success_message']) # Logika 4
+                        st.success(result['success_message']) 
                         
                         st.markdown("---")
                         st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
@@ -1349,11 +1428,18 @@ elif st.session_state.current_page == "Model Prediction":
                             'objects_detected': result['total_objects']
                         })
 
-                        # Logika 1: Deteksi Smoking/Not Smoking
-                        color = "#00e676" if result['class'] == 'Not Smoking' else "#ffc400"
-                        
+                        # Logika: Deteksi Smoking/Not Smoking
+                        if result['total_objects'] > 0:
+                            # Warna hijau/kuning berdasarkan kelas teratas
+                            color_start = "#00e676" if result['class'] == 'Not Smoking' else "#ffc400"
+                            color_end = "#00c853" if result['class'] == 'Not Smoking' else "#ff9800"
+                        else:
+                            # Warna abu-abu jika tidak ada deteksi (meskipun sudah melewati filter)
+                            color_start = "#9ca3af"
+                            color_end = "#6b7280"
+                            
                         st.markdown(f"""
-                            <div style="text-align: center; background: linear-gradient(135deg, {color} 0%, #00c853 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.5);">
+                            <div style="text-align: center; background: linear-gradient(135deg, {color_start} 0%, {color_end} 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.5);">
                                 <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">
                                     HASIL DETEKSI: <span style="font-size: 2rem;">{result['class']}</span>
                                 </p>
@@ -1382,7 +1468,7 @@ elif st.session_state.current_page == "Model Prediction":
     st.markdown("""
         <div style="text-align: center; margin: 4rem 0 2rem 0;">
             <p style="font-size: 1.25rem; color: #000000; font-style: italic; margin: 0;">
-                "Disini Bisa Deteksi Berbagai Ekspresi Wajah (simulasi)"
+                "Disini Bisa Deteksi Berbagai Ekspresi Wajah (deteksi objek nyata)"
             </p>
         </div>
     """, unsafe_allow_html=True)
@@ -1461,7 +1547,7 @@ elif st.session_state.current_page == "Analytics":
         if 'objects_detected' in df_all_history.columns:
             df_all_history['Result'] = df_all_history.apply(
                 lambda row: f"Class: {row['class']} ({row['confidence']:.2f}%)" if row['task_type'] == 'Classification' 
-                else f"Objects Detected: {row['objects_detected']}", axis=1
+                else f"Object: {row['class']} ({row['confidence']:.2f}%) [{row['objects_detected']} items]", axis=1
             )
             df_display = df_all_history[['timestamp', 'task_type', 'Result']].rename(columns={'task_type': 'Mode'})
         else:
@@ -1490,16 +1576,16 @@ elif st.session_state.current_page == "About":
     st.markdown("""
     ### ML Image Prediction Dashboard
 
-    Platform untuk pengujian model machine learning (ML) secara real-time. Dashboard ini dirancang untuk menunjukkan kapabilitas model **Klasifikasi Gambar** (menggunakan TensorFlow atau PyTorch) dan **Deteksi Objek** (Simulasi YOLO).
+    Platform untuk pengujian model machine learning (ML) secara real-time. Dashboard ini dirancang untuk menunjukkan kapabilitas model **Klasifikasi Gambar** (menggunakan TensorFlow atau PyTorch) dan **Deteksi Objek** (YOLO Nyata).
 
     #### Fitur Utama:
-    * **Klasifikasi Gambar:** Mengklasifikasikan gambar yang diunggah ke dalam kategori tertentu dengan nilai *confidence*.
-    * **Deteksi Objek (Simulasi):** Menyimulasikan pendeteksian objek dalam gambar.
+    * **Klasifikasi Gambar:** Mengklasifikasikan gambar yang diunggah ke dalam kategori tertentu dengan nilai *confidence* (5 kelas Beras).
+    * **Deteksi Objek (YOLO):** Melakukan pendeteksian objek **Smoking/Not Smoking** menggunakan model YOLO (Ultralytics).
     * **Visualisasi Data:** Menampilkan distribusi *confidence* dan riwayat prediksi.
 
     #### Teknologi
     * **Framework Utama:** Streamlit
-    * **Machine Learning:** TensorFlow/Keras & PyTorch
+    * **Machine Learning:** TensorFlow/Keras & PyTorch (Klasifikasi), **Ultralytics YOLO** (Deteksi)
     * **Data Analysis:** Pandas, NumPy
     * **Visualisasi:** Plotly Express & Graph Objects
     """)
