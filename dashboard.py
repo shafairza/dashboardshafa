@@ -811,7 +811,7 @@ def predict_detection(image):
                 'class': best_detection['class'], 'confidence': best_detection['confidence'],
                 'probabilities': probabilities, 'objects': detected_objects, 'total_objects': len(detected_objects),
                 'task_type': 'Detection',
-                'success_message': f"Deteksi Sukses: **{best_detection['class']}** ({len(detected_objects)} objek terdeteksi)"
+                'success_message': f"Successful Detection: **{best_detection['class']}** ({len(detected_objects)} detection object)"
             }
         else:
             result = {
@@ -1042,7 +1042,7 @@ elif st.session_state.current_page == "Model Prediction":
                         result_img_array = results[0].plot() 
                         # Konversi kembali ke PIL Image
                         image_with_boxes = Image.fromarray(result_img_array)
-                        st.image(image_with_boxes, width='stretch', caption=f"Gambar dengan Deteksi: {uploaded_file.name}")
+                        st.image(image_with_boxes, width='stretch', caption=f"Image with Detection: {uploaded_file.name}")
                     except Exception as e:
                         st.error(f"Error menggambar bounding box: {e}")
                         st.image(image, width='stretch', caption=f"Gambar yang Diunggah (Error Plotting): {uploaded_file.name}")
@@ -1094,7 +1094,7 @@ elif st.session_state.current_page == "Model Prediction":
                             
                         st.markdown(f"""<div style="text-align: center; background: linear-gradient(135deg, {color_start} 0%, {color_end} 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.5);">
                                 <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">Result Prediction: <span style="font-size: 2rem;">{result['class']}</span></p>
-                                <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">CONFIDENCE: {result['confidence']:.2f}% (Jumlah Objek: {result['total_objects']})</p></div>""", unsafe_allow_html=True)
+                                <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">Confidence: {result['confidence']:.2f}% (number of objects: {result['total_objects']})</p></div>""", unsafe_allow_html=True)
                         st.success(result['success_message'])
                         st.markdown("---")
                         st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
@@ -1107,7 +1107,7 @@ elif st.session_state.current_page == "Model Prediction":
             </div>""", unsafe_allow_html=True)
         
     st.markdown("""<div style="text-align: center; margin: 4rem 0 2rem 0;">
-            <p style="font-size: 1.25rem; color: #000000; font-style: italic; margin: 0;">"Disini Bisa Deteksi Berbagai Ekspresi Wajah (deteksi objek nyata)"</p>
+            <p style="font-size: 1.25rem; color: #000000; font-style: italic; margin: 0;"> </p>
         </div>""", unsafe_allow_html=True)
 
 # 3. Analytics (Tidak Berubah Signifikan)
