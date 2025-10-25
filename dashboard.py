@@ -919,7 +919,7 @@ with st.sidebar:
 
     st.markdown("""<p style='font-size: 0.7rem; font-weight: 600; color: #a855f7; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1rem;'>Navigasi:</p>""", unsafe_allow_html=True)
 
-    menu_options = ["🏠 Beranda", "🧠 Prediksi Model", "📊 Analitik", "ℹ️ Tentang"]
+    menu_options = ["Home", "Model Prediction", "Analytics", "About"]
     menu_selection = st.radio("menu_nav", menu_options, label_visibility="collapsed", horizontal=False, key="main_menu_selection")
 
     if "Beranda" in menu_selection: st.session_state.current_page = "Dashboard"
