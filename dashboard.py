@@ -770,7 +770,7 @@ def predict_detection(image):
              'class': "INPUT TIDAK COCOK", 'confidence': 0.0,
              'probabilities': {c: 0.0 for c in categories}, 'objects': [], 'total_objects': 0,
              'task_type': 'Detection',
-             'error_message': "Input Rejected: Not a Classification Object. This model only supports grain/rice classification."
+             'error_message': "Input Rejected: Not a object detection. This only support Object Detection"
          }
     
     # Cek apakah model Deteksi berhasil dimuat
