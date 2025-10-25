@@ -981,7 +981,7 @@ if st.session_state.current_page == "Dashboard":
                 <p style="color: #000000;">
                 <b>Image Classification</b> to recognize image categories, 
                 <b>Object Detection</b> to identify and label objects, 
-                and <b>User Analytics</b> to monitor prediction activity and usage history.has been performed.
+                and <b>User Analytics</b> to monitor prediction activity and usage history has been performed.
                 </p>
             </div>
         """, unsafe_allow_html=True)
