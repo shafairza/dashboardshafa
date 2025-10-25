@@ -961,7 +961,7 @@ if st.session_state.current_page == "Dashboard":
 
     st.markdown("---")
 
-    st.info("Select **'🧠 Model Prediction'** in the sidebar to start image detection or classification.")
+    st.info("Select **'Model Prediction'** in the sidebar to start image detection or classification.")
     
     col_info_1, col_info_2 = st.columns(2)
     with col_info_1:
