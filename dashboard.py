@@ -730,7 +730,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
         return {
             'class': "INPUT TIDAK COCOK", 'confidence': 0.0, 
             'probabilities': {cat: 0.0 for cat in categories}, 'task_type': 'Classification',
-            'error_message': "Input Ditolak: **Bukan Objek Klasifikasi**. Model ini hanya mendukung klasifikasi **biji-bijian/beras**."
+            'error_message': "Input rejected: Not a classification. This model only support classification grain seed."
         }
 
     try:
