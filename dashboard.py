@@ -971,8 +971,8 @@ if st.session_state.current_page == "Dashboard":
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
                 <h3 style="color: #a855f7;">💡 Model Information:</h3>
                 <p style="color: #000000;">
-                    Loaded models of <b>Shafa_Laporan 2.h5</b> model is a CNN-based image classification model, 
-                    while <b>Shafa_Laporan 4.pt</b> is a YOLOv-based object detection model.
+                    Loaded models of Shafa_Laporan 2.h5 model is a CNN-based image classification model, 
+                    while Shafa_Laporan 4.pt is a YOLOv-based object detection model.
                 </p>
             </div>
         """, unsafe_allow_html=True)
