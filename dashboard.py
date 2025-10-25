@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from PIL import Image, ImageDraw 
+from PIL import Image, ImageDraw
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
@@ -9,11 +9,11 @@ import time
 # import random # Tidak digunakan dalam prediksi model, hanya simulasi deteksi
 
 # Import os untuk cek file path (debugging)
-import os 
+import os
 # TAMBAHKAN IMPORT DARI TORCHVISION UNTUK PRE-PROCESSING PYTORCH
 try:
     import torch
-    from torchvision import transforms 
+    from torchvision import transforms
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -117,19 +117,19 @@ def load_css():
     }
 
     @keyframes backgroundShift {
-        0%, 100% { 
+        0%, 100% {
             transform: translateX(0) translateY(0) scale(1);
             opacity: 1;
         }
-        25% { 
+        25% {
             transform: translateX(-10px) translateY(-5px) scale(1.02);
             opacity: 0.8;
         }
-        50% { 
+        50% {
             transform: translateX(5px) translateY(-10px) scale(0.98);
             opacity: 0.9;
         }
-        75% { 
+        75% {
             transform: translateX(-5px) translateY(5px) scale(1.01);
             opacity: 0.85;
         }
@@ -316,6 +316,28 @@ def load_css():
         transition: all 0.3s ease;
         border-radius: 0 4px 4px 0;
     }
+
+    /* Add selected style to the label */
+    .stRadio > div > label[data-baseweb="radio"]:has(input:checked) {
+        border-color: var(--primary) !important;
+        background: rgba(168, 85, 247, 0.15) !important; /* Slightly more visible selected state */
+        transform: translateX(0) !important; /* Prevent hover effect on selected item */
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3) !important;
+    }
+
+    .stRadio > div > label[data-baseweb="radio"]:has(input:checked)::before {
+        background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+        width: 6px; /* Make the bar thicker when selected */
+    }
+
+    /* Remove the default hover effect on the selected item */
+    .stRadio > div > label[data-baseweb="radio"]:has(input:checked):hover {
+        background: rgba(168, 85, 247, 0.15) !important;
+        border-color: var(--primary) !important;
+        transform: none !important;
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3) !important;
+    }
+
 
     .stRadio > div > label:hover {
         background: rgba(255, 255, 255, 0.08) !important;
@@ -630,6 +652,39 @@ def load_css():
         border-color: rgba(255, 255, 255, 0.08) !important;
         margin: 2rem 0 !important;
     }
+    
+    /* Perbaikan Visual untuk st.selectbox di Prediksi Model */
+    [data-testid="stSelectbox"] div[data-baseweb="select"] {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 14px !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    [data-testid="stSelectbox"] div[data-baseweb="select"] input {
+        color: #ffffff !important;
+    }
+
+    /* Override for selectbox in the main content to match purple theme */
+    .main [data-testid="stSelectbox"] div[data-baseweb="select"] {
+        background: rgba(168, 85, 247, 0.05) !important;
+        border: 1px solid rgba(168, 85, 247, 0.3) !important;
+    }
+    .main [data-testid="stSelectbox"] div[data-baseweb="select"] input {
+        color: #000000 !important;
+    }
+
+    /* Override for radio buttons to make them black text in main content (for balance card) */
+    .main .stRadio > div > label > div {
+        color: #000000 !important;
+    }
+    
+    /* Ensure selected radio button text is black in main content */
+    .main .stRadio > div > label[data-baseweb="radio"]:has(input:checked) > div {
+         color: #000000 !important;
+    }
+
     </style>
     """
 
@@ -643,7 +698,7 @@ if 'total_predictions' not in st.session_state:
 if 'accuracy_score' not in st.session_state:
     st.session_state.accuracy_score = 95.7
 if 'task_type' not in st.session_state:
-    st.session_state.task_type = "Image Classification" # Default
+    st.session_state.task_type = "Klasifikasi Gambar" # Default
 if 'model_loaded' not in st.session_state:
     st.session_state.model_loaded = False
 if 'current_page' not in st.session_state:
@@ -664,9 +719,9 @@ def load_tensorflow_model():
         model_path = 'model/Shafa_Laporan 2.h5' 
         
         if not os.path.exists(model_path):
-             st.error(f"FATAL: File model TensorFlow tidak ditemukan di: {model_path}")
-             return None
-             
+            st.error(f"FATAL: File model TensorFlow tidak ditemukan di: {model_path}")
+            return None
+            
         model = keras.models.load_model(model_path) 
         return model
     except Exception as e:
@@ -683,8 +738,8 @@ def load_pytorch_model():
         model_path = 'model/Shafa_Laporan 4.pt'
         
         if not os.path.exists(model_path):
-             st.error(f"FATAL: File model PyTorch tidak ditemukan di: {model_path}")
-             return None
+            st.error(f"FATAL: File model PyTorch tidak ditemukan di: {model_path}")
+            return None
 
         # Memuat model PyTorch asli
         model = torch.load(model_path, map_location='cpu')
@@ -765,7 +820,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
         if model is None:
             # Jika model gagal dimuat (FATAL ERROR), lemparkan kesalahan agar tidak melanjutkan prediksi
             raise RuntimeError("Model Klasifikasi tidak dapat dimuat (Lihat pesan FATAL error di atas).")
-        
+            
         if model_type == "TensorFlow Model":
             # Kode prediksi TensorFlow/Keras
             
@@ -783,7 +838,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
             
             # Perlu dipastikan PyTorch dan torchvision terinstal, jika tidak akan crash
             if 'transforms' not in globals():
-                 raise ImportError("PyTorch transforms diperlukan tetapi tidak terimport.")
+                raise ImportError("PyTorch transforms diperlukan tetapi tidak terimport.")
 
             # Preprocess untuk PyTorch
             preprocess = transforms.Compose([
@@ -1125,7 +1180,7 @@ with st.sidebar:
         st.session_state.current_page = "About"
     
     # Tetap sediakan variabel untuk kompatibilitas
-    task_type_default = "Image Classification"
+    task_type_default = "Klasifikasi Gambar"
     model_type_default = "TensorFlow Model"
     confidence_threshold_default = 70
 
@@ -1198,19 +1253,25 @@ elif st.session_state.current_page == "Model Prediction":
     st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
     st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
     
-    col_mode_select, col_model_select = st.columns([1, 1])
+    # --- PERUBAHAN UTAMA: Menggunakan st.radio untuk Mode Prediksi ---
+    
+    # Gunakan satu kolom untuk Radio Button agar tampilannya vertikal seperti gambar
+    # dan satu kolom untuk model/info
+    col_mode_radio, col_model_select = st.columns([1, 1])
 
-    with col_mode_select:
-        task_type_select = st.selectbox(
+    with col_mode_radio:
+        # Menggunakan st.radio untuk tampilan seperti gambar
+        task_type_select = st.radio(
             "Pilih Mode:", 
             ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"],
             label_visibility="collapsed",
-            key="task_type_select"
+            key="task_type_select" # Mempertahankan key
         )
         st.session_state.task_type = task_type_select
         
     with col_model_select:
         if st.session_state.task_type == "Klasifikasi Gambar":
+            # Selectbox untuk memilih framework tetap di sini
             model_type_select = st.selectbox(
                 "Pilih Framework:",
                 ["TensorFlow Model", "PyTorch Model"],
@@ -1219,7 +1280,9 @@ elif st.session_state.current_page == "Model Prediction":
             )
         else:
             model_type_select = "Detection Model (Simulated)"
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi digunakan.</p>', unsafe_allow_html=True)
+            st.markdown(f'<div style="margin-top: 0.5rem;"><p style="color: #000000; font-size: 0.9rem; font-weight: 600;">Model yang Digunakan:</p><p style="color: #000000; font-size: 0.9rem;">Deteksi Objek (Simulated YOLO)</p></div>', unsafe_allow_html=True)
+
+    # --- AKHIR PERUBAHAN UTAMA ---
 
     st.markdown('</div>', unsafe_allow_html=True)
 
