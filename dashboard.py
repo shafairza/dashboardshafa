@@ -1280,11 +1280,11 @@ st.markdown("""
     .footer {
         position: fixed;
         bottom: 0;
-        left: 1.5rem;  /* jarak dari sisi kiri layar */
+        left: 17rem;  /* geser agar sejajar dengan area konten utama */
         text-align: left;
         font-size: 0.85rem;
         color: #555555;
-        background-color: transparent; /* biar nyatu sama background */
+        background-color: transparent;
         padding: 5px 0;
         z-index: 100;
     }
