@@ -1285,5 +1285,6 @@ elif st.session_state.current_page == "About":
     """)
 
 # --- RUN FOOTER ---
+st.markdown("<br><br><br><br>", unsafe_allow_html=True)  # spacer ke bawah
 st.markdown("<hr>", unsafe_allow_html=True)
 st.caption("© 2025 Dashboard by S | Built with Streamlit and Kind of Love | Big Data Programming Laboratory")
