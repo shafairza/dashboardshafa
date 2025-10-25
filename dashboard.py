@@ -990,7 +990,7 @@ if st.session_state.current_page == "Dashboard":
 # 2. Prediksi Model (Baru)
 elif st.session_state.current_page == "Model Prediction":
     st.markdown("""<div style="text-align: center; padding: 1rem 2rem 2rem 2rem;">
-            <h1 style="font-size: 2.5rem; font-weight: 700; color: #000000; margin: 0; letter-spacing: -0.03em;">🧠 Prediksi Model Deteksi & Klasifikasi</h1>
+            <h1 style="font-size: 2.5rem; font-weight: 700; color: #000000; margin: 0; letter-spacing: -0.03em;">Detection & Classification Model Prediction</h1>
             <p style="font-size: 1.125rem; color: #000000; margin: 0.75rem 0 0 0; font-weight: 500;">Uji model Anda dalam mode Klasifikasi atau Deteksi Objek.</p>
         </div>
     """, unsafe_allow_html=True)
@@ -1006,7 +1006,7 @@ elif st.session_state.current_page == "Model Prediction":
         task_type_select = st.selectbox("Pilih Mode:", ["Image Classification (CNN)", "Object Detection (YOLO)"], label_visibility="collapsed", key="task_type_select")
         st.session_state.task_type = task_type_select
         
-        if st.session_state.task_type == "Klasifikasi Gambar":
+        if st.session_state.task_type == "Image Classification (CNN)":
             model_type_select = "TensorFlow Model" 
             st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model used: **{model_type_select}** (Shafa_Laporan 2.h5)</p>', unsafe_allow_html=True)
         else:
