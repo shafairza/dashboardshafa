@@ -10,14 +10,10 @@ import random
 
 # Import os untuk cek file path (debugging)
 import os 
-# Import transforms jika PyTorch digunakan
-try:
-    from torchvision import transforms
-except ImportError:
-    pass # Hanya akan crash jika PyTorch dipilih dan PyTorch/torchvision tidak terinstal
-
+# TAMBAHKAN IMPORT DARI TORCHVISION UNTUK PRE-PROCESSING PYTORCH
 try:
     import torch
+    from torchvision import transforms # <--- DITAMBAHKAN
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -329,17 +325,6 @@ def load_css():
     }
 
     .stRadio > div > label:hover::before {
-        background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
-    }
-
-    .stRadio > div > label[data-checked="true"] {
-        background: linear-gradient(135deg, rgba(168, 85, 247, 0.3) 0%, rgba(147, 51, 234, 0.2) 100%) !important;
-        border-color: var(--primary) !important;
-        box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4) !important;
-        transform: translateX(4px) !important;
-    }
-
-    .stRadio > div > label[data-checked="true"]::before {
         background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
     }
 
@@ -688,7 +673,7 @@ def load_tensorflow_model():
         return None
     try:
         # PENTING: Perbaikan path dari 'model/' menjadi 'models/'
-        model_path = 'models/Shafa_Laporan 2.h5' 
+        model_path = 'model/Shafa_Laporan 2.h5' 
         
         if not os.path.exists(model_path):
              st.error(f"FATAL: File model TensorFlow tidak ditemukan di: {model_path}")
@@ -707,7 +692,7 @@ def load_pytorch_model():
         return None
     try:
         # PENTING: Path yang dicari
-        model_path = 'models/Shafa_Laporan 4.pt'
+        model_path = 'model/Shafa_Laporan 4.pt'
         
         if not os.path.exists(model_path):
              st.error(f"FATAL: File model PyTorch tidak ditemukan di: {model_path}")
@@ -780,7 +765,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
         # 3. Input ditolak jika bukan gambar beras
         return {
             'class': "INPUT TIDAK COCOK",
-            'confidence': 0.0, 
+            'confidence': 0.0, # Confidence 0.0 saat ditolak
             'probabilities': {cat: 0.0 for cat in categories},
             'task_type': 'Classification',
             'error_message': "Input Ditolak: **Bukan Objek Klasifikasi**. Model ini hanya mendukung klasifikasi **biji-bijian/beras**."
@@ -810,9 +795,11 @@ def predict_classification(image, model_type="TensorFlow Model"):
             
         elif model_type == "PyTorch Model":
             # Kode prediksi PyTorch
-            if 'transforms' not in globals():
-                 st.error("PyTorch transforms diperlukan tetapi tidak terimport.")
-                 raise ImportError("PyTorch transforms missing.")
+            
+            # Perlu dipastikan PyTorch dan torchvision terinstal, jika tidak akan crash
+            if not TORCH_AVAILABLE:
+                 st.error("PyTorch tidak tersedia untuk prediksi.")
+                 raise ImportError("PyTorch not available.")
 
             # Preprocess untuk PyTorch
             preprocess = transforms.Compose([
@@ -970,10 +957,7 @@ def predict_image(image, task_type, model_type="TensorFlow Model"):
 def process_image(image):
     img = Image.open(image)
     img = img.convert('RGB')
-    # Jangan menggunakan .thumbnail() di sini jika resolusi input model ketat,
-    # karena thumbnail akan mempertahankan rasio aspek tetapi mungkin tidak mencapai resolusi target yang tepat (128x128).
-    # Biarkan resize dilakukan di fungsi prediksi
-    # img.thumbnail((800, 800)) 
+    # img.thumbnail((800, 800)) # Dihapus agar resize mutlak dilakukan di fungsi prediksi
     
     # Simpan nama file untuk digunakan dalam fungsi is_rice_image/is_person_image
     st.session_state.uploaded_filename = image.name 
