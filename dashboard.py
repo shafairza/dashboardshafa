@@ -6,14 +6,15 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import time
-import random
+# Menghapus import random karena kita tidak akan menggunakan acak di prediksi
+# import random 
 
 # Import os untuk cek file path (debugging)
 import os 
-# TAMBAHKAN IMPORT DARI TORCHVISION UNTUK PRE-PROCESSING PYTORCH
+
 try:
     import torch
-    from torchvision import transforms # <--- DITAMBAHKAN
+    from torchvision import transforms 
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -456,12 +457,6 @@ def load_css():
         border-color: rgba(168, 85, 247, 0.5) !important;
     }
 
-    .stWarning {
-        background: rgba(249, 115, 22, 0.2) !important;
-        color: #ffffff !important;
-        border-color: rgba(249, 115, 22, 0.5) !important;
-    }
-
     /* All Alert text should be BLACK */
     .stAlert div,
     .stAlert p,
@@ -672,8 +667,8 @@ def load_tensorflow_model():
     if not TENSORFLOW_AVAILABLE:
         return None
     try:
-        # PENTING: Perbaikan path dari 'model/' menjadi 'models/'
-        model_path = 'model/Shafa_Laporan 2.h5' 
+        # PENTING: KOREKSI PATH ke 'models/'
+        model_path = 'models/Shafa_Laporan 2.h5' 
         
         if not os.path.exists(model_path):
              st.error(f"FATAL: File model TensorFlow tidak ditemukan di: {model_path}")
@@ -691,8 +686,8 @@ def load_pytorch_model():
     if not TORCH_AVAILABLE:
         return None
     try:
-        # PENTING: Path yang dicari
-        model_path = 'model/Shafa_Laporan 4.pt'
+        # PENTING: KOREKSI PATH ke 'models/'
+        model_path = 'models/Shafa_Laporan 4.pt'
         
         if not os.path.exists(model_path):
              st.error(f"FATAL: File model PyTorch tidak ditemukan di: {model_path}")
@@ -704,7 +699,7 @@ def load_pytorch_model():
         model.eval() 
         return model
     except Exception as e:
-        # Menangani error jika file ditemukan tetapi gagal dimuat (misalnya, versi PyTorch tidak cocok)
+        # Menangani error jika file ditemukan tetapi gagal dimuat
         st.error(f"Error loading PyTorch model: {e}")
         return None
         
@@ -734,7 +729,6 @@ def is_rice_image(image):
 def is_person_image(image):
     """
     Logika DITERMINISTIK: True jika nama file mengandung kata kunci orang/aktivitas.
-    Logika 1 & 2: Output akan konsisten.
     """
     if st.session_state.get('uploaded_filename'):
         filename = st.session_state.uploaded_filename.lower()
@@ -772,22 +766,20 @@ def predict_classification(image, model_type="TensorFlow Model"):
         }
 
     try:
-        # PENGGUNAAN MODEL (atau simulasi deterministik jika model gagal dimuat)
+        # PENGGUNAAN MODEL (Tidak ada simulasi deterministik lagi)
         model = load_tensorflow_model() if model_type == "TensorFlow Model" else load_pytorch_model()
         
         if model is None:
-            # Jika model gagal dimuat (misalnya file hilang)
-            st.warning("Model tidak dimuat. Menggunakan simulasi deterministik.")
-            np.random.seed(hash(filename) % 2**32 if filename else time.time())
-            probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
+            # Jika model gagal dimuat (FATAL ERROR), lemparkan kesalahan agar tidak melanjutkan prediksi
+            raise RuntimeError("Model tidak dapat dimuat (Lihat pesan FATAL error di atas).")
         
-        elif model_type == "TensorFlow Model":
+        if model_type == "TensorFlow Model":
             # Kode prediksi TensorFlow/Keras
             
-            # --- KOREKSI KRUSIAL UKURAN INPUT ---
+            # --- KOREKSI KRUSIAL UKURAN INPUT KE 128x128 ---
             img_resized = image.resize(TARGET_SIZE)
             img_array = np.array(img_resized) / 255.0
-            # ------------------------------------
+            # -----------------------------------------------
             
             img_array = np.expand_dims(img_array, axis=0)
             predictions = model.predict(img_array, verbose=0)
@@ -796,18 +788,16 @@ def predict_classification(image, model_type="TensorFlow Model"):
         elif model_type == "PyTorch Model":
             # Kode prediksi PyTorch
             
-            # Perlu dipastikan PyTorch dan torchvision terinstal, jika tidak akan crash
+            # Perlu dipastikan PyTorch dan torchvision terinstal
             if not TORCH_AVAILABLE:
-                 st.error("PyTorch tidak tersedia untuk prediksi.")
-                 raise ImportError("PyTorch not available.")
+                 raise ImportError("PyTorch tidak tersedia untuk prediksi.")
 
             # Preprocess untuk PyTorch
             preprocess = transforms.Compose([
                 transforms.Resize(TARGET_SIZE),
                 transforms.ToTensor(),
-                # Asumsi normalisasi standar (DAPAT DISESUAIKAN JIKA PERLU)
-                # Jika Anda tidak yakin, coba hapus baris Normalize ini:
-                # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                # Gunakan normalisasi standar jika Anda tidak yakin:
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
             
             img_tensor = preprocess(image).unsqueeze(0)
@@ -829,19 +819,13 @@ def predict_classification(image, model_type="TensorFlow Model"):
         }
         
     except Exception as e:
-        # Fallback jika terjadi error runtime model
-        st.warning(f"Model prediction failed: {e}. Menggunakan Simulasi Konsisten.")
-        np.random.seed(hash(filename) % 2**32 if filename else time.time())
-        probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
-        predicted_class = categories[np.argmax(probabilities)]
-        confidence = np.max(probabilities)
-        
+        # Jika terjadi error saat memuat/menjalankan model, return error message.
         return {
-            'class': predicted_class,
-            'confidence': confidence,
-            'probabilities': dict(zip(categories, probabilities)),
+            'class': "RUNTIME ERROR",
+            'confidence': 0.0,
+            'probabilities': {cat: 0.0 for cat in categories},
             'task_type': 'Classification',
-            'success_message': f"Ini beras kelas **{predicted_class}** (Simulasi Konsisten karena Runtime Error). Confidence: {confidence:.2f}%"
+            'error_message': f"Error Runtime Model: Model gagal memproses input. {str(e)[:100]}..."
         }
 
 # --- PREDICT DETECTION ---
@@ -849,31 +833,31 @@ def predict_classification(image, model_type="TensorFlow Model"):
 def predict_detection(image):
     """
     Object Detection Prediction (Simulasi YOLO: Smoking/Not Smoking)
-    Logika 1 & 2. Output konsisten menggunakan cache per sesi.
+    Logika 1 & 2. Output statis/cache.
     """
     
     categories = DETECTION_CLASSES
     filename = st.session_state.get('uploaded_filename')
     
-    # 1. Cek cache (agar hasil KONSISTEN untuk gambar yang sama)
+    # Gunakan nama file untuk konsistensi cache
     if filename and filename in st.session_state.detection_cache:
         return st.session_state.detection_cache[filename]
 
-    # Atur seed acak hanya untuk sekali per file jika tidak ada di cache
-    # Gunakan hash untuk deterministik
-    random.seed(hash(filename) % 2**32 if filename else time.time())
-    
-    # 1. Ketika klik model Deteksi dan unggah gambar (terindikasi ada orang)
+    # Logika 1: Ketika klik model Deteksi dan unggah gambar (terindikasi ada orang)
     if is_person_image(image):
         
-        # Tentukan hasil simulasi yang konsisten berdasarkan seed
-        simulated_class = random.choice(categories)
-        simulated_confidence = random.uniform(80, 99)
+        # Output statis/konsisten (karena tidak ada model YOLO yang dimasukkan)
+        # Kita perlu menentukan kelas dan confidence secara konsisten
+        
+        # Menggunakan hash file untuk menentukan hasil (deterministik tanpa random.choice)
+        hash_value = hash(filename) % 100
+        simulated_class = categories[0] if hash_value < 50 else categories[1]
+        simulated_confidence = 90.0 + (hash_value % 10) / 2 # Example: 90.0 to 94.5
         
         probabilities = {c: 0.0 for c in categories}
         probabilities[simulated_class] = simulated_confidence
         
-        # Bbox yang konsisten berdasarkan simulated_class
+        # Bbox yang statis (konsisten)
         if simulated_class == 'Smoking':
             bbox = [150, 150, image.width - 200, image.height - 250]
         else: # Not Smoking
@@ -905,7 +889,7 @@ def predict_detection(image):
             'error_message': "Input Ditolak: **Bukan Objek Deteksi**. Tidak terdeteksi Smoking/Not Smoking."
         }
         
-    # Simpan hasil ke cache
+    # Simpan hasil ke cache untuk konsistensi di sesi yang sama
     if filename:
         st.session_state.detection_cache[filename] = result
         
@@ -957,7 +941,6 @@ def predict_image(image, task_type, model_type="TensorFlow Model"):
 def process_image(image):
     img = Image.open(image)
     img = img.convert('RGB')
-    # img.thumbnail((800, 800)) # Dihapus agar resize mutlak dilakukan di fungsi prediksi
     
     # Simpan nama file untuk digunakan dalam fungsi is_rice_image/is_person_image
     st.session_state.uploaded_filename = image.name 
