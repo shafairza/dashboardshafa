@@ -1187,7 +1187,7 @@ elif st.session_state.current_page == "Model Prediction":
         st.markdown("""
             <div style="text-align: center; padding: 4rem 2rem;">
                 <p style="color: #000000; font-size: 1.125rem;">
-                    ☝️ Select the Mode above and upload an image to start the prediction.
+                    Select the mode above and upload to start the prediction.
                 </p>
             </div>
         """, unsafe_allow_html=True)
