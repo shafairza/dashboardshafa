@@ -995,7 +995,7 @@ elif st.session_state.current_page == "Model Prediction":
                 Detection & Classification Model Prediction
             </h1>
             <p style="font-size: 1.125rem; color: #000000; margin: 0.75rem 0 0 0; font-weight: 500;">
-                Let's try it and don't forget upload an Image.
+                Let's try it and don't forget upload an Image
             </p>
         </div>
     """, unsafe_allow_html=True)
