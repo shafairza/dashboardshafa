@@ -708,7 +708,7 @@ def is_rice_image(image):
     # Untuk tujuan simulasi, kita akan gunakan logika sederhana berdasarkan nama file
     if st.session_state.get('uploaded_filename'):
         filename = st.session_state.uploaded_filename.lower()
-        if any(rice_type in filename for rice_type in ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag']):
+        if any(rice_type in filename for rice_type in ['rice', 'arborio', 'basmati', 'ipsala', 'jasmine', 'karacadag', 'grain', 'seed']):
             return True
     
     # Jika tidak ada nama file (misalnya dari kamera), asumsikan acak
