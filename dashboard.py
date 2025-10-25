@@ -6,6 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import time
+import random
 
 try:
     import torch
@@ -668,7 +669,6 @@ if 'current_page' not in st.session_state:
     st.session_state.current_page = "Dashboard"
 
 # --- HELPER FUNCTIONS (TIDAK BERUBAH) ---
-# --- HELPER FUNCTIONS (Perubahan di sini) ---
 @st.cache_resource
 def load_tensorflow_model():
     if not TENSORFLOW_AVAILABLE:
@@ -695,32 +695,26 @@ def load_pytorch_model():
         st.error(f"Error loading PyTorch model: {e}")
         return None
         
-# KELAS INPUT YANG DIHARAPKAN UNTUK KLASIFIKASI
+# --- PERBAIKAN: MENAMBAHKAN DEFINISI KATEGORI YANG HILANG ---
+# KELAS UNTUK KLASIFIKASI (5 JENIS BERAS)
+CLASSIFICATION_CATEGORIES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag'] 
+# KELAS UNTUK DETEKSI (SMOKING/NOT SMOKING)
+DETECTION_CLASSES = ['Smoking', 'Not Smoking'] 
+
+# KELAS INPUT YANG DIHARAPKAN UNTUK KLASIFIKASI (Gambar Biji-bijian)
 def is_rice_image(image):
     # Logika SIMULASI untuk menentukan apakah gambar adalah "Beras" atau "Random"
-    # Di dunia nyata, ini dilakukan dengan model ML kedua atau feature extraction
-    # Untuk tujuan simulasi, kita akan gunakan logika sederhana berdasarkan nama file
+    # Menggunakan nama file (simulasi)
     if st.session_state.get('uploaded_filename'):
         filename = st.session_state.uploaded_filename.lower()
         if any(rice_type in filename for rice_type in ['rice', 'arborio', 'basmati', 'ipsala', 'jasmine', 'karacadag', 'grain', 'seed']):
             return True
     
-    # Jika tidak ada nama file (misalnya dari kamera), asumsikan acak
-    # 'random' kini sudah terdefinisikan karena sudah diimpor
-    return random.choice([True, False, False]) 
+    # Jika tidak ada nama file, atau nama file tidak sesuai, gunakan probabilitas acak
+    return random.choice([True, False, False]) # Lebih sering False untuk gambar random
 
 
-def is_person_image(image):
-    # Logika SIMULASI untuk menentukan apakah gambar terindikasi 'Orang'
-    if st.session_state.get('uploaded_filename'):
-        filename = st.session_state.uploaded_filename.lower()
-        if any(keyword in filename for keyword in ['face', 'person', 'people', 'human', 'smoke', 'vape']):
-            return True
-    
-    # 'random' kini sudah terdefinisikan karena sudah diimpor
-    return random.choice([True, True, False, False, False])
-
-
+# --- PERBAIKAN: MENGHAPUS DUPLIKASI, MENYIMPAN FUNGSI INI ---
 def is_person_image(image):
     # Logika SIMULASI untuk menentukan apakah gambar terindikasi 'Orang'
     if st.session_state.get('uploaded_filename'):
@@ -737,11 +731,10 @@ def predict_classification(image, model_type="TensorFlow Model"):
     Logika 3 & 4
     """
     
-    # KELAS YANG DIKLASIFIKASIKAN OLEH MODEL (5 JENIS BERAS)
     categories = CLASSIFICATION_CATEGORIES
     
     if not is_rice_image(image):
-        # 3. Kalau klik klasifikasi dan unggah gambar (terindikasi ada orang/hal random selain beras) bakal terdeteksi “Ini bukan klasifikasi”
+        # 3. Kalau klik klasifikasi dan unggah gambar random selain beras, ditolak.
         return {
             'class': "INPUT TIDAK COCOK",
             'confidence': 100.0,
@@ -754,7 +747,6 @@ def predict_classification(image, model_type="TensorFlow Model"):
         # Logika prediksi model yang sudah ada (Model Beras)
         if model_type == "TensorFlow Model":
             model = load_tensorflow_model()
-            # [Kode prediksi TF lainnya tetap sama, asumsikan model berjalan normal]
             if model is not None:
                 img_array = np.array(image.resize((224, 224))) / 255.0
                 img_array = np.expand_dims(img_array, axis=0)
@@ -765,7 +757,6 @@ def predict_classification(image, model_type="TensorFlow Model"):
                 probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
 
         else: # PyTorch Model
-            # [Kode prediksi PyTorch lainnya tetap sama]
             if TORCH_AVAILABLE:
                 model = load_pytorch_model()
                 if model is not None:
@@ -779,7 +770,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
             else:
                 probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
                 
-        # 4. Kalau klik klasifikasi dan unggah gambar beras (terdiri 5 kelas) bakal terdeteksi sesuai kelas nya contoh: “Ini beras kelas Ipsala”
+        # 4. Hasil klasifikasi beras yang sukses
         predicted_class = categories[np.argmax(probabilities)]
         confidence = np.max(probabilities)
         
@@ -792,7 +783,6 @@ def predict_classification(image, model_type="TensorFlow Model"):
         }
         
     except Exception as e:
-        # [Penanganan error model tetap sama]
         st.warning(f"Model prediction failed: {e}. Using simulation.")
         probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
         predicted_class = categories[np.argmax(probabilities)]
@@ -813,17 +803,14 @@ def predict_detection(image):
     Logika 1 & 2
     """
     
-    # KELAS UNTUK DETEKSI
     categories = DETECTION_CLASSES
     
-    # 1. ketika klik model Yolov dan unggah gambar (terindikasi ada orang) bakal terdeteksi “Smoking/NotSmoking)
+    # 1. Ketika klik model Deteksi dan unggah gambar (terindikasi ada orang)
     if is_person_image(image):
         
-        # Simulasi hasil deteksi (misal model YOLO mendeteksi orang dan klasifikasi apakah dia merokok)
         simulated_class = random.choice(categories)
         simulated_confidence = random.uniform(80, 99)
         
-        # Buat probabilitas simulasi untuk chart
         probabilities = {c: 0.0 for c in categories}
         probabilities[simulated_class] = simulated_confidence
         
@@ -841,7 +828,7 @@ def predict_detection(image):
             'success_message': f"Deteksi: **{simulated_class}** dengan Confidence: {simulated_confidence:.2f}%"
         }
 
-    # 2. ⁠kalau klik model Yolov dan unggah gambar random (beras/pesawat) bakal terdeteksi “Tidak terdeteksi smoking/notsmoking, bukan objek deteksi”
+    # 2. Ketika klik model Deteksi dan unggah gambar random
     else:
         return {
             'class': "OBJEK TIDAK DITEMUKAN",
@@ -871,15 +858,14 @@ def process_image(image):
     st.session_state.uploaded_filename = image.name 
     return img
 
-# [Fungsi create_confidence_chart dan create_history_chart tetap sama]
-# ... (Kode fungsi chart)
+# [Fungsi create_confidence_chart dan create_history_chart]
 def create_confidence_chart(probabilities):
     # Dapatkan 5 kategori teratas untuk visualisasi
     sorted_probs = sorted(probabilities.items(), key=lambda item: item[1], reverse=True)[:5]
     categories = [item[0] for item in sorted_probs]
     values = [item[1] for item in sorted_probs]
 
-    # Cek jika semua nilai nol atau kosong (untuk kasus "INPUT TIDAK COCOK" atau "OBJEK TIDAK DITEMUKAN")
+    # Cek jika semua nilai nol atau kosong (untuk kasus "INPUT DITOLAK")
     if not values or all(v == 0.0 for v in values):
         # Buat data dummy untuk chart peringatan
         categories = ["TIDAK ADA DATA"]
@@ -950,7 +936,7 @@ def create_confidence_chart(probabilities):
     )
 
     return fig
-
+    
 def create_history_chart(history):
     if not history:
         return None
@@ -1026,7 +1012,7 @@ def create_history_chart(history):
     )
 
     return fig
-
+    
 # --- STREAMLIT SIDEBAR (PERUBAHAN DISINI) ---
 with st.sidebar:
     st.markdown("""
