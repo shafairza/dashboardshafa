@@ -668,7 +668,7 @@ if 'model_loaded' not in st.session_state:
 if 'current_page' not in st.session_state:
     st.session_state.current_page = "Dashboard"
 
-# --- HELPER FUNCTIONS (TIDAK BERUBAH) ---
+# --- HELPER FUNCTIONS ---
 @st.cache_resource
 def load_tensorflow_model():
     if not TENSORFLOW_AVAILABLE:
@@ -695,7 +695,6 @@ def load_pytorch_model():
         st.error(f"Error loading PyTorch model: {e}")
         return None
         
-# --- PERBAIKAN: MENAMBAHKAN DEFINISI KATEGORI YANG HILANG ---
 # KELAS UNTUK KLASIFIKASI (5 JENIS BERAS)
 CLASSIFICATION_CATEGORIES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag'] 
 # KELAS UNTUK DETEKSI (SMOKING/NOT SMOKING)
@@ -704,7 +703,6 @@ DETECTION_CLASSES = ['Smoking', 'Not Smoking']
 # KELAS INPUT YANG DIHARAPKAN UNTUK KLASIFIKASI (Gambar Biji-bijian)
 def is_rice_image(image):
     # Logika SIMULASI untuk menentukan apakah gambar adalah "Beras" atau "Random"
-    # Menggunakan nama file (simulasi)
     if st.session_state.get('uploaded_filename'):
         filename = st.session_state.uploaded_filename.lower()
         if any(rice_type in filename for rice_type in ['rice', 'arborio', 'basmati', 'ipsala', 'jasmine', 'karacadag', 'grain', 'seed']):
@@ -714,7 +712,6 @@ def is_rice_image(image):
     return random.choice([True, False, False]) # Lebih sering False untuk gambar random
 
 
-# --- PERBAIKAN: MENGHAPUS DUPLIKASI, MENYIMPAN FUNGSI INI ---
 def is_person_image(image):
     # Logika SIMULASI untuk menentukan apakah gambar terindikasi 'Orang'
     if st.session_state.get('uploaded_filename'):
@@ -889,7 +886,7 @@ def create_confidence_chart(probabilities):
         colors = ['rgba(168, 85, 247, 0.9)', 'rgba(192, 132, 252, 0.9)', 'rgba(147, 51, 234, 0.9)', 'rgba(216, 180, 254, 0.9)', 'rgba(139, 92, 246, 0.9)']
         title = 'Confidence Distribution'
         
-        fig = go.Figure(data=[
+        fig = go.Figure(data=[ # <--- BARIS 892 (DIPERBAIKI)
             go.Bar(
                 x=values,
                 y=categories,
@@ -897,14 +894,13 @@ def create_confidence_chart(probabilities):
                 marker=dict(
                     color=colors[:len(categories)],
                     line=dict(color='rgba(255, 255, 255, 0.3)', width=2),
-                    )
-                ),
+                ), # <-- Tanda kurung ditutup dengan benar di sini
                 text=[f'{v:.1f}%' for v in values],
                 textposition='auto',
                 textfont=dict(color='white', size=12, family='DM Sans'),
                 hovertemplate='<b>%{y}</b><br>Confidence: %{x:.1f}%<extra></extra>',
             )
-        ])
+        ]) # <-- Kurung siku dan kurung biasa ditutup dengan benar
 
     fig.update_layout(
         title={'text': title, 'font': {'size': 18, 'color': '#FFFFFF', 'family': 'DM Sans'}, 'x': 0.5, 'xanchor': 'center'},
@@ -927,7 +923,6 @@ def create_confidence_chart(probabilities):
             tickfont=dict(color='#d8b4fe', family='DM Sans')
         ),
         showlegend=False,
-        )
     )
 
     return fig
@@ -1058,7 +1053,6 @@ with st.sidebar:
     
     st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
 
-
 # --- MAIN CONTENT LOGIC ---
 
 # 1. Dashboard (Awal)
@@ -1117,18 +1111,13 @@ elif st.session_state.current_page == "Model Prediction":
     
     st.markdown("---")
     
-    # Bagian sidebar untuk pemilihan mode (Deteksi Objek atau Klasifikasi Gambar)
-    # Catatan: Walaupun prompt meminta st.sidebar.selectbox, kita akan membuatnya di main content area untuk UI yang lebih baik,
-    # atau di sidebar jika *memang* harus. Saya akan taruh di main area agar terlihat menonjol.
-    
-    # Gunakan container untuk styling yang lebih baik
+    # Pemilihan Mode dan Model
     st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
     st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
     
     col_mode_select, col_model_select = st.columns([1, 1])
 
     with col_mode_select:
-        # Pilihan mode deteksi/klasifikasi
         task_type_select = st.selectbox(
             "Pilih Mode:", 
             ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"],
@@ -1138,7 +1127,6 @@ elif st.session_state.current_page == "Model Prediction":
         st.session_state.task_type = task_type_select
         
     with col_model_select:
-        # Pilihan model (hanya untuk Klasifikasi)
         if st.session_state.task_type == "Klasifikasi Gambar":
             model_type_select = st.selectbox(
                 "Pilih Framework:",
@@ -1152,7 +1140,7 @@ elif st.session_state.current_page == "Model Prediction":
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-  # Logic for Image Upload and Prediction
+    # Logic for Image Upload and Prediction
     st.markdown("""
         <div style="max-width: 600px; margin: 0 auto 2rem auto;">
     """, unsafe_allow_html=True)
@@ -1175,7 +1163,7 @@ elif st.session_state.current_page == "Model Prediction":
             st.markdown("""
                 <div style="background: rgba(168, 85, 247, 0.1); border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 20px; padding: 1rem; overflow: hidden;">
             """, unsafe_allow_html=True)
-            st.image(image, use_container_width=True, caption=f"Gambar yang Diunggah: {uploaded_file.name}")
+            st.image(image, width='stretch', caption=f"Gambar yang Diunggah: {uploaded_file.name}") # PERBAIKAN: use_container_width -> width='stretch'
             st.markdown("</div>", unsafe_allow_html=True)
 
         with col2:
@@ -1206,8 +1194,8 @@ elif st.session_state.current_page == "Model Prediction":
                     """, unsafe_allow_html=True)
                     
                     st.markdown("---")
-                    #st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
-                    st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
+                    st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch') # PERBAIKAN: use_container_width -> width='stretch'
+
 
                 else:
                     # Logika Normal (Klasifikasi Beras atau Deteksi Smoking/NotSmoking)
@@ -1237,8 +1225,8 @@ elif st.session_state.current_page == "Model Prediction":
                         st.success(result['success_message']) # Logika 4
                         
                         st.markdown("---")
-                        #st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
-                        st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
+                        st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch') # PERBAIKAN: use_container_width -> width='stretch'
+
 
                     elif st.session_state.task_type == "Deteksi Objek (YOLO)":
                         # Simpan ke histori
@@ -1267,8 +1255,8 @@ elif st.session_state.current_page == "Model Prediction":
                         
                         st.markdown("---")
                         # Gunakan chart confidence untuk deteksi juga
-                        #st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
-                        st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
+                        st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch') # PERBAIKAN: use_container_width -> width='stretch'
+
             st.markdown("</div>", unsafe_allow_html=True)
             
     else:
@@ -1381,7 +1369,6 @@ elif st.session_state.current_page == "Analytics":
 
     else:
         st.info("Tidak ada data prediksi **Klasifikasi** yang tersedia. Kunjungi halaman Prediksi Model untuk memulai.")
-
 
 # 4. About (Tidak Berubah)
 elif st.session_state.current_page == "About":
