@@ -1199,10 +1199,6 @@ elif st.session_state.current_page == "Model Prediction":
             key="task_type_select"
         )
         st.session_state.task_type = task_type_select
-        
-        else:
-            model_type_select = "Detection Model (Simulated)"
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi digunakan.</p>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
