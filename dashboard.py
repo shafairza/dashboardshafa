@@ -5,7 +5,7 @@ from PIL import Image, ImageDraw
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
-import time
+import time 
 
 # Import os untuk cek file path (debugging)
 import os
