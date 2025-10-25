@@ -678,41 +678,33 @@ if 'detection_cache' not in st.session_state:
 def load_tensorflow_model():
     if not TENSORFLOW_AVAILABLE:
         return None
+    model_path = 'model/Shafa_Laporan 2.h5' 
     try:
-        # KOREKSI PATH KE 'model/'
-        model_path = 'model/Shafa_Laporan 2.h5' 
-        
         if not os.path.exists(model_path):
-            st.error(f"FATAL: File model TensorFlow tidak ditemukan di: {model_path}")
+            st.error(f"FATAL: File model TensorFlow TIDAK DITEMUKAN di: {model_path}")
             return None
             
         model = keras.models.load_model(model_path) 
         return model
     except Exception as e:
-        # Menampilkan error asli dari Keras/TensorFlow
-        st.error(f"Error loading TensorFlow model: {e}")
+        st.error(f"Error loading TensorFlow model ({model_path}): {e}")
         return None
 
 @st.cache_resource
 def load_pytorch_model():
     if not TORCH_AVAILABLE:
         return None
+    model_path = 'model/Shafa_Laporan 4.pt'
     try:
-        # KOREKSI PATH KE 'model/'
-        model_path = 'model/Shafa_Laporan 4.pt'
-        
         if not os.path.exists(model_path):
-            st.error(f"FATAL: File model PyTorch tidak ditemukan di: {model_path}")
+            st.error(f"FATAL: File model PyTorch TIDAK DITEMUKAN di: {model_path}")
             return None
 
-        # Memuat model PyTorch asli
         model = torch.load(model_path, map_location='cpu')
-        # Penting: Model perlu diatur ke mode evaluasi
         model.eval() 
         return model
     except Exception as e:
-        # Menangani error jika file ditemukan tetapi gagal dimuat
-        st.error(f"Error loading PyTorch model: {e}")
+        st.error(f"Error loading PyTorch model ({model_path}): {e}")
         return None
 
 @st.cache_resource
@@ -721,115 +713,96 @@ def load_yolo_model():
         st.error("FATAL: Pustaka 'ultralytics' tidak terinstal. Deteksi objek tidak akan berfungsi.")
         return None
     try:
-        # GANTI PATH INI ke model YOLO (.pt atau .onnx) Anda
-        model_path = 'model/yolov8_custom_deteksi.pt' 
+        # --- PATH MODEL YOLO KUSTOM (PENTING) ---
+        # GANTI NAMA FILE INI JIKA MODEL YOLO ANDA BERBEDA
+        model_path = 'model/yolov8_deteksi_Shafa.pt' 
         
         if not os.path.exists(model_path):
-            st.warning(f"PERINGATAN: File model YOLO tidak ditemukan di: {model_path}. Menggunakan model pre-trained 'yolov8n.pt' (jika diizinkan).")
-            # Fallback ke model YOLO pre-trained jika diizinkan
-            model_path = 'yolov8n.pt' 
+            # TIDAK ADA FALLBACK LAIN SESUAI PERMINTAAN
+            st.error(f"FATAL: File model YOLO kustom TIDAK DITEMUKAN di: {model_path}. Deteksi objek GAGAL.")
+            return None
             
         model = YOLO(model_path)
         return model
     except Exception as e:
-        st.error(f"Error loading YOLO model: {e}")
+        st.error(f"Error loading YOLO model ({model_path}): {e}")
         return None
         
 # KELAS UNTUK KLASIFIKASI (5 JENIS BERAS)
 CLASSIFICATION_CATEGORIES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag'] 
 # KELAS UNTUK DETEKSI (SMOKING/NOT SMOKING)
-# PASTIKAN URUTAN INI SAMA DENGAN URUTAN KELAS DI MODEL YOLO ANDA
-DETECTION_CLASSES = ['Not Smoking', 'Smoking'] 
+# --- PENTING: PASTIKAN URUTAN INI SESUAI DENGAN data.yaml MODEL YOLO ANDA ---
+DETECTION_CLASSES = ['NotSmoking', 'Smoking'] 
 
-# --- FUNGSI INPUT KONSISTEN BERDASARKAN NAMA FILE (DETERMINISTIK) ---
+# --- FUNGSI INPUT KONSISTEN BERDASARKAN NAMA FILE (DITERAPKAN HANYA UNTUK CLASSIFICATION) ---
 
 def is_rice_image(image):
     """
-    Logika DITERMINISTIK: True jika nama file mengandung kata kunci beras/kelas.
+    Digunakan untuk memfilter input untuk model klasifikasi.
     """
     if st.session_state.get('uploaded_filename'):
         filename = st.session_state.uploaded_filename.lower()
         rice_keywords = ['rice', 'grain', 'seed'] + [c.lower() for c in CLASSIFICATION_CATEGORIES]
         
-        # Logika 4: Unggah gambar beras (keyword ada) -> True
         if any(keyword in filename for keyword in rice_keywords):
             return True
     
-    # Logika 3: Unggah gambar orang/selain beras (keyword tidak ada) -> False
     return False
 
-
+# FUNGSI is_person_image dipertahankan tetapi tidak digunakan untuk memfilter predict_detection
 def is_person_image(image):
     """
-    Logika DITERMINISTIK: True jika nama file mengandung kata kunci orang/aktivitas.
+    Logika penentuan apakah gambar terindikasi objek orang.
     """
     if st.session_state.get('uploaded_filename'):
         filename = st.session_state.uploaded_filename.lower()
         person_keywords = ['face', 'person', 'human', 'smoke', 'vape', 'man', 'woman']
         
-        # Logika 1: Jika ada keyword orang, kembalikan True (Deteksi aktif)
         if any(keyword in filename for keyword in person_keywords):
             return True
-    
-    # Logika 2: Jika tidak ada keyword orang/random, kembalikan False (Deteksi ditolak)
-    # Catatan: Jika ingin model YOLO selalu berjalan tanpa filter nama file, kembalikan True di sini
     return False
-    
-# --- PREDICT CLASSIFICATION ---
+
+
+# --- PREDICT CLASSIFICATION (TIDAK DIUBAH) ---
 
 def predict_classification(image, model_type="TensorFlow Model"):
     """
     Image Classification Prediction (Hanya untuk 5 Kelas Beras)
-    Logika 3 & 4
     """
     
     categories = CLASSIFICATION_CATEGORIES
-    filename = st.session_state.get('uploaded_filename')
-    
-    # KOREKSI UKURAN INPUT: Disesuaikan dengan permintaan user (128x128)
-    TARGET_SIZE = (128, 128)
     
     if not is_rice_image(image):
-        # 3. Input ditolak jika bukan gambar beras
+        # Input ditolak jika bukan gambar beras
         return {
             'class': "INPUT TIDAK COCOK",
-            'confidence': 0.0, # Confidence 0.0 saat ditolak
+            'confidence': 0.0, 
             'probabilities': {cat: 0.0 for cat in categories},
             'task_type': 'Classification',
             'error_message': "Input Ditolak: **Bukan Objek Klasifikasi**. Model ini hanya mendukung klasifikasi **biji-bijian/beras**."
         }
 
     try:
-        # PENGGUNAAN MODEL 
         model = load_tensorflow_model() if model_type == "TensorFlow Model" else load_pytorch_model()
         
         if model is None:
-            # Jika model gagal dimuat (FATAL ERROR), lemparkan kesalahan agar tidak melanjutkan prediksi
-            raise RuntimeError(f"Model Klasifikasi ({model_type}) tidak dapat dimuat (Lihat pesan FATAL error di atas).")
+            raise RuntimeError(f"Model Klasifikasi ({model_type}) tidak dapat dimuat.")
             
+        TARGET_SIZE = (128, 128)
+        
         if model_type == "TensorFlow Model":
-            # Kode prediksi TensorFlow/Keras
             
-            # --- KOREKSI KRUSIAL UKURAN INPUT KE 128x128 ---
             img_resized = image.resize(TARGET_SIZE)
             img_array = np.array(img_resized) / 255.0
-            # -----------------------------------------------
-            
             img_array = np.expand_dims(img_array, axis=0)
             predictions = model.predict(img_array, verbose=0)
             probabilities = predictions[0] * 100
             
         elif model_type == "PyTorch Model":
-            # Kode prediksi PyTorch
             
-            if 'transforms' not in globals():
-                raise ImportError("PyTorch transforms diperlukan tetapi tidak terimport.")
-
-            # Preprocess untuk PyTorch
             preprocess = transforms.Compose([
                 transforms.Resize(TARGET_SIZE),
                 transforms.ToTensor(),
-                # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
             
             img_tensor = preprocess(image).unsqueeze(0)
@@ -838,7 +811,6 @@ def predict_classification(image, model_type="TensorFlow Model"):
                 predictions = model(img_tensor)
                 probabilities = torch.softmax(predictions, dim=1).cpu().numpy()[0] * 100
         
-        # 4. Hasil klasifikasi beras yang sukses
         predicted_class = categories[np.argmax(probabilities)]
         confidence = np.max(probabilities)
         
@@ -851,7 +823,6 @@ def predict_classification(image, model_type="TensorFlow Model"):
         }
         
     except Exception as e:
-        # Jika terjadi error saat memuat/menjalankan model, return error message.
         return {
             'class': "RUNTIME ERROR",
             'confidence': 0.0,
@@ -860,7 +831,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
             'error_message': f"Error Runtime Model: Model gagal memproses input ({model_type}). {str(e)[:100]}..."
         }
 
-# --- PREDICT DETECTION (MENGGUNAKAN YOLO NYATA) ---
+# --- PREDICT DETECTION (DIPERBAIKI) ---
 
 def predict_detection(image):
     """
@@ -870,41 +841,35 @@ def predict_detection(image):
     categories = DETECTION_CLASSES 
     filename = st.session_state.get('uploaded_filename', 'no_file')
 
-    # Logika Caching untuk Deteksi (agar hasil konsisten di sesi yang sama)
+    # Logika Caching
     if filename in st.session_state.detection_cache:
         cached_result = st.session_state.detection_cache[filename]
-        if 'error_message' not in cached_result and cached_result['total_objects'] > 0:
+        # Hanya gunakan cache jika deteksi sukses atau error pemuatan model (agar error tidak muncul berulang)
+        if 'error_message' not in cached_result or cached_result['class'] == "MODEL GAGAL DIMUAT":
              return cached_result
     
-    # Logika Awal: Cek apakah gambar terindikasi objek orang (Filter)
-    if not is_person_image(image) and "rice" not in filename: # Tambahkan pengecualian beras
-         return {
-            'class': "INPUT TIDAK COCOK",
-            'confidence': 0.0,
-            'probabilities': {c: 0.0 for c in categories},
-            'objects': [],
-            'total_objects': 0,
-            'task_type': 'Detection',
-            'error_message': "Input Ditolak: **Bukan Objek Deteksi**. Model ini hanya mendeteksi **Smoking/Not Smoking** pada objek yang terindikasi orang."
-        }
-
+    # Keterangan: Filter is_person_image dihilangkan di sini agar YOLO selalu berjalan di mode ini.
 
     # --- INFERENSI YOLO NYATA ---
     yolo_model = load_yolo_model()
     if yolo_model is None:
-        return {
+        # Jika load_yolo_model gagal memuat file custom
+        result = {
             'class': "MODEL GAGAL DIMUAT",
             'confidence': 0.0,
             'probabilities': {c: 0.0 for c in categories},
             'objects': [],
             'total_objects': 0,
             'task_type': 'Detection',
-            'error_message': "Model Deteksi (YOLO) gagal dimuat. Pastikan `ultralytics` terinstal dan path model benar."
+            'error_message': "Model Deteksi (YOLO) gagal dimuat. Pastikan file **model/yolov8_deteksi_Shafa.pt** ada dan pustaka `ultralytics` terinstal."
         }
+        st.session_state.detection_cache[filename] = result
+        return result
+
 
     try:
-        # Jalankan Inferensi (Mode Stream, menerima PIL Image)
-        # Threshold: conf=0.5 (dapat disesuaikan)
+        # Jalankan Inferensi (Menggunakan PIL Image langsung)
+        # Conf=0.5 adalah default yang baik, bisa di turunkan ke 0.2 untuk debugging deteksi lemah
         results = yolo_model(image, conf=0.5, iou=0.7, verbose=False) 
         
         detected_objects = []
@@ -919,10 +884,10 @@ def predict_detection(image):
                     confidence = float(box_data[4]) * 100
                     class_id = int(box_data[5])
                     
-                    # Mapping class_id ke nama kelas
-                    if class_id < len(categories):
+                    # Mapping class_id ke nama kelas (gunakan try-except untuk mencegah IndexError)
+                    try:
                         class_name = categories[class_id]
-                    else:
+                    except IndexError:
                         class_name = f"Unknown ID {class_id}"
                         
                     detected_objects.append({
@@ -962,7 +927,7 @@ def predict_detection(image):
             }
             
     except Exception as e:
-        # Menangani error runtime YOLO
+        # Menangani error runtime YOLO (jika bukan error pemuatan)
         result = {
             'class': "RUNTIME ERROR",
             'confidence': 0.0,
@@ -989,13 +954,14 @@ def draw_bounding_boxes(image, detections):
     draw = ImageDraw.Draw(img_copy)
     
     for obj in detections['objects']:
-        # Bbox harus berupa integer
+        # Bbox harus berupa integer (penting untuk ImageDraw)
         bbox = [int(x) for x in obj['bbox']]
         class_name = obj['class']
         confidence = obj['confidence']
         
         # Pilih warna berdasarkan kelas
-        color = "lime" if class_name == "Not Smoking" else "red"
+        # Warna sudah sesuai dengan kelas DETECTION_CLASSES yang baru
+        color = "red" if class_name == "Smoking" else "lime"
         
         # Gambar Bounding Box (4 pixel width)
         draw.rectangle(bbox, outline=color, width=4)
@@ -1027,9 +993,11 @@ def process_image(image):
     img = Image.open(image)
     img = img.convert('RGB')
     
-    # Simpan nama file untuk digunakan dalam fungsi is_rice_image/is_person_image
+    # Simpan nama file untuk digunakan dalam fungsi is_rice_image
     st.session_state.uploaded_filename = image.name 
     return img
+
+# --- FUNGSI CHART TETAP SAMA ---
 
 def create_confidence_chart(probabilities):
     # Dapatkan 5 kategori teratas untuk visualisasi
@@ -1257,7 +1225,7 @@ if st.session_state.current_page == "Dashboard":
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
                 <h3 style="color: #a855f7;">Model Klasifikasi:</h3>
                 <p style="color: #000000;">
-                    Default: TensorFlow/Keras. (Model PyTorch juga tersedia di kode).
+                    Model yang dimuat: <b>Shafa_Laporan 2.h5</b> (TensorFlow) atau <b>Shafa_Laporan 4.pt</b> (PyTorch).
                 </p>
             </div>
         """, unsafe_allow_html=True)
@@ -1266,7 +1234,7 @@ if st.session_state.current_page == "Dashboard":
             <div class="glass-card" style="padding: 1.5rem; text-align: center;">
                 <h3 style="color: #a855f7;">Fitur Utama:</h3>
                 <p style="color: #000000;">
-                    Klasifikasi (Beras 5 Kelas) & Deteksi Objek (YOLO Nyata)
+                    Klasifikasi (Beras 5 Kelas) & Deteksi Objek (YOLO Kustom).
                 </p>
             </div>
         """, unsafe_allow_html=True)
@@ -1308,11 +1276,11 @@ elif st.session_state.current_page == "Model Prediction":
         if st.session_state.task_type == "Klasifikasi Gambar":
             # Default menggunakan TensorFlow Model. Anda bisa mengubahnya menjadi PyTorch Model jika diinginkan.
             model_type_select = "TensorFlow Model" 
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Klasifikasi yang digunakan: **{model_type_select}** (Default)</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Klasifikasi yang digunakan: **{model_type_select}** (Shafa_Laporan 2.h5)</p>', unsafe_allow_html=True)
         else:
             # Model Deteksi (YOLO Nyata)
             model_type_select = "YOLO Model (Ultralytics)"
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi yang digunakan: **{model_type_select}**</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi yang digunakan: **{model_type_select}** (yolov8_deteksi_Shafa.pt)</p>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1341,7 +1309,6 @@ elif st.session_state.current_page == "Model Prediction":
             """, unsafe_allow_html=True)
             
             # Panggil fungsi prediksi
-            # PENTING: model_type_select sudah didefinisikan di atas
             result = predict_image(image, st.session_state.task_type, model_type_select)
             
             # Tampilkan Bounding Box jika mode Deteksi dan ada objek
@@ -1585,7 +1552,7 @@ elif st.session_state.current_page == "About":
 
     #### Teknologi
     * **Framework Utama:** Streamlit
-    * **Machine Learning:** TensorFlow/Keras & PyTorch (Klasifikasi), **Ultralytics YOLO** (Deteksi)
+    * **Machine Learning:** TensorFlow/Keras & PyTorch (Klasifikasi), **Ultralyics YOLO** (Deteksi)
     * **Data Analysis:** Pandas, NumPy
     * **Visualisasi:** Plotly Express & Graph Objects
     """)
