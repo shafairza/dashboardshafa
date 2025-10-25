@@ -1266,8 +1266,6 @@ elif st.session_state.current_page == "Analytics":
 # 4. About (Tidak Berubah)
 elif st.session_state.current_page == "About":
     st.markdown("# About")
-    st.markdown("---")
-
     st.markdown("""
     ### About the Developer
 
