@@ -1064,7 +1064,7 @@ elif st.session_state.current_page == "Model Prediction":
                 
                 if 'error_message' in result:
                     st.error(result['error_message'])
-                    status_text = "Rejected" if result['class'] == "INPUT TIDAK COCOK" else "RUNTIME ERROR"
+                    status_text = "REJECTED" if result['class'] == "INPUT TIDAK COCOK" else "RUNTIME ERROR"
                     color_start = "#ef4444"; color_end = "#dc2626"
                     st.markdown(f"""<div style="text-align: center; background: linear-gradient(135deg, {color_start} 0%, {color_end} 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5); margin-top: 1rem;">
                             <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">STATUS: {status_text}</p></div>""", unsafe_allow_html=True)
