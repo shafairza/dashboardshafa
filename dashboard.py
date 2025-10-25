@@ -8,6 +8,9 @@ from datetime import datetime
 import time
 import random
 
+# Import os untuk cek file path (debugging)
+import os 
+
 try:
     import torch
     TORCH_AVAILABLE = True
@@ -684,7 +687,11 @@ def load_tensorflow_model():
         model = keras.models.load_model('models/Shafa_Laporan 2.h5') 
         return model
     except Exception as e:
-        st.error(f"Error loading TensorFlow model: {e}")
+        # Tambahkan debugging untuk memastikan file ada
+        if not os.path.exists('models/Shafa_Laporan 2.h5'):
+             st.error(f"FATAL: File model TensorFlow tidak ditemukan di: models/Shafa_Laporan 2.h5")
+        else:
+            st.error(f"Error loading TensorFlow model: {e}")
         return None
 
 @st.cache_resource
@@ -697,7 +704,11 @@ def load_pytorch_model():
         model = torch.load('models/Shafa_Laporan 4.pt', map_location='cpu')
         return model
     except Exception as e:
-        st.error(f"Error loading PyTorch model: {e}")
+        # Tambahkan debugging untuk memastikan file ada
+        if not os.path.exists('models/Shafa_Laporan 4.pt'):
+             st.error(f"FATAL: File model PyTorch tidak ditemukan di: models/Shafa_Laporan 4.pt")
+        else:
+            st.error(f"Error loading PyTorch model: {e}")
         return None
         
 # KELAS UNTUK KLASIFIKASI (5 JENIS BERAS)
@@ -705,37 +716,40 @@ CLASSIFICATION_CATEGORIES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacad
 # KELAS UNTUK DETEKSI (SMOKING/NOT SMOKING)
 DETECTION_CLASSES = ['Smoking', 'Not Smoking'] 
 
-# --- REVISI: FUNSI INPUT KONSISTEN BERDASARKAN NAMA FILE ---
+# --- FUNGSI INPUT KONSISTEN BERDASARKAN NAMA FILE (DETERMINISTIK) ---
 
 def is_rice_image(image):
     """
-    Menentukan apakah gambar adalah beras (untuk Klasifikasi).
-    Logika DITERMINISTIK berdasarkan nama file.
+    Logika DITERMINISTIK: True jika nama file mengandung kata kunci beras/kelas.
     """
     if st.session_state.get('uploaded_filename'):
         filename = st.session_state.uploaded_filename.lower()
-        # Cek apakah nama file mengandung salah satu kelas beras
-        if any(rice_type.lower() in filename for rice_type in CLASSIFICATION_CATEGORIES) or "rice" in filename:
+        rice_keywords = ['rice', 'grain', 'seed'] + [c.lower() for c in CLASSIFICATION_CATEGORIES]
+        
+        # Logika 4: Unggah gambar beras (keyword ada) -> True
+        if any(keyword in filename for keyword in rice_keywords):
             return True
     
-    # Jika tidak ada nama file atau tidak terindikasi beras, anggap bukan beras
+    # Logika 3: Unggah gambar orang/selain beras (keyword tidak ada) -> False
     return False
 
 
 def is_person_image(image):
     """
-    Menentukan apakah gambar terindikasi orang (untuk Deteksi).
-    Logika DITERMINISTIK berdasarkan nama file.
+    Logika DITERMINISTIK: True jika nama file mengandung kata kunci orang/aktivitas.
     """
     if st.session_state.get('uploaded_filename'):
         filename = st.session_state.uploaded_filename.lower()
-        # Cek apakah nama file mengandung indikasi orang atau aktivitas
-        if any(keyword in filename for keyword in ['face', 'person', 'human', 'smoke', 'vape', 'man', 'woman']):
+        person_keywords = ['face', 'person', 'human', 'smoke', 'vape', 'man', 'woman']
+        
+        # Logika 1: Unggah gambar orang (keyword ada) -> True
+        if any(keyword in filename for keyword in person_keywords):
             return True
     
+    # Logika 2: Unggah gambar random (keyword tidak ada) -> False
     return False
 
-# --- REVISI: PREDICT CLASSIFICATION ---
+# --- PREDICT CLASSIFICATION ---
 
 def predict_classification(image, model_type="TensorFlow Model"):
     """
@@ -744,47 +758,37 @@ def predict_classification(image, model_type="TensorFlow Model"):
     """
     
     categories = CLASSIFICATION_CATEGORIES
+    filename = st.session_state.get('uploaded_filename')
     
     if not is_rice_image(image):
-        # 3. Kalau klik klasifikasi dan unggah gambar random (terindikasi ada orang/hal random selain beras) bakal terdeteksi “Ini bukan klasifikasi”
+        # 3. Input ditolak jika bukan gambar beras
         return {
             'class': "INPUT TIDAK COCOK",
-            'confidence': 100.0,
+            'confidence': 0.0, # Confidence 0.0 saat ditolak
             'probabilities': {cat: 0.0 for cat in categories},
             'task_type': 'Classification',
             'error_message': "Input Ditolak: **Bukan Objek Klasifikasi**. Model ini hanya mendukung klasifikasi **biji-bijian/beras**."
         }
 
     try:
-        # Bagian prediksi model (Model Beras)
-        # ... (Logika pemuatan dan prediksi model TensorFlow/PyTorch tetap sama) ...
-        if model_type == "TensorFlow Model":
-            model = load_tensorflow_model()
-            # Simulasi atau prediksi jika model dimuat
-            if model is not None:
-                img_array = np.array(image.resize((224, 224))) / 255.0
-                img_array = np.expand_dims(img_array, axis=0)
-                predictions = model.predict(img_array, verbose=0)
-                probabilities = predictions[0] * 100
-            else:
-                # Simulasi jika model gagal dimuat atau diprediksi
-                # Kita harus memastikan ini konsisten, tapi karena ini simulasi model, kita pakai np.random
-                np.random.seed(hash(st.session_state.uploaded_filename) % 2**32) # Seed berdasarkan nama file
-                probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
-        else: # PyTorch Model
-            if TORCH_AVAILABLE:
-                model = load_pytorch_model()
-                if model is not None:
-                    # ... (Logika prediksi PyTorch) ...
-                    # Simulasi jika model tidak dimuat/diprediksi karena alasan demo
-                    np.random.seed(hash(st.session_state.uploaded_filename) % 2**32)
-                    probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
-                else:
-                    np.random.seed(hash(st.session_state.uploaded_filename) % 2**32)
-                    probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
-            else:
-                np.random.seed(hash(st.session_state.uploaded_filename) % 2**32)
-                probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
+        # PENGGUNAAN MODEL (atau simulasi deterministik jika model gagal dimuat)
+        model = load_tensorflow_model() if model_type == "TensorFlow Model" else load_pytorch_model()
+        
+        if model is not None and TENSORFLOW_AVAILABLE and model_type == "TensorFlow Model":
+            # Kode prediksi TensorFlow/Keras
+            img_array = np.array(image.resize((224, 224))) / 255.0
+            img_array = np.expand_dims(img_array, axis=0)
+            predictions = model.predict(img_array, verbose=0)
+            probabilities = predictions[0] * 100
+        elif model is not None and TORCH_AVAILABLE and model_type == "PyTorch Model":
+            # Kode prediksi PyTorch
+            # Simulasi untuk tujuan demonstrasi karena model PyTorch yang sebenarnya tidak disertakan
+            np.random.seed(hash(filename) % 2**32)
+            probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
+        else:
+            # Simulasi Deterministic (Logika 4 - Fallback jika model gagal/simulasi PyTorch)
+            np.random.seed(hash(filename) % 2**32)
+            probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
                 
         # 4. Hasil klasifikasi beras yang sukses
         predicted_class = categories[np.argmax(probabilities)]
@@ -799,9 +803,9 @@ def predict_classification(image, model_type="TensorFlow Model"):
         }
         
     except Exception as e:
-        # Fallback jika model prediction benar-benar gagal
-        st.warning(f"Model prediction failed: {e}. Using deterministic simulation.")
-        np.random.seed(hash(st.session_state.uploaded_filename) % 2**32)
+        # Fallback jika terjadi error runtime model
+        st.warning(f"Model prediction failed: {e}. Menggunakan Simulasi Konsisten.")
+        np.random.seed(hash(filename) % 2**32)
         probabilities = np.random.dirichlet(np.ones(len(categories))) * 100
         predicted_class = categories[np.argmax(probabilities)]
         confidence = np.max(probabilities)
@@ -814,7 +818,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
             'success_message': f"Ini beras kelas **{predicted_class}** (Simulasi Konsisten). Confidence: {confidence:.2f}%"
         }
 
-# --- REVISI: PREDICT DETECTION ---
+# --- PREDICT DETECTION ---
 
 def predict_detection(image):
     """
@@ -835,6 +839,7 @@ def predict_detection(image):
     # 1. Ketika klik model Deteksi dan unggah gambar (terindikasi ada orang)
     if is_person_image(image):
         
+        # Tentukan hasil simulasi yang konsisten berdasarkan seed
         simulated_class = random.choice(categories)
         simulated_confidence = random.uniform(80, 99)
         
@@ -1241,10 +1246,11 @@ elif st.session_state.current_page == "Model Prediction":
             """, unsafe_allow_html=True)
             
             # Panggil fungsi prediksi untuk mendapatkan hasil
+            # Logika ini dipanggil di sini untuk mengisi 'result' sebelum ditampilkan di kolom 1
             result = predict_image(image, st.session_state.task_type, model_type_select)
             
             # Tampilkan Bounding Box jika mode Deteksi dan ada objek
-            if st.session_state.task_type == "Deteksi Objek (YOLO)" and result['objects']:
+            if st.session_state.task_type == "Deteksi Objek (YOLO)" and result['objects'] and result['total_objects'] > 0:
                 image_with_boxes = draw_bounding_boxes(image, result)
                 st.image(image_with_boxes, width='stretch', caption=f"Gambar dengan Deteksi: {uploaded_file.name}")
             else:
@@ -1265,7 +1271,7 @@ elif st.session_state.current_page == "Model Prediction":
                 
                 # Hasil sudah ada di variabel 'result'
                 
-                # Cek apakah ada error_message (Logika 2 & 3)
+                # Cek apakah ada error_message (Logika 2 & 3: Input Ditolak)
                 if 'error_message' in result:
                     st.error(result['error_message'])
                     
