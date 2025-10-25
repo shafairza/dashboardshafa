@@ -777,7 +777,7 @@ def predict_detection(image):
             'class': "MODEL GAGAL DIMUAT", 'confidence': 0.0,
             'probabilities': {c: 0.0 for c in categories}, 'objects': [], 'total_objects': 0,
             'task_type': 'Detection',
-            'error_message': "Model Deteksi (Shafa_Laporan 4.pt) gagal dimuat sebagai YOLO. Cek konsol untuk FATAL ERROR."
+            'error_message': "The Detection Model (Shafa_Report 4.pt) failed to load as YOLO. Check the console for FATAL ERROR."
         }
 
     try:
