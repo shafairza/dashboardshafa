@@ -652,6 +652,8 @@ CLASSIFICATION_CATEGORIES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacad
 # KELAS UNTUK DETEKSI (SMOKING/NOT SMOKING)
 DETECTION_CLASSES = ['NotSmoking', 'Smoking'] 
 
+YOLO_CONF_THRESHOLD = 0.60 
+YOLO_IOU_THRESHOLD = 0.45
 # --- MODEL LOADING ---
 
 @st.cache_resource
