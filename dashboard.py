@@ -1045,11 +1045,11 @@ elif st.session_state.current_page == "Model Prediction":
                         st.image(image_with_boxes, width='stretch', caption=f"Image with Detection: {uploaded_file.name}")
                     except Exception as e:
                         st.error(f"Error menggambar bounding box: {e}")
-                        st.image(image, width='stretch', caption=f"Gambar yang Diunggah (Error Plotting): {uploaded_file.name}")
+                        st.image(image, width='stretch', caption=f"Uploaded Image (Error Plotting): {uploaded_file.name}")
                 else:
-                    st.image(image, width='stretch', caption=f"Gambar yang Diunggah: {uploaded_file.name}")
+                    st.image(image, width='stretch', caption=f"Uploaded Image: {uploaded_file.name}")
             else:
-                st.image(image, width='stretch', caption=f"Gambar yang Diunggah: {uploaded_file.name}")
+                st.image(image, width='stretch', caption=f"Uploaded Image: {uploaded_file.name}")
                 
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1097,7 +1097,7 @@ elif st.session_state.current_page == "Model Prediction":
                                 <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">Confidence: {result['confidence']:.2f}% (number of objects: {result['total_objects']})</p></div>""", unsafe_allow_html=True)
                         st.success(result['success_message'])
                         st.markdown("---")
-                        st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
+                        #st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
 
             st.markdown("</div>", unsafe_allow_html=True)
             
