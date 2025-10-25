@@ -650,11 +650,9 @@ if 'detection_cache' not in st.session_state:
 # KELAS UNTUK KLASIFIKASI (5 JENIS BERAS)
 CLASSIFICATION_CATEGORIES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag'] 
 # KELAS UNTUK DETEKSI (SMOKING/NOT SMOKING)
-# PASTIKAN URUTAN INI SESUAI DENGAN PELATIHAN MODEL YOLO Shafa_Laporan 4.pt
 DETECTION_CLASSES = ['NotSmoking', 'Smoking'] 
 
-# --- MODEL LOADING (DIPERBAIKI) ---
-
+# --- MODEL LOADING  ---
 @st.cache_resource
 def load_models():
     # --- MODEL DETEKSI OBJEK (YOLO) ---
@@ -669,8 +667,6 @@ def load_models():
                 
         except Exception as e:
             st.error(f"Gagal memuat Model Deteksi (Shafa_Laporan 4.pt) sebagai YOLO: {e}")
-    else:
-         st.error("FATAL: Pustaka 'ultralytics' tidak terinstal. Deteksi objek tidak akan berfungsi.")
 
     # --- MODEL KLASIFIKASI (TENSORFLOW) ---
     classifier_path = "model/Shafa_Laporan 2.h5"
@@ -694,33 +690,46 @@ except Exception:
     MODEL_LOAD_SUCCESS = False
     yolo_model = None
     classifier = None
-
-# --- DUMMY MODEL/FILTER (DIHAPUS UNTUK MENJALANKAN FUNGSI ASLI) ---
-
-# Mengganti semua fungsi is_person_image dan is_rice_image agar langsung menjalankan model
+    
+# Inisialisasi model
+try:
+    yolo_model, classifier = load_models()
+except Exception:
+    yolo_model = None
+    classifier = None
+    
+# --- FUNGSI INPUT FILTER ---
 def is_rice_image(image):
-    # Dummies/filter untuk klasifikasi (dibiarkan sesuai permintaan klasifikasi awal)
+    """Mendeteksi apakah gambar kemungkinan besar adalah objek klasifikasi (beras) berdasarkan nama file."""
     if st.session_state.get('uploaded_filename'):
         filename = st.session_state.uploaded_filename.lower()
-        rice_keywords = ['rice', 'grain', 'seed'] + [c.lower() for c in CLASSIFICATION_CATEGORIES]
+        rice_keywords = ['rice', 'grain', 'seed', 'arborio', 'basmati', 'ipsala', 'jasmine', 'karacadag']
         if any(keyword in filename for keyword in rice_keywords):
             return True
     return False
 
 def is_person_image(image):
-    # Dummies/filter untuk deteksi (Dipertahankan di sini, tetapi tidak akan memblokir Deteksi objek)
+    """Mendeteksi apakah gambar kemungkinan besar adalah objek deteksi (orang/aktivitas) berdasarkan nama file."""
     if st.session_state.get('uploaded_filename'):
         filename = st.session_state.uploaded_filename.lower()
-        person_keywords = ['face', 'person', 'human', 'smoke', 'vape', 'man', 'woman']
+        person_keywords = ['face', 'person', 'human', 'smoke', 'vape', 'man', 'woman', 'merokok']
         if any(keyword in filename for keyword in person_keywords):
             return True
     return False
 
-# --- PREDICT CLASSIFICATION (DIBIARKAN SAMA) ---
-
+# --- PREDICT CLASSIFICATION (Filter Diperketat) ---
 def predict_classification(image, model_type="TensorFlow Model"):
     categories = CLASSIFICATION_CATEGORIES
     
+    # PERBAIKAN: Blokir input yang jelas-jelas ditujukan untuk Deteksi Objek
+    if is_person_image(image):
+         return {
+            'class': "INPUT TIDAK COCOK", 'confidence': 0.0, 
+            'probabilities': {cat: 0.0 for cat in categories}, 'task_type': 'Classification',
+            'error_message': "Input Ditolak: **Gambar adalah Objek Deteksi (Orang/Aktivitas)**. Pilih mode Deteksi Objek."
+        }
+        
+    # Blokir input yang bukan beras dan bukan orang (gambar random yang tidak cocok)
     if not is_rice_image(image):
         return {
             'class': "INPUT TIDAK COCOK", 'confidence': 0.0, 
@@ -729,13 +738,10 @@ def predict_classification(image, model_type="TensorFlow Model"):
         }
 
     try:
-        model = classifier # Menggunakan model yang sudah dimuat
-        if model is None:
-            raise RuntimeError("Model Klasifikasi tidak dapat dimuat.")
+        model = classifier
+        if model is None: raise RuntimeError("Model Klasifikasi tidak dapat dimuat.")
             
         TARGET_SIZE = (128, 128)
-        
-        # Simulasi prediksi (gunakan TensorFlow karena itu model Anda)
         img_resized = image.resize(TARGET_SIZE)
         img_array = np.array(img_resized) / 255.0
         img_array = np.expand_dims(img_array, axis=0)
@@ -753,24 +759,22 @@ def predict_classification(image, model_type="TensorFlow Model"):
         
     except Exception as e:
         return {
-            'class': "RUNTIME ERROR", 'confidence': 0.0,
-            'probabilities': {cat: 0.0 for cat in categories}, 'task_type': 'Classification',
+            'class': "RUNTIME ERROR", 'confidence': 0.0, 'probabilities': {cat: 0.0 for cat in categories}, 'task_type': 'Classification',
             'error_message': f"Error Runtime Model: Model gagal memproses input. {str(e)[:100]}..."
         }
-
-# --- PREDICT DETECTION (DIPERBAIKI TOTAL UNTUK YOLO) ---
-
+        
+# --- PREDICT DETECTION (YOLO NYATA - Filter Diperketat) ---
 def predict_detection(image):
-    """
-    Object Detection Prediction (YOLO Nyata: NotSmoking/Smoking)
-    Menggunakan model Shafa_Laporan 4.pt yang dimuat sebagai YOLO.
-    """
-    
     categories = DETECTION_CLASSES 
-    filename = st.session_state.get('uploaded_filename', 'no_file')
-
-    # Caching Dihapus untuk simplicity, model akan dijalankan setiap kali
-    # (Anda dapat mengaktifkan kembali cache jika diperlukan)
+    
+    # PERBAIKAN: Blokir input yang jelas-jelas ditujukan untuk Klasifikasi (gambar beras)
+    if is_rice_image(image):
+         return {
+             'class': "INPUT TIDAK COCOK", 'confidence': 0.0,
+             'probabilities': {c: 0.0 for c in categories}, 'objects': [], 'total_objects': 0,
+             'task_type': 'Detection',
+             'error_message': "Input Ditolak: **Gambar adalah Objek Klasifikasi (Beras)**. Pilih mode Klasifikasi Gambar."
+         }
     
     # Cek apakah model Deteksi berhasil dimuat
     if yolo_model is None:
@@ -782,33 +786,26 @@ def predict_detection(image):
         }
 
     try:
-        # Jalankan Inferensi YOLO nyata. Conf=0.25 (dapat diubah)
-        # Model YOLO akan menerima gambar PIL langsung
-        results = yolo_model(image, conf=0.25, iou=0.45, verbose=False) 
+        # Jalankan Inferensi YOLO nyata (Conf=0.25 adalah default awal, sesuaikan jika perlu)
+        # Kami MENINGKATKAN threshold untuk mengurangi false positive pada gambar asing.
+        results = yolo_model(image, conf=0.60, iou=0.45, verbose=False) 
         
         detected_objects = []
-        
-        # Iterasi melalui hasil deteksi
         r = results[0]
+        
         if hasattr(r, 'boxes') and r.boxes.data.shape[0] > 0:
             for box_data in r.boxes.data:
-                # box_data format: [xmin, ymin, xmax, ymax, confidence, class_id] (Tensor)
-                
                 bbox = box_data[:4].tolist() 
                 confidence = float(box_data[4]) * 100
                 class_id = int(box_data[5])
                 
-                # Mapping class_id ke nama kelas menggunakan array DETECTION_CLASSES
                 try:
                     class_name = categories[class_id]
                 except IndexError:
                     class_name = f"Unknown ID {class_id}"
                     
-                detected_objects.append({
-                    'class': class_name, 'confidence': confidence, 'bbox': bbox
-                })
+                detected_objects.append({'class': class_name, 'confidence': confidence, 'bbox': bbox})
 
-        # Final Result Aggregation
         if detected_objects:
             best_detection = max(detected_objects, key=lambda x: x['confidence'])
             probabilities = {c: 0.0 for c in categories}
@@ -822,71 +819,37 @@ def predict_detection(image):
             }
         else:
             result = {
-                'class': "OBJEK TIDAK DITEMUKAN", 'confidence': 0.0,
-                'probabilities': {c: 0.0 for c in categories}, 'objects': [], 'total_objects': 0,
-                'task_type': 'Detection',
-                'error_message': f"Tidak ada objek **NotSmoking/Smoking** yang terdeteksi di atas threshold (0.25)."
+                'class': "OBJEK TIDAK DITEMUKAN", 'confidence': 0.0, 'probabilities': {c: 0.0 for c in categories}, 
+                'objects': [], 'total_objects': 0, 'task_type': 'Detection',
+                'error_message': f"Tidak ada objek **NotSmoking/Smoking** yang terdeteksi di atas threshold (0.60)."
             }
             
     except Exception as e:
         result = {
-            'class': "RUNTIME ERROR", 'confidence': 0.0,
-            'probabilities': {c: 0.0 for c in categories}, 'objects': [], 'total_objects': 0,
-            'task_type': 'Detection',
+            'class': "RUNTIME ERROR", 'confidence': 0.0, 'probabilities': {c: 0.0 for c in categories}, 
+            'objects': [], 'total_objects': 0, 'task_type': 'Detection',
             'error_message': f"Error Runtime Model YOLO: {str(e)}"
         }
         
     return result
-
-
-def draw_bounding_boxes(image, detections):
-    """Menggambar bounding box pada gambar."""
-    if not detections['objects']:
-        return image
-        
-    img_copy = image.copy()
-    draw = ImageDraw.Draw(img_copy)
     
-    for obj in detections['objects']:
-        bbox = [int(x) for x in obj['bbox']]
-        class_name = obj['class']
-        confidence = obj['confidence']
-        
-        # Pilih warna berdasarkan kelas
-        color = "red" if class_name == "Smoking" else "lime"
-        
-        # Gambar Bounding Box (4 pixel width)
-        draw.rectangle(bbox, outline=color, width=4)
-        
-        # Tambahkan teks label
-        text = f"{class_name} ({confidence:.1f}%)"
-        
-        try:
-            # Tambahkan label di atas bbox
-            draw.text((bbox[0] + 5, bbox[1] - 15), text, fill=color)
-        except Exception:
-            pass
-            
-    return img_copy
+    # --- FUNGSI AUXILIARY ---
 
+    def draw_bounding_boxes(image, detections):
+        # Fungsionalitas plotting dipindahkan ke main block menggunakan results[0].plot()
+        # Fungsi ini dipertahankan sebagai placeholder atau untuk kompatibilitas lama
+        pass 
 
-def predict_image(image, task_type, model_type):
-    """Main prediction function"""
-    if task_type == "Klasifikasi Gambar":
-        return predict_classification(image, model_type)
-    elif task_type == "Deteksi Objek (YOLO)":
-        return predict_detection(image)
-    else:
-        return predict_classification(image, model_type) 
+    def predict_image(image, task_type, model_type):
+        if task_type == "Klasifikasi Gambar": return predict_classification(image, model_type)
+        elif task_type == "Deteksi Objek (YOLO)": return predict_detection(image)
+        else: return predict_classification(image, model_type) 
 
-def process_image(image):
-    img = Image.open(image)
-    img = img.convert('RGB')
-    st.session_state.uploaded_filename = image.name 
+    def process_image(image):
+        img = Image.open(image); img = img.convert('RGB'); st.session_state.uploaded_filename = image.name 
     return img
 
 # --- FUNGSI CHART TETAP SAMA ---
-
 def create_confidence_chart(probabilities):
     sorted_probs = sorted(probabilities.items(), key=lambda item: item[1], reverse=True)[:5]
     categories = [item[0] for item in sorted_probs]
