@@ -1169,7 +1169,7 @@ elif st.session_state.current_page == "Analytics":
             st.rerun()
 
     else:
-        st.info("Tidak ada data prediksi **Klasifikasi** yang tersedia. Kunjungi halaman Prediksi Model untuk memulai.")
+        st.info("No **Classification** prediction data is available. Visit the Model Prediction page to get started.")
 
 # 4. About 
 elif st.session_state.current_page == "About":
