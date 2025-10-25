@@ -1018,16 +1018,6 @@ elif st.session_state.current_page == "Model Prediction":
         )
         st.session_state.task_type = task_type_select
 
-        # Penentuan Model/Framework secara Internal
-        if st.session_state.task_type == "Klasifikasi Gambar":
-            # Default menggunakan TensorFlow Model. Anda bisa mengubahnya menjadi PyTorch Model jika diinginkan.
-            model_type_select = "TensorFlow Model"
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Detection model used: **{model_type_select}** (Shafa_Laporan 2.h5)</p>', unsafe_allow_html=True)
-        else:
-            # Model Deteksi (YOLO Nyata)
-            model_type_select = "YOLO Model (Ultralytics)"
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Detection model used: **{model_type_select}** (Shafa_Laporan 4.pt)</p>', unsafe_allow_html=True)
-
     # Logic for Image Upload and Prediction
     st.markdown("""
         <div style="max-width: 600px; margin: 0 auto 2rem auto;">
