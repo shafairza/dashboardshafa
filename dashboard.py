@@ -750,7 +750,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
         return {
             'class': predicted_class, 'confidence': confidence, 
             'probabilities': dict(zip(categories, probabilities)), 'task_type': 'Classification',
-            'success_message': f"Hasil: **Kelas {predicted_class}** (Confidence: {confidence:.2f}%)"
+            'success_message': f"Hasil: **Class {predicted_class}** (Confidence: {confidence:.2f}%)"
         }
         
     except Exception as e:
@@ -1077,8 +1077,8 @@ elif st.session_state.current_page == "Model Prediction":
                     if st.session_state.task_type == "Image Classification (CNN)":
                         st.session_state.prediction_history.append({'timestamp': datetime.now().strftime('%H:%M:%S'), 'class': result['class'], 'confidence': result['confidence'], 'task_type': result['task_type']})
                         st.markdown(f"""<div style="text-align: center; background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.5);">
-                                <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">KELAS PREDISKI: <span style="font-size: 2rem;">{result['class']}</span></p>
-                                <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">CONFIDENCE: {result['confidence']:.2f}%</p></div>""", unsafe_allow_html=True)
+                                <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">Class Predictiono: <span style="font-size: 2rem;">{result['class']}</span></p>
+                                <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">Confidence: {result['confidence']:.2f}%</p></div>""", unsafe_allow_html=True)
                         st.success(result['success_message']) 
                         st.markdown("---")
                         #st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
