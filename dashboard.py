@@ -1265,9 +1265,8 @@ elif st.session_state.current_page == "Analytics":
 
 # 4. About (Tidak Berubah)
 elif st.session_state.current_page == "About":
-    st.markdown("# About")
+    st.markdown("# About the Developer")
     st.markdown("""
-    ### About the Developer
 
     Hello! I'm **Shafarina Irzani**, the developer of this dashboard.  
     This platform was created as a demonstration of applying **Machine Learning (ML)** and **Deep Learning (DL)** techniques for real-time image analysis.
