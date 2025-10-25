@@ -770,7 +770,7 @@ def predict_detection(image):
              'class': "INPUT TIDAK COCOK", 'confidence': 0.0,
              'probabilities': {c: 0.0 for c in categories}, 'objects': [], 'total_objects': 0,
              'task_type': 'Detection',
-             'error_message': "Input Ditolak: **Gambar adalah Objek Klasifikasi (Beras)**. Pilih mode Klasifikasi Gambar."
+             'error_message': "Input Rejected: Not a Classification Object. This model only supports grain/rice classification."
          }
     
     # Cek apakah model Deteksi berhasil dimuat
@@ -998,20 +998,20 @@ elif st.session_state.current_page == "Model Prediction":
     st.markdown("---")
     
     st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
-    st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Choose Prediction:</h3>', unsafe_allow_html=True)
     
     col_mode_only = st.columns([1])[0] 
 
     with col_mode_only:
-        task_type_select = st.selectbox("Pilih Mode:", ["Klasifikasi Gambar", "Deteksi Objek (YOLO)"], label_visibility="collapsed", key="task_type_select")
+        task_type_select = st.selectbox("Pilih Mode:", ["Image Classification (CNN)", "Object Detection (YOLO)"], label_visibility="collapsed", key="task_type_select")
         st.session_state.task_type = task_type_select
         
         if st.session_state.task_type == "Klasifikasi Gambar":
             model_type_select = "TensorFlow Model" 
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Klasifikasi yang digunakan: **{model_type_select}** (Shafa_Laporan 2.h5)</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model used: **{model_type_select}** (Shafa_Laporan 2.h5)</p>', unsafe_allow_html=True)
         else:
             model_type_select = "YOLO Model (Ultralytics)"
-            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi yang digunakan: **{model_type_select}** (Shafa_Laporan 4.pt)</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model used: **{model_type_select}** (Shafa_Laporan 4.pt)</p>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
