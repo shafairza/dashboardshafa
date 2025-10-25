@@ -995,7 +995,7 @@ elif st.session_state.current_page == "Model Prediction":
         </div>
     """, unsafe_allow_html=True)
     
-    #st.markdown("---")
+    st.markdown("---")
     
     #st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
     #st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Choose Prediction:</h3>', unsafe_allow_html=True)
