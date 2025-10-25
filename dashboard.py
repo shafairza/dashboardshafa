@@ -897,9 +897,6 @@ def create_confidence_chart(probabilities):
                 marker=dict(
                     color=colors[:len(categories)],
                     line=dict(color='rgba(255, 255, 255, 0.3)', width=2),
-                    gradient=dict(
-                        type='radial',
-                        coloraxis='coloraxis'
                     )
                 ),
                 text=[f'{v:.1f}%' for v in values],
@@ -930,8 +927,6 @@ def create_confidence_chart(probabilities):
             tickfont=dict(color='#d8b4fe', family='DM Sans')
         ),
         showlegend=False,
-        coloraxis=dict(
-            colorscale=[[0, 'rgba(168, 85, 247, 0.8)'], [1, 'rgba(147, 51, 234, 0.8)']]
         )
     )
 
@@ -1211,8 +1206,8 @@ elif st.session_state.current_page == "Model Prediction":
                     """, unsafe_allow_html=True)
                     
                     st.markdown("---")
-                    st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
-
+                    #st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
+                    st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
 
                 else:
                     # Logika Normal (Klasifikasi Beras atau Deteksi Smoking/NotSmoking)
@@ -1242,8 +1237,8 @@ elif st.session_state.current_page == "Model Prediction":
                         st.success(result['success_message']) # Logika 4
                         
                         st.markdown("---")
-                        st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
-
+                        #st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
+                        st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
 
                     elif st.session_state.task_type == "Deteksi Objek (YOLO)":
                         # Simpan ke histori
@@ -1272,8 +1267,8 @@ elif st.session_state.current_page == "Model Prediction":
                         
                         st.markdown("---")
                         # Gunakan chart confidence untuk deteksi juga
-                        st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
-
+                        #st.plotly_chart(create_confidence_chart(result['probabilities']), use_container_width=True)
+                        st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
             st.markdown("</div>", unsafe_allow_html=True)
             
     else:
@@ -1349,13 +1344,13 @@ elif st.session_state.current_page == "Analytics":
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(30, 25, 45, 0.4)'
             )
-            st.plotly_chart(fig_pie, use_container_width=True)
+            st.plotly_chart(fig_pie, width='stretch')
 
         with col2:
             st.markdown("### Trend Confidence")
             fig_line = create_history_chart(st.session_state.prediction_history)
             if fig_line:
-                st.plotly_chart(fig_line, use_container_width=True)
+                st.plotly_chart(fig_line, width='stretch')
 
         st.markdown("---")
 
