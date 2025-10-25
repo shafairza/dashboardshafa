@@ -1189,7 +1189,7 @@ elif st.session_state.current_page == "Model Prediction":
     st.markdown('<div class="balance-card" style="padding: 1.5rem 2rem; margin-bottom: 2rem;">', unsafe_allow_html=True)
     st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Pilih Mode Prediksi:</h3>', unsafe_allow_html=True)
     
-    col_mode_select, col_model_select = st.columns([1, 1])
+    col_mode_select = st.columns(1)
 
     with col_mode_select:
         task_type_select = st.selectbox(
@@ -1200,14 +1200,6 @@ elif st.session_state.current_page == "Model Prediction":
         )
         st.session_state.task_type = task_type_select
         
-    with col_model_select:
-        if st.session_state.task_type == "Klasifikasi Gambar":
-            model_type_select = st.selectbox(
-                "Pilih Framework:",
-                ["TensorFlow Model", "PyTorch Model"],
-                label_visibility="collapsed",
-                key="model_type_select"
-            )
         else:
             model_type_select = "Detection Model (Simulated)"
             st.markdown(f'<p style="color: #000000; margin-top: 0.5rem; font-size: 0.9rem;">Model Deteksi digunakan.</p>', unsafe_allow_html=True)
