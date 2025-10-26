@@ -16,7 +16,7 @@ A modern, interactive dashboard for machine learning / Deep Learning image class
 
 ### Quick Start (Demo Mode)
 
-For a quick demo without ML frameworks:
+For a quick demo with frameworks:
 
 ```bash
 pip install streamlit pandas numpy pillow plotly
