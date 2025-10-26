@@ -58,17 +58,18 @@ pip install -r requirements.txt
    - Object Detection: Detect objects in images
 
 3. **Select Model:**
-   - TensorFlow Model: Uses `models/Shafa_Laporan 2.h5`
-   - PyTorch Model: Uses `models/Shafa_Laporan 4.pt`
+   - TensorFlow Model: Uses `models/Shafa_Laporan 2.h5` Classify images into categories
+   - PyTorch Model: Uses `models/Shafa_Laporan 4.pt` Detect objects in images
 
 4. **Upload Image:**
    - Supported formats: PNG, JPG, JPEG
    - Maximum file size: 200MB
 
 5. **Run Prediction:**
-   - Click "Start Prediction" button
+   - Click "Browse File" button for uploaded image
+   - Wait for a while
    - View results and confidence scores
-   - Analyze visualizations and history
+   - Analyze visualizations and history on analytics page
 
 ## Model Integration
 
@@ -89,44 +90,42 @@ models/
 ## Configuration
 
 ### Model Categories
-The application is configured for rice classification with these categories:
+The application is configured for rice classification with these categories based on rice varieties commonly cultivated in Turkey:
 - Arborio
 - Basmati
 - Ipsala
+- Karacadag
 - Jasmine
 
 Object Detection:
 - Not Smoking
 - Smoking
 
-To modify categories, edit the `categories` list in the `predict_classification()` function.
-
 ### Confidence Threshold
 Adjust the confidence threshold in the sidebar (0-100%) to filter predictions based on model confidence.
-
-### Framework Status
-
-The dashboard automatically detects available ML frameworks and shows status in the sidebar:
-- ✅ Available: Framework is installed and ready
-- ❌ Not Available: Framework is not installed (demo mode)
 
 ## File Structure
 
 ```
-├── dashboard.py                 # Main application file
-├── requirements.txt       # Python dependencies
-├── README.md             # This file
-├── models/               # ML model files
+├── Assets/                  # Logo file
+│   └── Logo Dashboard.png
+├── models/                  # DL model files
 │   ├── Shafa_Laporan 2.h5
 │   └── Shafa_Laporan 4.pt
-├── sample image/         # Uploaded images (auto-created)
+├── sample image/            # Image used
+│   └── Arborio.png
+│   .....
+│   └── Smoking.png
+├── README.md               # This file
+├── dashboard.py            # Main application file
+├── requirements.txt        # Python dependencies
 
 ```
 
 ## License
 
-This project is open source by Shafa and available under laboratory Big Data Programming.
+This project is open source by Shafa Statistics Student Universitas Syiah Kuala and available under laboratory Big Data Programming.
 
 ---
 
-**Note:** This dashboard works in production mode (with actual ML and DL models). The production mode provides real model predictions by creator.
+**Note:** This dashboard works in production mode (with actual ML and DL models). The production mode provides real model predictions by developer is Shafa.
