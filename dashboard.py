@@ -8,7 +8,7 @@ from datetime import datetime
 import time
 import os
 
-# TAMBAHKAN IMPORT DARI TORCHVISION DAN ULTRALYTICS
+# TAMBAHKAN IMPORT DARI TORCHVISION DAN ULTRALYTICS 
 try:
     import torch
     from torchvision import transforms
@@ -36,9 +36,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- CSS STYLING (TIDAK BERUBAH) ---
+# --- CSS STYLING  ---
 def load_css():
-    # ... (kode CSS tetap sama) ...
     return """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
@@ -645,17 +644,18 @@ if 'uploaded_filename' not in st.session_state:
 if 'detection_cache' not in st.session_state:
     st.session_state.detection_cache = {}
 
-# KELAS UNTUK KLASIFIKASI (5 JENIS BERAS)
+# KELAS UNTUK KLASIFIKASI (5 JENIS BERAS) DAN DETEKSI (SMOKING/NOT SMOKING)
 CLASSIFICATION_CATEGORIES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag'] 
-# KELAS UNTUK DETEKSI (SMOKING/NOT SMOKING)
 DETECTION_CLASSES = ['NotSmoking', 'Smoking'] 
 
 YOLO_CONF_THRESHOLD = 0.60 
 YOLO_IOU_THRESHOLD = 0.45
+
 # --- MODEL LOADING ---
 
 @st.cache_resource
 def load_models():
+    
     # --- MODEL DETEKSI OBJEK (YOLO) ---
     yolo_model_path = "model/Shafa_Laporan 4.pt" 
     yolo_model = None
@@ -683,7 +683,7 @@ def load_models():
             
     return yolo_model, classifier
 
-# Inisialisasi model
+# INISIALISASI MODEL
 try:
     yolo_model, classifier = load_models()
 except Exception:
@@ -757,7 +757,7 @@ def predict_classification(image, model_type="TensorFlow Model"):
             'error_message': f"Error Runtime Model: Model gagal memproses input. {str(e)[:100]}..."
         }
 
-# --- PREDICT DETECTION (YOLO NYATA - Filter Diperketat) ---
+# --- PREDICT DETECTION (Filter Diperketat) ---
 
 def predict_detection(image):
     categories = DETECTION_CLASSES 
@@ -843,19 +843,7 @@ def process_image(image):
     img = Image.open(image); img = img.convert('RGB'); st.session_state.uploaded_filename = image.name 
     return img
 
-# --- FUNGSI CHART TETAP SAMA ---
-
-#def create_confidence_chart(probabilities):
- #   sorted_probs = sorted(probabilities.items(), key=lambda item: item[1], reverse=True)[:5]
-  #  categories = [item[0] for item in sorted_probs]; values = [item[1] for item in sorted_probs]
-   # if not values or all(v == 0.0 for v in values):
-    #    categories = ["TIDAK ADA DATA"]; values = [100]; colors = ['rgba(239, 68, 68, 0.9)']; title = 'Confidence Distribution (TIDAK ADA HASIL)'
-     #   fig = go.Figure(data=[go.Bar(x=values, y=categories, orientation='h', marker=dict(color=colors[0], line=dict(color='rgba(255, 255, 255, 0.3)', width=2)), text=['N/A'], textposition='auto', textfont=dict(color='white', size=12, family='DM Sans'), hovertemplate='<b>TIDAK ADA HASIL VALID</b><extra></extra>',)])
-    #else:
-     #   colors = ['rgba(168, 85, 247, 0.9)', 'rgba(192, 132, 252, 0.9)', 'rgba(147, 51, 234, 0.9)', 'rgba(216, 180, 254, 0.9)', 'rgba(139, 92, 246, 0.9)']; title = 'Confidence Distribution'
-      #  fig = go.Figure(data=[go.Bar(x=values, y=categories, orientation='h', marker=dict(color=colors[:len(categories)], line=dict(color='rgba(255, 255, 255, 0.3)', width=2),), text=[f'{v:.1f}%' for v in values], textposition='auto', textfont=dict(color='white', size=12, family='DM Sans'), hovertemplate='<b>%{y}</b><br>Confidence: %{x:.1f}%<extra></extra>',)]) 
-    #fig.update_layout(title={'text': title, 'font': {'size': 18, 'color': '#FFFFFF', 'family': 'DM Sans'}, 'x': 0.5, 'xanchor': 'center'}, xaxis_title='Confidence (%)', yaxis_title='Category', font=dict(size=12, color='#B4B4B4', family='DM Sans'), plot_bgcolor='rgba(255, 255, 255, 0.03)', paper_bgcolor='rgba(0,0,0,0)', height=450, margin=dict(l=20, r=20, t=80, b=20), xaxis=dict(range=[0, 100], gridcolor='rgba(168, 85, 247, 0.2)', linecolor='rgba(255, 255, 255, 0.1)', tickfont=dict(color='#d8b4fe', family='DM Sans')), yaxis=dict(gridcolor='rgba(168, 85, 247, 0.2)', linecolor='rgba(255, 255, 255, 0.1)', tickfont=dict(color='#d8b4fe', family='DM Sans')), showlegend=False)
-    #return fig
+# --- FUNGSI CHART ---
 
 def create_history_chart(history):
     if not history: return None
@@ -932,8 +920,7 @@ with st.sidebar:
 
 # --- MAIN CONTENT LOGIC ---
 
-# 1. Dashboard (Awal)
-# 1. Dashboard (Awal)
+# 1. Dashboard
 if st.session_state.current_page == "Dashboard":
     # Load and encode logo
     import base64
@@ -985,7 +972,7 @@ if st.session_state.current_page == "Dashboard":
             </div>
         """, unsafe_allow_html=True)
 
-# 2. Prediksi Model (Baru)
+# 2. Prediksi Model 
 elif st.session_state.current_page == "Model Prediction":
     st.markdown("""<div style="text-align: center; padding: 1rem 2rem 2rem 2rem;">
             <h1 style="font-size: 2.5rem; font-weight: 700; color: #000000; margin: 0; letter-spacing: -0.03em;">Detection & Classification Model Prediction</h1>
@@ -1001,7 +988,7 @@ elif st.session_state.current_page == "Model Prediction":
     col_mode_only = st.columns([1])[0] 
 
     with col_mode_only:
-        task_type_select = st.selectbox("Pilih Mode:", ["Image Classification (CNN)", "Object Detection (YOLO)"], label_visibility="collapsed", key="task_type_select")
+        task_type_select = st.selectbox("Select Mode:", ["Image Classification (CNN)", "Object Detection (YOLO)"], label_visibility="collapsed", key="task_type_select")
         st.session_state.task_type = task_type_select
         
         if st.session_state.task_type == "Image Classification (CNN)":
@@ -1067,7 +1054,7 @@ elif st.session_state.current_page == "Model Prediction":
                     st.markdown(f"""<div style="text-align: center; background: linear-gradient(135deg, {color_start} 0%, {color_end} 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5); margin-top: 1rem;">
                             <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">STATUS: {status_text}</p></div>""", unsafe_allow_html=True)
                     st.markdown("---")
-                    #st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
+                    
                 else:
                     st.session_state.total_predictions += 1
                     st.markdown('<h3 style="color: #000000; margin-bottom: 1rem;">Result Prediction:</h3>', unsafe_allow_html=True)
@@ -1079,9 +1066,7 @@ elif st.session_state.current_page == "Model Prediction":
                                 <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">Confidence: {result['confidence']:.2f}%</p></div>""", unsafe_allow_html=True)
                         st.success(result['success_message']) 
                         st.markdown("---")
-                        #st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
-
-
+                        
                     elif st.session_state.task_type == "Object Detection (YOLO)":
                         st.session_state.prediction_history.append({'timestamp': datetime.now().strftime('%H:%M:%S'), 'class': result['class'], 'confidence': result['confidence'], 'task_type': result['task_type'], 'objects_detected': result['total_objects']})
                         if result['total_objects'] > 0:
@@ -1095,7 +1080,6 @@ elif st.session_state.current_page == "Model Prediction":
                                 <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">Confidence: {result['confidence']:.2f}% (number of objects: {result['total_objects']})</p></div>""", unsafe_allow_html=True)
                         st.success(result['success_message'])
                         st.markdown("---")
-                        #st.plotly_chart(create_confidence_chart(result['probabilities']), width='stretch')
 
             st.markdown("</div>", unsafe_allow_html=True)
             
@@ -1108,7 +1092,7 @@ elif st.session_state.current_page == "Model Prediction":
             <p style="font-size: 1.25rem; color: #000000; font-style: italic; margin: 0;"> </p>
         </div>""", unsafe_allow_html=True)
 
-# 3. Analytics (Tidak Berubah Signifikan)
+# 3. Analytics Page
 elif st.session_state.current_page == "Analytics":
     st.markdown("# Predictive Analytics")
     st.markdown("---")
@@ -1171,7 +1155,7 @@ elif st.session_state.current_page == "Analytics":
     else:
         st.info("No **Classification** prediction data is available. Visit the Model Prediction page to get started.")
 
-# 4. About 
+# 4. About page
 elif st.session_state.current_page == "About":
     st.markdown("# About the Developer")
     st.markdown("""
