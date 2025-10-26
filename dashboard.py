@@ -662,12 +662,12 @@ def load_models():
     if ULTRALYTICS_AVAILABLE:
         try:
             if not os.path.exists(yolo_model_path):
-                st.error(f"FATAL: File YOLO TIDAK DITEMUKAN: {yolo_model_path}")
+                st.error(f"FATAL: File Yolo NOT FOUND {yolo_model_path}")
             else:
                 yolo_model = YOLO(yolo_model_path)
                 
         except Exception as e:
-            st.error(f"Gagal memuat Model Deteksi (Shafa_Laporan 4.pt) sebagai YOLO: {e}")
+            st.error(f"Failed to load Object Detection Model (Shafa_Laporan 4.pt) as YOLO: {e}")
     
     # --- MODEL KLASIFIKASI (TENSORFLOW) ---
     classifier_path = "model/Shafa_Laporan 2.h5"
@@ -675,11 +675,11 @@ def load_models():
     if TENSORFLOW_AVAILABLE:
         try:
             if not os.path.exists(classifier_path):
-                st.error(f"FATAL: File Classifier TIDAK DITEMUKAN: {classifier_path}")
+                st.error(f"FATAL: File Classifier NOT FOUND: {classifier_path}")
             else:
                 classifier = tf.keras.models.load_model(classifier_path)
         except Exception as e:
-            st.error(f"Gagal memuat Model Klasifikasi (Shafa_Laporan 2.h5): {e}")
+            st.error(f"Failed to load Classification Model (Shafa_Laporan 2.h5): {e}")
             
     return yolo_model, classifier
 
@@ -1075,7 +1075,7 @@ elif st.session_state.current_page == "Model Prediction":
                     if st.session_state.task_type == "Image Classification (CNN)":
                         st.session_state.prediction_history.append({'timestamp': datetime.now().strftime('%H:%M:%S'), 'class': result['class'], 'confidence': result['confidence'], 'task_type': result['task_type']})
                         st.markdown(f"""<div style="text-align: center; background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.5);">
-                                <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">Class Predictiono: <span style="font-size: 2rem;">{result['class']}</span></p>
+                                <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">Class Prediction: <span style="font-size: 2rem;">{result['class']}</span></p>
                                 <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">Confidence: {result['confidence']:.2f}%</p></div>""", unsafe_allow_html=True)
                         st.success(result['success_message']) 
                         st.markdown("---")
@@ -1091,7 +1091,7 @@ elif st.session_state.current_page == "Model Prediction":
                             color_start = "#9ca3af"; color_end = "#6b7280"
                             
                         st.markdown(f"""<div style="text-align: center; background: linear-gradient(135deg, {color_start} 0%, {color_end} 100%); padding: 1rem; border-radius: 14px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.5);">
-                                <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;">Result Prediction: <span style="font-size: 2rem;">{result['class']}</span></p>
+                                <p style="color: white; font-weight: 700; margin: 0; font-size: 1.5rem;"> <span style="font-size: 2rem;">{result['class']}</span></p>
                                 <p style="color: white; font-weight: 500; margin: 0; font-size: 1rem;">Confidence: {result['confidence']:.2f}% (number of objects: {result['total_objects']})</p></div>""", unsafe_allow_html=True)
                         st.success(result['success_message'])
                         st.markdown("---")
