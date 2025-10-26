@@ -1,16 +1,15 @@
 # Dashboard Image Prediction by S.
 
-A modern, interactive dashboard for machine learning image classification and object detection built with Streamlit.
+A modern, interactive dashboard for machine learning / Deep Learning image classification and object detection built with Streamlit.
 
 ## Features
 
 - 🖼️ **Image Classification** - Classify images into categories (Rice types)
 - 🎯 **Object Detection** - Detect and locate objects in images specific to Smoking or NotSmoking
 - 🤖 **Multiple Model Support** - TensorFlow (.h5) and PyTorch (.pt) models
-- 📊 **Interactive Visualizations** - Real-time charts and analytics
 - 🎨 **Modern UI** - Glassmorphism design with dark/light theme
-- 📱 **Responsive Design** - Works on desktop and mobile
-- 📈 **Analytics Dashboard** - Performance metrics and prediction history
+- 📱 **Responsive Design** - Works on desktop but still not going well on mobile
+- 📈 **Analytics Dashboard** - Interactive visualization chart and prediction history
 - 💾 **Data Export** - Download results in CSV format
 
 ## Installation
