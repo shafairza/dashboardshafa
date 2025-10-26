@@ -23,7 +23,7 @@ pip install streamlit pandas numpy pillow plotly
 streamlit run app.py
 ```
 
-### Full Installation (With ML Support)
+### Full Installation (With ML/DL Support)
 
 For full functionality with actual model predictions:
 
@@ -31,7 +31,7 @@ For full functionality with actual model predictions:
 # Install core dependencies
 pip install streamlit pandas numpy pillow plotly
 
-# Install ML frameworks (optional)
+# Install ML frameworks
 pip install tensorflow torch torchvision
 
 # Run the application
