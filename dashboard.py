@@ -815,7 +815,7 @@ def predict_detection(image):
             result = {
                 'class': "OBJEK TIDAK DITEMUKAN", 'confidence': 0.0, 'probabilities': {c: 0.0 for c in categories}, 
                 'objects': [], 'total_objects': 0, 'task_type': 'Detection',
-                'error_message': f"Tidak ada objek **NotSmoking/Smoking** yang terdeteksi di atas threshold (0.60)."
+                'error_message': f"There is no **NotSmoking/Smoking** detected above the threshold (0.60)."
             }
             
     except Exception as e:
