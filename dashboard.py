@@ -1054,7 +1054,7 @@ elif st.session_state.current_page == "Model Prediction":
         with col2:
             st.markdown("""<div style="background: rgba(168, 85, 247, 0.1); border: 2px solid rgba(168, 85, 247, 0.4); border-radius: 20px; padding: 1rem; overflow: hidden;">""", unsafe_allow_html=True)
 
-            with st.spinner(f"Memproses gambar dengan mode {st.session_state.task_type}..."):
+            with st.spinner(f"Processing images with mode {st.session_state.task_type}..."):
                 progress_bar = st.progress(0)
                 for i in range(100):
                     time.sleep(0.01)
